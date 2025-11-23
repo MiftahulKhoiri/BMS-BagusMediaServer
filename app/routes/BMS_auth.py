@@ -6,7 +6,19 @@ auth = Blueprint("auth", __name__, url_prefix="/auth")
 
 
 # ======================================
-#  FUNGSI PEMBANTU
+#  CEK APAKAH ADA USER DI DATABASE
+# ======================================
+def BMS_auth_has_users():
+    """Mengembalikan True jika tabel users sudah ada penggunanya."""
+    conn = BMS_db_connect()
+    cur = conn.cursor()
+    cur.execute("SELECT COUNT(*) AS total FROM users")
+    result = cur.fetchone()
+    return result["total"] > 0
+
+
+# ======================================
+#  HASH & VERIFIKASI
 # ======================================
 
 def BMS_auth_hash(password):
@@ -14,7 +26,6 @@ def BMS_auth_hash(password):
 
 
 def BMS_auth_verify(username, password):
-    """Verifikasi user & password"""
     conn = BMS_db_connect()
     cur = conn.cursor()
 
@@ -26,7 +37,10 @@ def BMS_auth_verify(username, password):
     return None
 
 
-# ROLE CHECKER
+# ======================================
+#  ROLE CHECKER
+# ======================================
+
 def BMS_auth_is_root():
     return session.get("role") == "root"
 
@@ -41,38 +55,21 @@ def BMS_auth_is_login():
 
 
 # ======================================
-#  MIDDLEWARE PROTEKSI
-# ======================================
-
-def BMS_auth_require_login():
-    if not BMS_auth_is_login():
-        return redirect("/auth/login")
-
-def BMS_auth_require_admin():
-    if not (BMS_auth_is_root() or BMS_auth_is_admin()):
-        return "Akses ditolak!"
-
-def BMS_auth_require_root():
-    if not BMS_auth_is_root():
-        return "Akses ditolak! Khusus ROOT!"
-
-
-# ======================================
 #  HALAMAN LOGIN
 # ======================================
 
 @auth.route("/login")
 def BMS_auth_login_page():
+
+    # Jika sudah login → arahkan sesuai role
     if BMS_auth_is_login():
-        # Sudah login → langsung ke halaman masing-masing
         if BMS_auth_is_root() or BMS_auth_is_admin():
-            return redirect("/admin/home")
+            return redirect("/admin/dashboard")
         return redirect("/user/home")
 
     return render_template("BMSauth_login.html")
 
 
-# PROSES LOGIN
 @auth.route("/login-process", methods=["POST"])
 def BMS_auth_login_process():
     username = request.form.get("username")
@@ -83,16 +80,16 @@ def BMS_auth_login_process():
     if not user:
         return "Login gagal!"
 
-    # Simpan session
+    # Simpan ke session
     session["username"] = user["username"]
     session["role"] = user["role"]
 
     # Redirect sesuai role
     if user["role"] == "root":
-        return redirect("/admin/home")
+        return redirect("/admin/dashboard")
 
     if user["role"] == "admin":
-        return redirect("/admin/home")
+        return redirect("/admin/dashboard")
 
     return redirect("/user/home")
 
@@ -106,22 +103,37 @@ def BMS_auth_register_page():
     return render_template("BMSauth_register.html")
 
 
-# PROSES REGISTER
 @auth.route("/register-process", methods=["POST"])
 def BMS_auth_register_process():
     username = request.form.get("username")
     password = request.form.get("password")
     role = request.form.get("role")
 
-    # Proteksi: user tidak boleh buat ROOT!
+    conn = BMS_db_connect()
+    cur = conn.cursor()
+
+    # ======================================
+    # CASE 1: Jika database masih kosong → buat ROOT pertama
+    # ======================================
+    if not BMS_auth_has_users():
+        role = "root"  # override, paksa root pertama
+
+        cur.execute(
+            "INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
+            (username, BMS_auth_hash(password), role)
+        )
+        conn.commit()
+
+        return redirect("/auth/login")
+
+    # ======================================
+    # CASE 2: Database sudah ada user → hanya admin/member
+    # ======================================
     if role == "root":
-        return "Tidak boleh membuat root!"
+        return "Tidak boleh membuat root lagi!"
 
     if role not in ("admin", "member"):
         return "Role tidak valid!"
-
-    conn = BMS_db_connect()
-    cur = conn.cursor()
 
     try:
         cur.execute(
@@ -129,7 +141,9 @@ def BMS_auth_register_process():
             (username, BMS_auth_hash(password), role)
         )
         conn.commit()
+
         return redirect("/auth/login")
+
     except:
         return "Username sudah dipakai!"
 
