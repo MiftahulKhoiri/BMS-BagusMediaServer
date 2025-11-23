@@ -1,0 +1,69 @@
+/* Background dan posisi tengah */
+body {
+    background: #111;
+    color: #fff;
+    font-family: Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+}
+
+/* Container box form */
+.BMSauth-box {
+    background: #222;
+    width: 320px;
+    padding: 25px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 0 15px #000;
+}
+
+/* Judul halaman */
+.BMSauth-title {
+    font-size: 22px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+/* Input dan select */
+.BMSauth-input,
+.BMSauth-select {
+    width: 100%;
+    padding: 12px;
+    margin-top: 10px;
+    border: none;
+    border-radius: 5px;
+    background: #333;
+    color: #fff;
+}
+
+/* Tombol */
+.BMSauth-button {
+    width: 100%;
+    padding: 12px;
+    margin-top: 15px;
+    border: none;
+    border-radius: 5px;
+    background: #00aaff;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.BMSauth-button:hover {
+    background: #0090dd;
+}
+
+/* Link */
+.BMSauth-link {
+    color: #00aaff;
+    text-decoration: none;
+    font-size: 14px;
+}
+
+.BMSauth-link:hover {
+    text-decoration: underline;
+}
