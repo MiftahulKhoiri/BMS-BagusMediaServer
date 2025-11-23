@@ -28,7 +28,6 @@ def BMS_admin_required():
 
 @admin.route("/dashboard")
 def BMS_admin_dashboard():
-    # cek proteksi
     check = BMS_admin_required()
     if check:
         return check
@@ -42,7 +41,7 @@ def BMS_admin_dashboard():
 
 @admin.route("/page")
 def BMS_admin_load_page():
-    # cek proteksi
+
     check = BMS_admin_required()
     if check:
         return check
@@ -83,4 +82,86 @@ def BMS_admin_load_page():
     if page == "users":
         return "<h2>👤 User Manager</h2><p>Manajemen user akan dibuat di sini.</p>"
 
+    # HALAMAN UPDATE PANEL (BENAR DI SINI)
+    if page == "update":
+        return """
+        <h2>🔄 Update Panel</h2>
+
+        <h3>Git Update</h3>
+        <button onclick="runUpdate()">Update (git pull)</button>
+
+        <h3>Install Package</h3>
+        <input id='pkg' placeholder='Nama package' />
+        <button onclick="installPkg()">Install</button>
+
+        <h3>Server Control</h3>
+        <button onclick="runRestart()">Restart Server</button>
+        <button onclick="runShutdown()">Shutdown Server</button>
+
+        <h3>Logs</h3>
+        <button onclick="loadLog()">Load Log</button>
+        <button onclick="clearLog()">Clear Log</button>
+
+        <pre id='logbox' style='background:#000;color:#0f0;padding:10px;height:300px;overflow:auto;'></pre>
+
+        <script>
+
+        function runUpdate(){
+            fetch('/tools/update')
+            .then(r=>r.text())
+            .then(t=>{
+                alert('Update selesai!');
+                loadLog();
+            });
+        }
+
+        function installPkg(){
+            const pkg = document.getElementById('pkg').value;
+            const form = new FormData();
+            form.append('package', pkg);
+
+            fetch('/tools/install', {method:'POST', body:form})
+            .then(r=>r.text())
+            .then(t=>{
+                alert('Install: ' + t);
+                loadLog();
+            });
+        }
+
+        function runRestart(){
+            fetch('/tools/restart')
+            .then(r=>r.text())
+            .then(t=>{
+                alert('Server restart (simulasi)!');
+            });
+        }
+
+        function runShutdown(){
+            fetch('/tools/shutdown')
+            .then(r=>r.text())
+            .then(t=>{
+                alert('Server shutdown!');
+            });
+        }
+
+        function loadLog(){
+            fetch('/tools/log')
+            .then(r=>r.text())
+            .then(t=>{
+                document.getElementById('logbox').textContent = t;
+            });
+        }
+
+        function clearLog(){
+            fetch('/tools/log/clear')
+            .then(r=>r.text())
+            .then(t=>{
+                loadLog();
+            });
+        }
+
+        </script>
+        """
+
+    # DEFAULT JIKA TIDAK DITEMUKAN
     return "<p>Halaman tidak ditemukan.</p>"
