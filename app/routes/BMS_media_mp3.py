@@ -1,8 +1,6 @@
-from flask import Blueprint, request, jsonify, Response, send_file, render_template, safe_join
+from flask import Blueprint, request, jsonify, Response, send_file, render_template
+from werkzeug.utils import safe_join
 import os
-import mimetypes
-from datetime import datetime
-from werkzeug.utils import secure_filename
 
 mp3 = Blueprint("mp3", __name__, url_prefix="/mp3")
 
