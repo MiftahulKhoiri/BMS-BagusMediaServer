@@ -1,19 +1,40 @@
 import sqlite3
 import os
 
-DB_PATH = "bms.db"
+# =====================================================
+#  PENGATURAN PATH DATABASE
+# =====================================================
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB_PATH = os.path.join(BASE_DIR, "bms.db")
 
+
+# =====================================================
+#  KONEKSI DATABASE
+# =====================================================
 def BMS_db_connect():
+    """Membuat koneksi SQLite dengan row dict-like."""
     conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
 
+# =====================================================
+#  INIT DATABASE (DIPANGGIL SAAT APLIKASI START)
+# =====================================================
 def BMS_db_init():
-    """Membuat tabel user jika belum ada."""
+    """
+    Membuat tabel users jika belum ada.
+    Dipanggil sekali saat Flask start.
+    """
+
+    # Pastikan file bms.db ada di folder yang benar
+    if not os.path.exists(DB_PATH):
+        open(DB_PATH, "w").close()
+
     conn = BMS_db_connect()
     cur = conn.cursor()
 
+    # Buat tabel users
     cur.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -27,8 +48,15 @@ def BMS_db_init():
     conn.close()
 
 
+# =====================================================
+#  MEMBUAT ROOT PERTAMA (OPSIONAL)
+# =====================================================
 def BMS_db_create_root(username, password):
-    """Membuat akun root pertama kali."""
+    """
+    Membuat akun root pertama.
+    Tidak dipakai otomatis karena BMS_auth sudah tangani root pertama.
+    Berguna untuk recovery.
+    """
     import hashlib
 
     conn = BMS_db_connect()
@@ -41,9 +69,11 @@ def BMS_db_create_root(username, password):
             INSERT INTO users (username, password, role)
             VALUES (?, ?, ?)
         """, (username, hashed_pw, "root"))
+
         conn.commit()
-    except:
-        # Jika sudah ada root, jangan error
+
+    except sqlite3.IntegrityError:
+        # Root sudah ada → abaikan saja
         pass
 
     conn.close()
