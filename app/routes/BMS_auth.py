@@ -112,12 +112,3 @@ def BMS_auth_register_process():
 def BMS_auth_logout():
     session.clear()
     return "Anda telah logout."
-
-
-# admin home
-@auth.route("/home")
-def BMS_admin_home():
-    if session.get("role") != "root":
-        return "Akses ditolak! Hanya ROOT yang boleh masuk!"
-
-    return render_template("BMSadmin_home.html")
