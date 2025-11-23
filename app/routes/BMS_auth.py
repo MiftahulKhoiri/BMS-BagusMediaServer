@@ -52,7 +52,7 @@ def BMS_auth_is_member():
 
 @auth.route("/login")
 def BMS_auth_login_page():
-    return render_template("auth_login.html")
+    return render_template("BMSauth_login.html")
 
 
 # PROSES LOGIN
@@ -77,7 +77,7 @@ def BMS_auth_login_process():
 
 @auth.route("/register")
 def BMS_auth_register_page():
-    return render_template("auth_register.html")
+    return render_template("BMSauth_register.html")
 
 
 # PROSES REGISTER
