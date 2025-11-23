@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>BMS Admin Panel</title>
+    <link rel="stylesheet" href="/static/css/BMSadmin.css">
+</head>
+<body>
+
+<div class="admin-container">
+
+    <div class="admin-header">
+        <h2>🛠 BMS ADMIN PANEL</h2>
+        <p>Root access granted</p>
+    </div>
+
+    <!-- Tombol control -->
+    <div class="admin-buttons">
+        <button class="btn-update">UPDATE</button>
+        <button class="btn-install">INSTALL</button>
+        <button class="btn-restart">RESTART</button>
+    </div>
+
+    <!-- Kotak log -->
+    <div class="admin-log-box">
+        <textarea id="logArea" readonly>
+--- LOG BMS SERVER ---
+        </textarea>
+    </div>
+
+    <!-- Clear Log -->
+    <div class="admin-clear-box">
+        <button class="btn-clear" onclick="document.getElementById('logArea').value = '';">
+            CLEAR LOG
+        </button>
+    </div>
+
+</div>
+
+</body>
+</html>
