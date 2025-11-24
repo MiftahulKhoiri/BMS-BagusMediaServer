@@ -19,6 +19,7 @@ from .BMS_filemanager import filemanager
 
 from .BMS_systeminfo import systeminfo
 from .BMS_terminal import terminal
+from .BMS_logger import logger
 
 
 # =======================================================
@@ -60,5 +61,8 @@ def register_blueprints(app):
 
     # Terminal
     app.register_blueprint(terminal)
+    
+
+    app.register_blueprint(logger)
 
     print(">> Semua Blueprint BMS berhasil terdaftar!")
