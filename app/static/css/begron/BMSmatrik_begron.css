@@ -1,0 +1,26 @@
+/* Fullscreen canvas */
+#matrixCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+    background: black;
+}
+
+/* Warna teks neon */
+.admin-container {
+    color: #00ff88;
+    text-shadow: 0 0 8px #00ff88;
+}
+
+/* Glow card transparan */
+.admin-header, .admin-buttons, .admin-log-box, .admin-clear-box {
+    background: rgba(0, 20, 0, 0.35);
+    padding: 15px;
+    border-radius: 10px;
+    margin: 15px;
+    border: 1px solid #00ff88;
+    box-shadow: 0 0 20px #00ff88;
+}
