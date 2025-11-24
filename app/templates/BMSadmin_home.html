@@ -2,23 +2,32 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BMS Admin Panel</title>
+
+    <!-- Background Matrix -->
+    <link rel="stylesheet" href="/static/css/begron/BMSmatrik_begron.css">
+
+    <!-- Style utama admin -->
     <link rel="stylesheet" href="/static/css/BMSadmin.css">
 </head>
 <body>
 
+<!-- CANVAS MATRIX -->
+<canvas id="matrixCanvas"></canvas>
+
 <div class="admin-container">
 
     <div class="admin-header">
-        <h2>🛠 BMS ADMIN PANEL</h2>
+        <h2>[ BMS ADMIN PANEL ]</h2>
         <p>Root access granted</p>
     </div>
 
     <!-- Tombol control -->
     <div class="admin-buttons">
-        <button class="btn-update">UPDATE</button>
-        <button class="btn-install">INSTALL</button>
-        <button class="btn-restart">RESTART</button>
+        <button class="btn-update">Update</button>
+        <button class="btn-install">Install</button>
+        <button class="btn-restart">Restart</button>
     </div>
 
     <!-- Kotak log -->
@@ -36,6 +45,9 @@
     </div>
 
 </div>
+
+<!-- JS Background Matrix -->
+<script src="/static/js/begron/BMSmatrik_begron.js"></script>
 
 </body>
 </html>
