@@ -1,36 +1,73 @@
+import os
 from flask import Flask
-from app.database.BMS_db import BMS_db_init
+from flask_cors import CORS
 
+# Import Blueprint Register
+from app.routes import register_blueprints
+
+
+# ======================================================
+#   FUNGSI UTAMA: MEMBUAT APLIKASI FLASK
+# ======================================================
 def create_app():
-    app = Flask(__name__)
-    app.secret_key = "BMS_SECRET_KEY"
 
-    # ==================================================
-    #  INISIALISASI DATABASE (WAJIB!)
-    # ==================================================
-    BMS_db_init()
-
-    # ==================================================
-    #  REGISTER BLUEPRINT
-    # ==================================================
-    from app.routes import (
-        main,
-        auth,
-        admin,
-        tools,
-        filem,
-        mp3,
-        video,
-        user
+    # Inisialisasi Flask
+    app = Flask(
+        __name__,
+        template_folder="templates",
+        static_folder="static"
     )
 
-    app.register_blueprint(main)
-    app.register_blueprint(auth)
-    app.register_blueprint(admin)
-    app.register_blueprint(tools)
-    app.register_blueprint(filem)
-    app.register_blueprint(mp3)
-    app.register_blueprint(video)
-    app.register_blueprint(user)
+    # Secret Key session
+    app.config["SECRET_KEY"] = "BAGUS-MEDIA-SERVER-KEY-99999"
+
+    # Izinkan CORS (jika perlu akses dari aplikasi lain)
+    CORS(app)
+
+    # Pastikan folder data penting ada
+    prepare_bms_folders()
+
+    # Register semua blueprint (dari app/routes/__init__.py)
+    register_blueprints(app)
+
+    print(">> BMS Flask App berhasil dibuat!")
 
     return app
+
+
+# ======================================================
+#   MEMBUAT FOLDER WAJIB UNTUK BMS
+# ======================================================
+def prepare_bms_folders():
+    """
+    Membuat folder penting agar BMS berjalan stabil
+    di Android (Termux), Linux, atau Windows.
+    """
+
+    base_paths = [
+        "/storage/emulated/0/BMS",
+        "/storage/emulated/0/BMS/MP3",
+        "/storage/emulated/0/BMS/VIDEO",
+        "/storage/emulated/0/BMS/UPLOAD",
+        "/storage/emulated/0/BMS/database",
+    ]
+
+    for path in base_paths:
+        try:
+            os.makedirs(path, exist_ok=True)
+        except Exception as e:
+            print(f"[WARN] Tidak bisa membuat folder: {path} -> {e}")
+
+
+# ======================================================
+#   JALANKAN FLASK (KHUSUS RUN STANDALONE)
+# ======================================================
+if __name__ == "__main__":
+    app = create_app()
+
+    # Jalankan server Flask
+    app.run(
+        host="0.0.0.0",
+        port=5000,
+        debug=True
+    )
