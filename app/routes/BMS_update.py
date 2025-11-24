@@ -1,130 +1,141 @@
 import os
 import subprocess
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, session
 from app.routes.BMS_auth import (
     BMS_auth_is_login,
     BMS_auth_is_admin,
     BMS_auth_is_root
 )
+from app.routes.BMS_logger import BMS_write_log
 
 update = Blueprint("update", __name__, url_prefix="/tools")
 
-# Folder untuk menyimpan log update
-LOG_FILE = "/storage/emulated/0/BMS/update.log"
-
 
 # ======================================================
-#   🔐 Proteksi akses (hanya ROOT/ADMIN boleh update)
+#   🔐 Proteksi Root + Admin
 # ======================================================
 def BMS_update_required():
     if not BMS_auth_is_login():
-        return "❌ Anda belum login!"
+        BMS_write_log("Akses update ditolak (belum login)", "UNKNOWN")
+        return jsonify({"error": "Belum login!"}), 403
 
-    if not (BMS_auth_is_root() or BMS_auth_is_admin()):
-        return "❌ Hanya ROOT atau ADMIN yang dapat melakukan update!"
-
+    if not (BMS_auth_is_admin() or BMS_auth_is_root()):
+        BMS_write_log("Akses update ditolak (tanpa izin)", session.get("username"))
+        return jsonify({"error": "Akses ditolak!"}), 403
+    
     return None
 
 
 # ======================================================
-#   📝 Fungsi mencatat log
-# ======================================================
-def write_log(text):
-    with open(LOG_FILE, "a") as f:
-        f.write(text + "\n")
-
-
-# ======================================================
-#   🔄 Git Pull (Update Server)
+#   🔄 Update Server (git pull)
 # ======================================================
 @update.route("/update")
-def BMS_update_git():
+def BMS_tool_update():
     check = BMS_update_required()
     if check:
         return check
 
+    username = session.get("username")
+    BMS_write_log("Menjalankan UPDATE (git pull)", username)
+
     try:
+        # Jalankan git pull
         result = subprocess.getoutput("git pull")
-        write_log("=== GIT UPDATE ===")
-        write_log(result)
-        return "✔ Update selesai!"
+        BMS_write_log(f"Hasil update: {result}", username)
+        return jsonify({"status": "ok", "output": result})
     except Exception as e:
-        return f"❌ ERROR: {str(e)}"
+        BMS_write_log(f"Error update: {e}", username)
+        return jsonify({"error": str(e)})
 
 
 # ======================================================
 #   📦 Install Package (pip install)
 # ======================================================
 @update.route("/install", methods=["POST"])
-def BMS_update_install_pkg():
+def BMS_tool_install():
     check = BMS_update_required()
     if check:
         return check
 
     pkg = request.form.get("package")
+    username = session.get("username")
 
     if not pkg:
-        return "❌ Nama package kosong!"
+        return jsonify({"error": "Nama package kosong!"})
+
+    BMS_write_log(f"Install package dimulai: {pkg}", username)
 
     try:
         result = subprocess.getoutput(f"pip install {pkg}")
-        write_log(f"=== INSTALL PACKAGE: {pkg} ===")
-        write_log(result)
-        return f"✔ Install selesai: {pkg}"
+        BMS_write_log(f"Hasil install {pkg}: {result}", username)
+        return jsonify({"status": "ok", "output": result})
     except Exception as e:
-        return f"❌ ERROR: {str(e)}"
+        BMS_write_log(f"Error install {pkg}: {e}", username)
+        return jsonify({"error": str(e)})
 
 
 # ======================================================
-#   🔁 Restart Server (Simulasi)
+#   🔁 Restart Server (simulasi)
 # ======================================================
 @update.route("/restart")
-def BMS_update_restart():
+def BMS_tool_restart():
     check = BMS_update_required()
     if check:
         return check
 
-    write_log("=== SERVER RESTART (SIMULATION) ===")
-    return "✔ Server restart (simulasi)!"
+    username = session.get("username")
+    BMS_write_log("Server RESTART diminta", username)
+
+    # Untuk keamanan, hanya simulasi
+    return jsonify({"status": "ok", "message": "Restart (simulasi)"})
 
 
 # ======================================================
-#   ⛔ Shutdown Server (Simulasi)
+#   ⛔ Shutdown Server
 # ======================================================
 @update.route("/shutdown")
-def BMS_update_shutdown():
+def BMS_tool_shutdown():
     check = BMS_update_required()
     if check:
         return check
 
-    write_log("=== SERVER SHUTDOWN (SIMULATION) ===")
-    return "✔ Server shutdown (simulasi)!"
+    username = session.get("username")
+    BMS_write_log("Server SHUTDOWN diminta", username)
+
+    return jsonify({"status": "ok", "message": "Shutdown (simulasi)"})
 
 
 # ======================================================
-#   📄 Ambil Log
+#   📜 Ambil Log
 # ======================================================
 @update.route("/log")
-def BMS_update_log():
+def BMS_tool_read_log():
     check = BMS_update_required()
     if check:
         return check
 
-    if not os.path.exists(LOG_FILE):
-        return "Log kosong."
+    username = session.get("username")
+    BMS_write_log("Admin load system log", username)
 
-    with open(LOG_FILE, "r") as f:
-        return f.read()
+    try:
+        with open("/storage/emulated/0/BMS/logs/system.log", "r") as f:
+            content = f.read()
+        return jsonify({"log": content})
+    except:
+        return jsonify({"log": ""})
 
 
 # ======================================================
-#   🧹 Hapus Log
+#   🧹 Clear Log
 # ======================================================
 @update.route("/log/clear")
-def BMS_update_log_clear():
+def BMS_tool_clear_log():
     check = BMS_update_required()
     if check:
         return check
 
-    open(LOG_FILE, "w").close()
-    return "✔ Log dibersihkan!"
+    username = session.get("username")
+    BMS_write_log("Clear log diminta", username)
+
+    open("/storage/emulated/0/BMS/logs/system.log", "w").close()
+    return jsonify({"status": "cleared"})
