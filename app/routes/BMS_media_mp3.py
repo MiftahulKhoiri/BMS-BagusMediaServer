@@ -1,7 +1,7 @@
 import os
 from flask import Blueprint, jsonify, request, send_from_directory, session
 from app.routes.BMS_auth import (
-    BMS_auth_is_login,
+    BMS_auth_is_login
 )
 from app.routes.BMS_logger import BMS_write_log
 
@@ -23,6 +23,26 @@ def BMS_mp3_required():
 
 
 # ======================================================
+#   🛡 Sanitasi nama file (anti path traversal)
+# ======================================================
+def sanitize_filename(filename):
+    if not filename:
+        return None
+
+    # Blokir karakter berbahaya
+    bad_chars = ["..", "/", "\\", ";", "&", "|", "$", "`"]
+    for bad in bad_chars:
+        if bad in filename:
+            return None
+
+    # Hanya izinkan .mp3
+    if not filename.lower().endswith(".mp3"):
+        return None
+
+    return filename
+
+
+# ======================================================
 #   🎵 List file MP3
 # ======================================================
 @media_mp3.route("/list")
@@ -34,10 +54,10 @@ def BMS_mp3_list():
     username = session.get("username")
     BMS_write_log("Meminta daftar MP3", username)
 
-    files = []
-    for fname in os.listdir(MP3_FOLDER):
-        if fname.lower().endswith(".mp3"):
-            files.append(fname)
+    files = [
+        f for f in os.listdir(MP3_FOLDER)
+        if f.lower().endswith(".mp3")
+    ]
 
     return jsonify({"files": files})
 
@@ -51,18 +71,21 @@ def BMS_mp3_play():
     if check:
         return check
 
-    file = request.args.get("file")
+    filename = request.args.get("file")
     username = session.get("username")
 
-    if not file:
-        return "❌ Parameter file kosong!"
+    safe_name = sanitize_filename(filename)
 
-    filepath = os.path.join(MP3_FOLDER, file)
+    if not safe_name:
+        BMS_write_log(f"Nama file MP3 ilegal: {filename}", username)
+        return "❌ File tidak valid!"
+
+    filepath = os.path.join(MP3_FOLDER, safe_name)
 
     if not os.path.exists(filepath):
-        BMS_write_log(f"File MP3 tidak ditemukan: {file}", username)
+        BMS_write_log(f"File MP3 tidak ditemukan: {safe_name}", username)
         return "❌ File tidak ditemukan!"
 
-    BMS_write_log(f"Memutar MP3: {file}", username)
+    BMS_write_log(f"Memutar MP3: {safe_name}", username)
 
-    return send_from_directory(MP3_FOLDER, file)
+    return send_from_directory(MP3_FOLDER, safe_name)
