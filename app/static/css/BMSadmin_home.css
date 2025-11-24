@@ -1,104 +1,143 @@
-/* ====== GLOBAL ====== */
+/* ------------------------------
+   GLOBAL STYLE
+------------------------------ */
+
 body {
     margin: 0;
     padding: 0;
-    font-family: "Segoe UI", Arial, sans-serif;
-    background: #0f0f0f;
-    color: #eee;
+    font-family: "Courier New", monospace;
+    color: #00ff99;
+    text-shadow: 0 0 8px #00ff99;
 }
 
 .admin-container {
     width: 95%;
     max-width: 800px;
-    margin: 30px auto;
-    padding: 20px;
-    background: #1a1a1a;
-    border-radius: 12px;
-    box-shadow: 0 0 20px rgba(0, 255, 200, 0.2);
+    margin: 0 auto;
+    padding-top: 40px;
 }
 
-/* ===== HEADER ===== */
+
+/* ------------------------------
+   HEADER
+------------------------------ */
+
 .admin-header {
+    background: rgba(0, 20, 0, 0.45);
+    padding: 20px;
+    border-radius: 15px;
+    border: 1px solid #00ff88;
     text-align: center;
-    margin-bottom: 20px;
+    margin-bottom: 25px;
+    box-shadow: 0 0 30px #00ff88;
 }
 
 .admin-header h2 {
     margin: 0;
     font-size: 26px;
-    color: #00ffc6;
-    text-shadow: 0 0 10px #00ffc6;
 }
 
-.admin-header p {
-    margin-top: 5px;
-    font-size: 14px;
-    color: #bbb;
-}
 
-/* ===== BUTTON CONTAINER ===== */
+/* ------------------------------
+   BUTTON GROUP
+------------------------------ */
+
 .admin-buttons {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
-    margin: 20px 0;
+    gap: 15px;
+    margin-bottom: 25px;
 }
 
 .admin-buttons button {
     flex: 1;
-    margin: 0 5px;
-    padding: 12px 10px;
-    background: #222;
-    color: #eee;
-    border: 1px solid #00ffc6;
-    border-radius: 8px;
-    cursor: pointer;
-    font-size: 15px;
+    min-width: 120px;
+    padding: 15px;
+    font-size: 16px;
+    background: rgba(0, 50, 0, 0.5);
+    color: #00ff99;
+    border: 1px solid #00ff88;
+    border-radius: 10px;
+    text-shadow: 0 0 8px #00ff99;
+    box-shadow: 0 0 15px #00ff88;
     transition: 0.2s;
 }
 
 .admin-buttons button:hover {
-    background: #00ffc6;
-    color: #000;
-    box-shadow: 0 0 10px #00ffc6;
+    background: #00ff66;
+    color: black;
+    text-shadow: none;
+    box-shadow: 0 0 25px #00ff66;
 }
 
-/* ===== LOG BOX ===== */
+
+/* ------------------------------
+   LOG BOX
+------------------------------ */
+
 .admin-log-box {
-    margin-top: 15px;
+    background: rgba(0, 20, 0, 0.45);
+    padding: 15px;
+    border-radius: 15px;
+    border: 1px solid #00ff88;
+    box-shadow: 0 0 30px #00ff88;
+    margin-bottom: 20px;
 }
 
 .admin-log-box textarea {
     width: 100%;
-    height: 250px;
-    background: #000;
-    color: #0f0;
-    border: 1px solid #00ffc6;
-    border-radius: 8px;
-    padding: 10px;
+    height: 200px;
+    background: black;
+    border: none;
+    color: #00ff99;
     font-family: monospace;
-    resize: none;
     font-size: 14px;
-    box-shadow: inset 0 0 10px rgba(0, 255, 200, 0.2);
+    padding: 10px;
+    resize: none;
+    outline: none;
+    text-shadow: 0 0 7px #00ff99;
 }
 
-/* ===== CLEAR BUTTON ===== */
+
+/* ------------------------------
+   CLEAR LOG BUTTON
+------------------------------ */
+
 .admin-clear-box {
-    text-align: right;
-    margin-top: 10px;
+    text-align: center;
+    margin-bottom: 40px;
 }
 
-.btn-clear {
-    padding: 10px 18px;
-    background: #330000;
-    border: 1px solid #ff3b3b;
-    border-radius: 8px;
-    color: #ff3b3b;
-    cursor: pointer;
-    transition: 0.2s;
+.admin-clear-box button {
+    background: rgba(0, 60, 0, 0.7);
+    border: 1px solid #00ff88;
+    padding: 12px 25px;
+    border-radius: 10px;
+    font-size: 16px;
+    color: #00ff99;
+    text-shadow: 0 0 5px #00ff99;
+    box-shadow: 0 0 20px #00ff88;
 }
 
-.btn-clear:hover {
-    background: #ff3b3b;
-    color: #fff;
-    box-shadow: 0 0 10px #ff3b3b;
+.admin-clear-box button:hover {
+    background: #00ff66;
+    color: black;
+    text-shadow: none;
+    box-shadow: 0 0 30px #00ff66;
+}
+
+
+/* ------------------------------
+   RESPONSIVE
+------------------------------ */
+
+@media (max-width: 480px) {
+    .admin-buttons {
+        flex-direction: column;
+    }
+
+    .admin-buttons button {
+        width: 100%;
+    }
 }
