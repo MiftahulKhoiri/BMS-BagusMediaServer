@@ -153,3 +153,35 @@ textarea {
     background: #00ff66;
     color: black;
 }
+
+/* ================================
+   RESPONSIVE TUNING
+   ================================ */
+
+/* Mobile (max 480px) */
+@media (max-width: 480px) {
+    .welcome-container {
+        margin-top: 18vh;
+        padding: 15px;
+    }
+
+    .btn {
+        min-width: 95px;
+        padding: 10px 16px;
+    }
+}
+
+/* Tablet (481–768px) */
+@media (max-width: 768px) {
+    .welcome-container {
+        margin-top: 14vh;
+    }
+}
+
+/* PC Large Screen */
+@media (min-width: 1200px) {
+    .welcome-container {
+        margin-top: 18vh;
+        max-width: 750px;
+    }
+}
