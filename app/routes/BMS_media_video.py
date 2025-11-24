@@ -1,40 +1,29 @@
 import os
-from flask import Blueprint, render_template, send_from_directory, jsonify
+from flask import Blueprint, jsonify, request, send_from_directory, session
 from app.routes.BMS_auth import (
     BMS_auth_is_login,
 )
+from app.routes.BMS_logger import BMS_write_log
 
 media_video = Blueprint("media_video", __name__, url_prefix="/video")
 
-# Lokasi folder video server (ubah sesuai lokasi kamu)
-VIDEO_FOLDER = "/storage/emulated/0/BMS/VIDEO"
+# Folder video
+VIDEO_FOLDER = "/storage/emulated/0/BMS/VIDEO/"
+os.makedirs(VIDEO_FOLDER, exist_ok=True)
 
 
 # ======================================================
-#   🔐 Proteksi akses video
+#   🔐 Proteksi login
 # ======================================================
 def BMS_video_required():
-    """Hanya user login yang boleh akses Video Player."""
     if not BMS_auth_is_login():
-        return "❌ Anda belum login!"
+        BMS_write_log("Akses video ditolak (belum login)", "UNKNOWN")
+        return jsonify({"error": "Belum login!"}), 403
     return None
 
 
 # ======================================================
-#   🎬 Halaman Video Player
-# ======================================================
-@media_video.route("/player")
-def BMS_video_player_page():
-    check = BMS_video_required()
-    if check:
-        return check
-
-    # memuat file HTML: BMS_video.html
-    return render_template("BMS_video.html")
-
-
-# ======================================================
-#   🎬 API: Ambil daftar video
+#   🎬 List file video
 # ======================================================
 @media_video.route("/list")
 def BMS_video_list():
@@ -42,24 +31,40 @@ def BMS_video_list():
     if check:
         return check
 
-    if not os.path.exists(VIDEO_FOLDER):
-        return jsonify({"error": "Folder VIDEO tidak ditemukan!"})
+    username = session.get("username")
+    BMS_write_log("Meminta daftar video", username)
 
-    files = [
-        f for f in os.listdir(VIDEO_FOLDER)
-        if f.lower().endswith((".mp4", ".mkv", ".webm", ".avi"))
-    ]
+    video_ext = (".mp4", ".mkv", ".webm", ".avi", ".mov")
 
-    return jsonify(files)
+    files = []
+    for fname in os.listdir(VIDEO_FOLDER):
+        if fname.lower().endswith(video_ext):
+            files.append(fname)
+
+    return jsonify({"files": files})
 
 
 # ======================================================
-#   🎬 API: Streaming file Video
+#   ▶ Putar video
 # ======================================================
-@media_video.route("/stream/<filename>")
-def BMS_video_stream(filename):
+@media_video.route("/play")
+def BMS_video_play():
     check = BMS_video_required()
     if check:
         return check
 
-    return send_from_directory(VIDEO_FOLDER, filename)
+    file = request.args.get("file")
+    username = session.get("username")
+
+    if not file:
+        return "❌ Parameter file kosong!"
+
+    filepath = os.path.join(VIDEO_FOLDER, file)
+
+    if not os.path.exists(filepath):
+        BMS_write_log(f"File video tidak ditemukan: {file}", username)
+        return "❌ File tidak ditemukan!"
+
+    BMS_write_log(f"Memutar video: {file}", username)
+
+    return send_from_directory(VIDEO_FOLDER, file)
