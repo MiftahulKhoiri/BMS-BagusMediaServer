@@ -6,7 +6,7 @@ from app.routes.BMS_auth import (
     BMS_auth_is_admin,
     BMS_auth_is_root
 )
-from app.routes.BMS_logger import BMS_write_log
+from app.routes.BMS_logger import BMS_write_log, LOG_FILE
 
 update = Blueprint("update", __name__, url_prefix="/tools")
 
@@ -19,10 +19,13 @@ def BMS_update_required():
         BMS_write_log("Akses update ditolak (belum login)", "UNKNOWN")
         return jsonify({"error": "Belum login!"}), 403
 
+    # Jika hanya ROOT boleh update:
+    # if not BMS_auth_is_root():
+
     if not (BMS_auth_is_admin() or BMS_auth_is_root()):
         BMS_write_log("Akses update ditolak (tanpa izin)", session.get("username"))
         return jsonify({"error": "Akses ditolak!"}), 403
-    
+
     return None
 
 
@@ -39,7 +42,6 @@ def BMS_tool_update():
     BMS_write_log("Menjalankan UPDATE (git pull)", username)
 
     try:
-        # Jalankan git pull
         result = subprocess.getoutput("git pull")
         BMS_write_log(f"Hasil update: {result}", username)
         return jsonify({"status": "ok", "output": result})
@@ -57,16 +59,24 @@ def BMS_tool_install():
     if check:
         return check
 
-    pkg = request.form.get("package")
+    pkg = request.form.get("package", "").strip()
     username = session.get("username")
 
     if not pkg:
         return jsonify({"error": "Nama package kosong!"})
 
+    # Sanitasi package (anti command injection)
+    bad_chars = [";", "&", "|", ">", "<", "$", "`", "&&", "||"]
+    for bad in bad_chars:
+        if bad in pkg:
+            BMS_write_log(f"[BLOCKED] Command injection pada pip install: {pkg}", username)
+            return jsonify({"error": "Nama package tidak valid!"})
+
     BMS_write_log(f"Install package dimulai: {pkg}", username)
 
     try:
-        result = subprocess.getoutput(f"pip install {pkg}")
+        cmd = f"pip install {pkg}"
+        result = subprocess.getoutput(cmd)
         BMS_write_log(f"Hasil install {pkg}: {result}", username)
         return jsonify({"status": "ok", "output": result})
     except Exception as e:
@@ -75,7 +85,7 @@ def BMS_tool_install():
 
 
 # ======================================================
-#   🔁 Restart Server (simulasi)
+#   🔁 Restart Server (Simulasi)
 # ======================================================
 @update.route("/restart")
 def BMS_tool_restart():
@@ -86,12 +96,11 @@ def BMS_tool_restart():
     username = session.get("username")
     BMS_write_log("Server RESTART diminta", username)
 
-    # Untuk keamanan, hanya simulasi
     return jsonify({"status": "ok", "message": "Restart (simulasi)"})
 
 
 # ======================================================
-#   ⛔ Shutdown Server
+#   ⛔ Shutdown Server (Simulasi)
 # ======================================================
 @update.route("/shutdown")
 def BMS_tool_shutdown():
@@ -117,12 +126,13 @@ def BMS_tool_read_log():
     username = session.get("username")
     BMS_write_log("Admin load system log", username)
 
-    try:
-        with open("/storage/emulated/0/BMS/logs/system.log", "r") as f:
-            content = f.read()
-        return jsonify({"log": content})
-    except:
+    if not os.path.exists(LOG_FILE):
         return jsonify({"log": ""})
+
+    with open(LOG_FILE, "r") as f:
+        content = f.read()
+
+    return jsonify({"log": content})
 
 
 # ======================================================
@@ -137,5 +147,5 @@ def BMS_tool_clear_log():
     username = session.get("username")
     BMS_write_log("Clear log diminta", username)
 
-    open("/storage/emulated/0/BMS/logs/system.log", "w").close()
+    open(LOG_FILE, "w").close()
     return jsonify({"status": "cleared"})
