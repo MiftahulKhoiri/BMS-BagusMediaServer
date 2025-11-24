@@ -1,14 +1,13 @@
-/* Reset & basic */
+/* RESET */
 body {
     margin: 0;
     padding: 0;
     overflow: hidden;
     font-family: Arial, sans-serif;
-    color: #00ff99;
     background: black;
 }
 
-/* Matrix background */
+/* MATRIX CANVAS */
 #matrixCanvas {
     position: fixed;
     inset: 0;
@@ -17,91 +16,95 @@ body {
     z-index: -1;
 }
 
-/* Welcome container */
+/* ============================
+   FLEX CENTER SYSTEM
+   ============================ */
 .welcome-container {
+    position: relative;
     width: 100%;
-    max-width: 650px;
-    margin: auto;
+    height: 100vh;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
     padding: 20px;
+
     text-align: center;
-    margin-top: 12vh;
+    color: #00ff99;
 }
 
-/* Judul */
+/* JUDUL */
 .welcome-container h1 {
-    font-size: clamp(24px, 6vw, 38px);
+    font-size: clamp(22px, 6vw, 40px);
     font-weight: bold;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
-/* Subjudul */
+/* SUBTITLE */
 .subtitle {
     font-size: clamp(12px, 3.2vw, 18px);
-    color: #88ffcc;
-    margin-bottom: 40px;
+    margin-bottom: 30px;
+    color: #99ffdd;
 }
 
-/* Tombol */
+/* BUTTON GROUP */
 .button-group {
     display: flex;
+    flex-direction: row;
     flex-wrap: wrap;
+    gap: 12px;
     justify-content: center;
-    gap: 14px;
-    margin-bottom: 40px;
+    margin-bottom: 30px;
 }
 
+/* BUTTON */
 .btn {
-    border: 2px solid #00ff99;
     padding: 12px 22px;
-    border-radius: 10px;
-    color: #00ffcc;
-    background: rgba(0, 255, 153, 0.10);
-    text-decoration: none;
-    font-size: clamp(14px, 4vw, 20px);
-    transition: 0.3s;
     min-width: 120px;
-    text-align: center;
+
+    background: rgba(0, 255, 153, 0.15);
+    border: 2px solid #00ff99;
+    border-radius: 10px;
+
+    color: #00ffcc;
+    text-decoration: none;
+
+    font-size: clamp(14px, 4vw, 20px);
+    font-weight: bold;
+
+    transition: 0.25s ease;
 }
 
 .btn:hover {
     background: rgba(0, 255, 153, 0.25);
 }
 
-/* Footer */
+/* FOOTER */
 footer {
-    margin-top: 30px;
     font-size: clamp(10px, 2.5vw, 14px);
-    color: #44ffcc;
+    color: #55ffdd;
+
+    position: absolute;
+    bottom: 18px;
+    left: 0;
+    width: 100%;
+    text-align: center;
 }
 
-/* ================================
-   RESPONSIVE TUNING
-   ================================ */
+/* ============================
+   OPTIMASI TAMBAHAN MOBILE
+   ============================ */
 
-/* Mobile (max 480px) */
-@media (max-width: 480px) {
+@media (max-height: 540px) {
     .welcome-container {
-        margin-top: 18vh;
-        padding: 15px;
+        justify-content: flex-start;
+        padding-top: 40px;
     }
 
-    .btn {
-        min-width: 95px;
-        padding: 10px 16px;
-    }
-}
-
-/* Tablet (481–768px) */
-@media (max-width: 768px) {
-    .welcome-container {
-        margin-top: 14vh;
-    }
-}
-
-/* PC Large Screen */
-@media (min-width: 1200px) {
-    .welcome-container {
-        margin-top: 18vh;
-        max-width: 750px;
+    footer {
+        position: static;
+        margin-top: 20px;
     }
 }
