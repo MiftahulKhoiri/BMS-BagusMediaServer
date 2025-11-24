@@ -1,5 +1,6 @@
 import os
 import sqlite3
+from app.routes.BMS_logger import BMS_write_log
 from flask import Blueprint, render_template, request, redirect, session
 
 auth = Blueprint("auth", __name__, url_prefix="/auth")
@@ -104,6 +105,7 @@ def BMS_auth_login():
     session["user_id"] = user["id"]
     session["username"] = user["username"]
     session["role"] = user["role"]
+    BMS_write_log("Login berhasil",user["username"])
 
     # Arahkan sesuai role
     if user["role"] == "root" or user["role"] == "admin":
@@ -118,4 +120,5 @@ def BMS_auth_login():
 @auth.route("/logout")
 def BMS_auth_logout():
     session.clear()
+BMS_write_log("Logout",session.get("username"))
     return redirect("/auth/login")
