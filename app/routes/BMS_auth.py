@@ -1,7 +1,7 @@
 import os
 import sqlite3
-from app.routes.BMS_logger import BMS_write_log
 from flask import Blueprint, render_template, request, redirect, session
+from app.routes.BMS_logger import BMS_write_log
 
 auth = Blueprint("auth", __name__, url_prefix="/auth")
 
@@ -54,7 +54,7 @@ def BMS_auth_is_root():
 
 
 # ======================================================
-#   🧾 Halaman REGISTER
+#   🧾 REGISTER
 # ======================================================
 @auth.route("/register", methods=["GET", "POST"])
 def BMS_auth_register():
@@ -72,7 +72,9 @@ def BMS_auth_register():
             (username, password, role)
         )
         conn.commit()
-    except:
+        BMS_write_log(f"Registrasi akun baru (role: {role})", username)
+
+    except Exception:
         return "❌ Username sudah digunakan!"
     finally:
         conn.close()
@@ -81,7 +83,7 @@ def BMS_auth_register():
 
 
 # ======================================================
-#   🔑 Halaman LOGIN
+#   🔑 LOGIN
 # ======================================================
 @auth.route("/login", methods=["GET", "POST"])
 def BMS_auth_login():
@@ -105,13 +107,14 @@ def BMS_auth_login():
     session["user_id"] = user["id"]
     session["username"] = user["username"]
     session["role"] = user["role"]
-    BMS_write_log("Login berhasil",user["username"])
+
+    # Catat log
+    BMS_write_log("Login berhasil", user["username"])
 
     # Arahkan sesuai role
-    if user["role"] == "root" or user["role"] == "admin":
+    if user["role"] in ("root", "admin"):
         return redirect("/admin/dashboard")
-    else:
-        return redirect("/user/home")
+    return redirect("/user/home")
 
 
 # ======================================================
@@ -119,6 +122,12 @@ def BMS_auth_login():
 # ======================================================
 @auth.route("/logout")
 def BMS_auth_logout():
+
+    # Catat log sebelum session dihapus
+    user = session.get("username")
+    if user:
+        BMS_write_log("Logout", user)
+
     session.clear()
-BMS_write_log("Logout",session.get("username"))
+
     return redirect("/auth/login")
