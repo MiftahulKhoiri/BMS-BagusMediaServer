@@ -23,6 +23,27 @@ def BMS_video_required():
 
 
 # ======================================================
+#   🛡 Sanitasi nama file (anti path traversal)
+# ======================================================
+def sanitize_filename(filename):
+    if not filename:
+        return None
+
+    # Karakter terlarang
+    bad_chars = ["..", "/", "\\", "|", "&", ";", "$", "`", ">", "<", "$("]
+    for bad in bad_chars:
+        if bad in filename:
+            return None
+
+    # Hanya video tertentu
+    valid_ext = (".mp4", ".mkv", ".webm", ".avi", ".mov")
+    if not filename.lower().endswith(valid_ext):
+        return None
+
+    return filename
+
+
+# ======================================================
 #   🎬 List file video
 # ======================================================
 @media_video.route("/list")
@@ -34,12 +55,12 @@ def BMS_video_list():
     username = session.get("username")
     BMS_write_log("Meminta daftar video", username)
 
-    video_ext = (".mp4", ".mkv", ".webm", ".avi", ".mov")
+    valid_ext = (".mp4", ".mkv", ".webm", ".avi", ".mov")
 
-    files = []
-    for fname in os.listdir(VIDEO_FOLDER):
-        if fname.lower().endswith(video_ext):
-            files.append(fname)
+    files = [
+        f for f in os.listdir(VIDEO_FOLDER)
+        if f.lower().endswith(valid_ext)
+    ]
 
     return jsonify({"files": files})
 
@@ -53,18 +74,20 @@ def BMS_video_play():
     if check:
         return check
 
-    file = request.args.get("file")
+    filename = request.args.get("file")
     username = session.get("username")
 
-    if not file:
-        return "❌ Parameter file kosong!"
+    safe_name = sanitize_filename(filename)
+    if not safe_name:
+        BMS_write_log(f"Nama file video ilegal: {filename}", username)
+        return "❌ File tidak valid!"
 
-    filepath = os.path.join(VIDEO_FOLDER, file)
+    filepath = os.path.join(VIDEO_FOLDER, safe_name)
 
     if not os.path.exists(filepath):
-        BMS_write_log(f"File video tidak ditemukan: {file}", username)
+        BMS_write_log(f"File video tidak ditemukan: {safe_name}", username)
         return "❌ File tidak ditemukan!"
 
-    BMS_write_log(f"Memutar video: {file}", username)
+    BMS_write_log(f"Memutar video: {safe_name}", username)
 
-    return send_from_directory(VIDEO_FOLDER, file)
+    return send_from_directory(VIDEO_FOLDER, safe_name)
