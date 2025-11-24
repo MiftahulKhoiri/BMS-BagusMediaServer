@@ -1,9 +1,8 @@
 import os
 from flask import Blueprint, render_template, request, redirect, session
+from jinja2 import TemplateNotFound
 from app.routes.BMS_auth import (
     BMS_auth_is_login,
-    BMS_auth_is_admin,
-    BMS_auth_is_root
 )
 from app.routes.BMS_logger import BMS_write_log
 
@@ -36,7 +35,7 @@ def BMS_user_home():
 
 
 # ======================================================
-#   📄 AJAX Loader Halaman User (Modern)
+#   📄 AJAX Loader Halaman User (AMAN)
 # ======================================================
 @user.route("/page")
 def BMS_user_page_loader():
@@ -47,14 +46,21 @@ def BMS_user_page_loader():
     page = request.args.get("name")
     username = session.get("username")
 
-    # Catat akses halaman
+    # INVALID: jika tidak ada parameter
+    if not page:
+        BMS_write_log("Halaman user kosong diminta", username)
+        return "<p>❌ Parameter halaman kosong.</p>"
+
+    # BLOKIR path traversal
+    if ".." in page or "/" in page or "\\" in page:
+        BMS_write_log(f"Percobaan akses ilegal user: {page}", username)
+        return "<p>❌ Akses ilegal.</p>"
+
     BMS_write_log(f"Membuka halaman user: {page}", username)
 
-    # Muat file HTML sesuai nama
     html_file = f"{page}.html"
 
-    template_path = os.path.join("app", "templates", html_file)
-    if not os.path.exists(template_path):
-        return "<p>Halaman tidak ditemukan!</p>"
-
-    return render_template(html_file)
+    try:
+        return render_template(html_file)
+    except TemplateNotFound:
+        return "<p>❌ Halaman tidak ditemukan.</p>"
