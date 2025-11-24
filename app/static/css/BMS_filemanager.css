@@ -1,0 +1,23 @@
+.fm-box {
+    background: rgba(0, 20, 0, 0.4);
+    border: 1px solid #00ff88;
+    padding: 15px;
+    border-radius: 12px;
+    box-shadow: 0 0 20px #00ff88;
+}
+
+.fm-item {
+    padding: 8px;
+    border-bottom: 1px solid #00ff88;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+}
+
+.fm-item:hover {
+    background: rgba(0, 255, 120, 0.18);
+}
+
+.actions button {
+    margin-left: 8px;
+}
