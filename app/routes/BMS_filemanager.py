@@ -1,15 +1,16 @@
 import os
 import shutil
-from flask import Blueprint, request, jsonify, send_from_directory
+from flask import Blueprint, request, jsonify, session
 from app.routes.BMS_auth import (
     BMS_auth_is_login,
     BMS_auth_is_admin,
     BMS_auth_is_root
 )
+from app.routes.BMS_logger import BMS_write_log
 
 filemanager = Blueprint("filemanager", __name__, url_prefix="/filemanager")
 
-# Folder dasar untuk file manager
+# Root folder file manager
 ROOT_PATH = "/storage/emulated/0/BMS/"
 
 
@@ -18,16 +19,18 @@ ROOT_PATH = "/storage/emulated/0/BMS/"
 # ======================================================
 def BMS_fm_required():
     if not BMS_auth_is_login():
+        BMS_write_log("Akses FileManager ditolak (belum login)", "UNKNOWN")
         return jsonify({"error": "Anda belum login!"}), 403
 
     if not (BMS_auth_is_root() or BMS_auth_is_admin()):
+        BMS_write_log("Akses FileManager ditolak (tanpa izin)", session.get("username"))
         return jsonify({"error": "Akses ditolak!"}), 403
 
     return None
 
 
 # ======================================================
-#   📁 API: List Folder dan File
+#   📄 List File & Folder
 # ======================================================
 @filemanager.route("/list")
 def BMS_file_list():
@@ -40,24 +43,31 @@ def BMS_file_list():
     if not os.path.exists(path):
         return jsonify({"error": "Path tidak ditemukan!"})
 
-    items = []
+    username = session.get("username")
+    BMS_write_log(f"List folder: {path}", username)
 
-    for name in os.listdir(path):
-        fullpath = os.path.join(path, name)
-        items.append({
-            "name": name,
-            "path": fullpath,
-            "is_dir": os.path.isdir(fullpath)
+    try:
+        items = []
+        for name in os.listdir(path):
+            fullpath = os.path.join(path, name)
+            items.append({
+                "name": name,
+                "path": fullpath,
+                "is_dir": os.path.isdir(fullpath)
+            })
+
+        return jsonify({
+            "current": path,
+            "items": items
         })
 
-    return jsonify({
-        "current": path,
-        "items": items
-    })
+    except Exception as e:
+        BMS_write_log(f"Error list folder: {path} -> {e}", username)
+        return jsonify({"error": str(e)})
 
 
 # ======================================================
-#   📤 Download File
+#   📥 Download File
 # ======================================================
 @filemanager.route("/download")
 def BMS_file_download():
@@ -66,17 +76,22 @@ def BMS_file_download():
         return check
 
     path = request.args.get("path")
-    if not path:
-        return "❌ Path kosong!"
+    username = session.get("username")
+
+    if not path or not os.path.exists(path):
+        return "❌ File tidak ditemukan!"
+
+    BMS_write_log(f"Download file: {path}", username)
 
     folder = os.path.dirname(path)
     filename = os.path.basename(path)
 
+    from flask import send_from_directory
     return send_from_directory(folder, filename, as_attachment=True)
 
 
 # ======================================================
-#   🗑 Hapus File / Folder
+#   🗑 Delete File / Folder
 # ======================================================
 @filemanager.route("/delete", methods=["POST"])
 def BMS_file_delete():
@@ -85,13 +100,24 @@ def BMS_file_delete():
         return check
 
     path = request.form.get("path")
+    username = session.get("username")
 
-    if os.path.isdir(path):
-        shutil.rmtree(path)
-        return "✔ Folder dihapus!"
-    else:
-        os.remove(path)
-        return "✔ File dihapus!"
+    if not path or not os.path.exists(path):
+        return "❌ Path tidak ditemukan!"
+
+    try:
+        if os.path.isdir(path):
+            shutil.rmtree(path)
+            BMS_write_log(f"Hapus folder: {path}", username)
+            return "✔ Folder berhasil dihapus!"
+        else:
+            os.remove(path)
+            BMS_write_log(f"Hapus file: {path}", username)
+            return "✔ File berhasil dihapus!"
+
+    except Exception as e:
+        BMS_write_log(f"Error delete {path}: {e}", username)
+        return f"❌ Error: {e}"
 
 
 # ======================================================
@@ -105,14 +131,22 @@ def BMS_file_rename():
 
     old = request.form.get("old")
     new = request.form.get("new")
+    username = session.get("username")
 
-    os.rename(old, new)
+    if not old or not new:
+        return "❌ Nama kosong!"
 
-    return "✔ Berhasil rename!"
+    try:
+        os.rename(old, new)
+        BMS_write_log(f"Rename: {old} → {new}", username)
+        return "✔ Berhasil rename!"
+    except Exception as e:
+        BMS_write_log(f"Error rename {old}: {e}", username)
+        return f"❌ Error: {e}"
 
 
 # ======================================================
-#   📂 Buat Folder Baru
+#   📂 Create Folder
 # ======================================================
 @filemanager.route("/mkdir", methods=["POST"])
 def BMS_file_mkdir():
@@ -120,7 +154,16 @@ def BMS_file_mkdir():
     if check:
         return check
 
-    newpath = request.form.get("path")
-    os.makedirs(newpath, exist_ok=True)
+    path = request.form.get("path")
+    username = session.get("username")
 
-    return "✔ Folder berhasil dibuat!"
+    if not path:
+        return "❌ Nama folder kosong!"
+
+    try:
+        os.makedirs(path, exist_ok=True)
+        BMS_write_log(f"Buat folder: {path}", username)
+        return "✔ Folder berhasil dibuat!"
+    except Exception as e:
+        BMS_write_log(f"Error mkdir {path}: {e}", username)
+        return f"❌ Error: {e}"
