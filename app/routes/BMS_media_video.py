@@ -1,123 +1,65 @@
-from flask import Blueprint, request, jsonify, Response, render_template
 import os
-from datetime import datetime
-import mimetypes
+from flask import Blueprint, render_template, send_from_directory, jsonify
+from app.routes.BMS_auth import (
+    BMS_auth_is_login,
+)
 
-video = Blueprint("video", __name__, url_prefix="/video")
+media_video = Blueprint("media_video", __name__, url_prefix="/video")
 
-BASE_PATH = os.path.abspath("storage")
-
-if not os.path.exists(BASE_PATH):
-    os.makedirs(BASE_PATH)
-
-
-# ================================
-# HELPER: Amankan path
-# ================================
-def _resolve_path(rel):
-    if rel is None:
-        rel = ""
-    rel = rel.strip().lstrip("/")
-    target = os.path.abspath(os.path.join(BASE_PATH, rel))
-    if not target.startswith(BASE_PATH):
-        return None
-    return target
+# Lokasi folder video server (ubah sesuai lokasi kamu)
+VIDEO_FOLDER = "/storage/emulated/0/BMS/VIDEO"
 
 
-# ================================
-# HELPER: Metadata file
-# ================================
-def _file_info(abs_path):
-    stat = os.stat(abs_path)
-    return {
-        "name": os.path.basename(abs_path),
-        "path": os.path.relpath(abs_path, BASE_PATH).replace("\\", "/"),
-        "size": stat.st_size,
-        "modified": datetime.fromtimestamp(stat.st_mtime).isoformat(),
-    }
+# ======================================================
+#   🔐 Proteksi akses video
+# ======================================================
+def BMS_video_required():
+    """Hanya user login yang boleh akses Video Player."""
+    if not BMS_auth_is_login():
+        return "❌ Anda belum login!"
+    return None
 
 
-# ================================
-# LIST VIDEO
-# ================================
-@video.route("/list")
+# ======================================================
+#   🎬 Halaman Video Player
+# ======================================================
+@media_video.route("/player")
+def BMS_video_player_page():
+    check = BMS_video_required()
+    if check:
+        return check
+
+    # memuat file HTML: BMS_video.html
+    return render_template("BMS_video.html")
+
+
+# ======================================================
+#   🎬 API: Ambil daftar video
+# ======================================================
+@media_video.route("/list")
 def BMS_video_list():
-    rel = request.args.get("path", "")
-    target = _resolve_path(rel)
+    check = BMS_video_required()
+    if check:
+        return check
 
-    if target is None or not os.path.exists(target):
-        return jsonify({"error": "Path tidak ditemukan"}), 400
+    if not os.path.exists(VIDEO_FOLDER):
+        return jsonify({"error": "Folder VIDEO tidak ditemukan!"})
 
-    items = os.listdir(target)
-
-    extensions = (".mp4", ".mkv", ".webm", ".avi", ".mov")
-
-    videos = [
-        x for x in items if os.path.isfile(os.path.join(target, x)) and x.lower().endswith(extensions)
+    files = [
+        f for f in os.listdir(VIDEO_FOLDER)
+        if f.lower().endswith((".mp4", ".mkv", ".webm", ".avi"))
     ]
 
-    videos_meta = []
-    for v in videos:
-        try:
-            videos_meta.append(_file_info(os.path.join(target, v)))
-        except:
-            pass
-
-    return jsonify({
-        "path": rel,
-        "videos": videos_meta
-    })
+    return jsonify(files)
 
 
-# ================================
-# STREAM VIDEO (WITH RANGE)
-# ================================
-def _video_partial_response(path, headers):
-    file_size = os.path.getsize(path)
-    range_header = headers.get("Range", None)
+# ======================================================
+#   🎬 API: Streaming file Video
+# ======================================================
+@media_video.route("/stream/<filename>")
+def BMS_video_stream(filename):
+    check = BMS_video_required()
+    if check:
+        return check
 
-    if not range_header:
-        # Tidak ada range → kirim full file
-        return Response(open(path, "rb"), mimetype=mimetypes.guess_type(path)[0])
-
-    try:
-        range_val = range_header.split("=")[1]
-        start_str, end_str = range_val.split("-")
-        start = int(start_str) if start_str else 0
-        end = int(end_str) if end_str else file_size - 1
-    except:
-        return Response(status=416)
-
-    if start > end or end >= file_size:
-        return Response(status=416)
-
-    length = end - start + 1
-
-    with open(path, "rb") as f:
-        f.seek(start)
-        data = f.read(length)
-
-    resp = Response(data, 206, mimetype=mimetypes.guess_type(path)[0])
-    resp.headers.add("Content-Range", f"bytes {start}-{end}/{file_size}")
-    resp.headers.add("Accept-Ranges", "bytes")
-    resp.headers.add("Content-Length", str(length))
-    return resp
-
-
-@video.route("/stream")
-def BMS_video_stream():
-    rel = request.args.get("path")
-    target = _resolve_path(rel)
-
-    if target is None or not os.path.isfile(target):
-        return "File tidak ditemukan", 404
-
-    return _video_partial_response(target, request.headers)
-
-
-# ================================
-# HALAMAN PLAYER
-# ================================
-@video.route("/player")
-def BMS_video_player_page():
-    return render_template("BMSvideo_player.html")
+    return send_from_directory(VIDEO_FOLDER, filename)
