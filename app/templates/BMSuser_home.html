@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMS User Panel</title>
+
+    <!-- CSS User Panel -->
+    <link rel="stylesheet" href="/static/css/BMSadmin.css">
+
+    <!-- Matrix Background -->
+    <link rel="stylesheet" href="/static/css/begron/BMSmatrik_begron.css">
+</head>
+<body>
+
+<!-- BACKGROUND -->
+<canvas id="matrixCanvas"></canvas>
+
+<div class="admin-container">
+
+    <!-- ============================= -->
+    <!--           HEADER              -->
+    <!-- ============================= -->
+    <div class="section-box">
+        <h1>[ BAGUS MEDIA SERVER – USER PANEL ]</h1>
+        <p>Akses pengguna</p>
+    </div>
+
+    <!-- ============================= -->
+    <!--           MENU USER           -->
+    <!-- ============================= -->
+    <div class="section-box">
+        <h2>[ MENU USER ]</h2>
+
+        <div class="tool-grid">
+
+            <!-- MP3 -->
+            <button onclick="loadPage('mp3')">
+                🎵 MP3 PLAYER
+            </button>
+
+            <!-- VIDEO -->
+            <button onclick="loadPage('video')">
+                🎬 VIDEO PLAYER
+            </button>
+
+            <!-- UPLOAD -->
+            <button onclick="loadPage('upload')">
+                📤 UNGGAH FILE
+            </button>
+
+            <!-- PROFILE -->
+            <button onclick="loadPage('profile')">
+                👤 PROFIL SAYA
+            </button>
+
+        </div>
+    </div>
+
+    <!-- ============================= -->
+    <!--         KONTEN AJAX          -->
+    <!-- ============================= -->
+    <div id="content" class="section-box">
+        <h2>🏠 HOME USER</h2>
+        <p>Selamat datang di Bagus Media Server.</p>
+        <p>Silahkan pilih menu di atas.</p>
+    </div>
+
+</div>
+
+<!-- MATRIX JS -->
+<script src="/static/js/begron/BMSmatrik_begron.js"></script>
+
+<!-- AJAX USER PANEL -->
+<script>
+function loadPage(page){
+    fetch(`/user/page?name=${page}`)
+    .then(res=>res.text())
+    .then(html=>{
+        document.getElementById("content").innerHTML = html;
+    });
+}
+</script>
+
+</body>
+</html>
