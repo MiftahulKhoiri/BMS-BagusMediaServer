@@ -1,0 +1,104 @@
+/* ====== GLOBAL ====== */
+body {
+    margin: 0;
+    padding: 0;
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: #0f0f0f;
+    color: #eee;
+}
+
+.admin-container {
+    width: 95%;
+    max-width: 800px;
+    margin: 30px auto;
+    padding: 20px;
+    background: #1a1a1a;
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(0, 255, 200, 0.2);
+}
+
+/* ===== HEADER ===== */
+.admin-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.admin-header h2 {
+    margin: 0;
+    font-size: 26px;
+    color: #00ffc6;
+    text-shadow: 0 0 10px #00ffc6;
+}
+
+.admin-header p {
+    margin-top: 5px;
+    font-size: 14px;
+    color: #bbb;
+}
+
+/* ===== BUTTON CONTAINER ===== */
+.admin-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin: 20px 0;
+}
+
+.admin-buttons button {
+    flex: 1;
+    margin: 0 5px;
+    padding: 12px 10px;
+    background: #222;
+    color: #eee;
+    border: 1px solid #00ffc6;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 15px;
+    transition: 0.2s;
+}
+
+.admin-buttons button:hover {
+    background: #00ffc6;
+    color: #000;
+    box-shadow: 0 0 10px #00ffc6;
+}
+
+/* ===== LOG BOX ===== */
+.admin-log-box {
+    margin-top: 15px;
+}
+
+.admin-log-box textarea {
+    width: 100%;
+    height: 250px;
+    background: #000;
+    color: #0f0;
+    border: 1px solid #00ffc6;
+    border-radius: 8px;
+    padding: 10px;
+    font-family: monospace;
+    resize: none;
+    font-size: 14px;
+    box-shadow: inset 0 0 10px rgba(0, 255, 200, 0.2);
+}
+
+/* ===== CLEAR BUTTON ===== */
+.admin-clear-box {
+    text-align: right;
+    margin-top: 10px;
+}
+
+.btn-clear {
+    padding: 10px 18px;
+    background: #330000;
+    border: 1px solid #ff3b3b;
+    border-radius: 8px;
+    color: #ff3b3b;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-clear:hover {
+    background: #ff3b3b;
+    color: #fff;
+    box-shadow: 0 0 10px #ff3b3b;
+}
