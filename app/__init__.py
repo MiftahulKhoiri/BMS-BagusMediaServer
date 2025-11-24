@@ -1,5 +1,5 @@
 import os
-from flask import Flask
+from flask import Flask, redirect, render_template, session
 from flask_cors import CORS
 
 # Register blueprint dari app/routes
@@ -17,7 +17,7 @@ def create_app():
         static_folder="static"
     )
 
-    # --- Secret Key (aman & flexibel) ---
+    # --- Secret Key (aman & fleksibel) ---
     app.config["SECRET_KEY"] = os.environ.get(
         "BMS_SECRET",
         "BAGUS-MEDIA-SERVER-KEY-99999"
@@ -34,12 +34,34 @@ def create_app():
     # Siapkan folder penting
     prepare_bms_folders()
 
-    # Daftarkan semua blueprint
+    # Daftarkan semuanya (auth, user, admin, explorer, media, logger, dll)
     register_blueprints(app)
 
     print(">> BMS Flask App berhasil dibuat!")
 
+    # ======================================================
+    #   ✓ ROUTE HOME (WELCOME PAGE)
+    # ======================================================
+    @app.route("/")
+    def BMS_home():
+        """
+        Halaman utama BMS.
+        Jika user belum login → tampilkan Welcome Page.
+        Jika sudah login → arahkan sesuai role.
+        """
+        if "user_id" not in session:
+            return render_template("BMS_welcome.html")
+
+        # user sudah login → arahkan ke panel berdasarkan role
+        role = session.get("role")
+
+        if role in ("root", "admin"):
+            return redirect("/admin/dashboard")
+
+        return redirect("/user/home")
+
     return app
+
 
 
 # ======================================================
@@ -74,7 +96,7 @@ def prepare_bms_folders():
 
 
 # ======================================================
-#   MAIN MODE (langsung run)
+#   JALANKAN SERVER (standalone mode)
 # ======================================================
 if __name__ == "__main__":
     app = create_app()
