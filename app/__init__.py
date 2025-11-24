@@ -2,7 +2,7 @@ import os
 from flask import Flask
 from flask_cors import CORS
 
-# Import Blueprint Register
+# Register blueprint dari app/routes
 from app.routes import register_blueprints
 
 
@@ -11,23 +11,30 @@ from app.routes import register_blueprints
 # ======================================================
 def create_app():
 
-    # Inisialisasi Flask
     app = Flask(
         __name__,
         template_folder="templates",
         static_folder="static"
     )
 
-    # Secret Key session
-    app.config["SECRET_KEY"] = "BAGUS-MEDIA-SERVER-KEY-99999"
+    # --- Secret Key (aman & flexibel) ---
+    app.config["SECRET_KEY"] = os.environ.get(
+        "BMS_SECRET",
+        "BAGUS-MEDIA-SERVER-KEY-99999"
+    )
 
-    # Izinkan CORS (jika perlu akses dari aplikasi lain)
-    CORS(app)
+    # --- CORS aman: hanya izinkan internal access ---
+    CORS(app, resources={r"/*": {"origins": [
+        "http://localhost",
+        "http://127.0.0.1",
+        "http://0.0.0.0",
+        "http://localhost:5000"
+    ]}})
 
-    # Pastikan folder data penting ada
+    # Siapkan folder penting
     prepare_bms_folders()
 
-    # Register semua blueprint (dari app/routes/__init__.py)
+    # Daftarkan semua blueprint
     register_blueprints(app)
 
     print(">> BMS Flask App berhasil dibuat!")
@@ -41,15 +48,22 @@ def create_app():
 def prepare_bms_folders():
     """
     Membuat folder penting agar BMS berjalan stabil
-    di Android (Termux), Linux, atau Windows.
+    di Android (Termux), Linux, dan Windows.
     """
 
+    # Deteksi OS (Android / PC)
+    if os.path.exists("/storage/emulated/0/"):
+        BASE = "/storage/emulated/0/BMS"
+    else:
+        BASE = os.path.expanduser("~/BMS")
+
     base_paths = [
-        "/storage/emulated/0/BMS",
-        "/storage/emulated/0/BMS/MP3",
-        "/storage/emulated/0/BMS/VIDEO",
-        "/storage/emulated/0/BMS/UPLOAD",
-        "/storage/emulated/0/BMS/database",
+        BASE,
+        f"{BASE}/MP3",
+        f"{BASE}/VIDEO",
+        f"{BASE}/UPLOAD",
+        f"{BASE}/database",
+        f"{BASE}/logs"
     ]
 
     for path in base_paths:
@@ -60,12 +74,11 @@ def prepare_bms_folders():
 
 
 # ======================================================
-#   JALANKAN FLASK (KHUSUS RUN STANDALONE)
+#   MAIN MODE (langsung run)
 # ======================================================
 if __name__ == "__main__":
     app = create_app()
 
-    # Jalankan server Flask
     app.run(
         host="0.0.0.0",
         port=5000,
