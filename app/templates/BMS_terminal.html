@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>BMS Terminal</title>
+
+    <!-- Neon Theme -->
+    <link rel="stylesheet" href="/static/css/BMSadmin.css">
+
+    <style>
+        #terminal-box {
+            background: rgba(0, 20, 0, 0.6);
+            border: 1px solid #00ff88;
+            height: 400px;
+            padding: 10px;
+            overflow-y: auto;
+            color: #00ff88;
+            font-family: monospace;
+            border-radius: 10px;
+            box-shadow: 0 0 20px #00ff88;
+        }
+
+        #cmdInput {
+            width: 100%;
+            padding: 10px;
+            background: black;
+            color: #00ff88;
+            border-radius: 8px;
+            border: 1px solid #00ff88;
+            outline: none;
+            font-family: monospace;
+        }
+
+        button {
+            margin-top: 10px;
+        }
+
+        .line {
+            white-space: pre-line;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="section-box">
+    <h2>[ 💻 BMS TERMINAL ]</h2>
+
+    <!-- Terminal Output -->
+    <div id="terminal-box"></div>
+
+    <!-- Input Command -->
+    <input type="text" id="cmdInput" placeholder="Masukkan perintah... (contoh: ls)">
+    <button onclick="runCmd()">RUN</button>
+</div>
+
+<script>
+function addLine(text) {
+    const box = document.getElementById("terminal-box");
+    let div = document.createElement("div");
+    div.className = "line";
+    div.textContent = text;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+}
+
+function runCmd() {
+    let cmd = document.getElementById("cmdInput").value;
+    if (cmd.trim() === "") return;
+
+    addLine("> " + cmd);
+
+    let fd = new FormData();
+    fd.append("cmd", cmd);
+
+    fetch("/terminal/run", { method: "POST", body: fd })
+        .then(r => r.json())
+        .then(res => {
+            if (res.error) {
+                addLine("❌ ERROR: " + res.error);
+            } else {
+                addLine(res.output);
+            }
+        });
+
+    document.getElementById("cmdInput").value = "";
+}
+
+// Enter otomatis run command
+document.getElementById("cmdInput").addEventListener("keydown", function(e){
+    if (e.key === "Enter") runCmd();
+});
+</script>
+
+</body>
+</html>
