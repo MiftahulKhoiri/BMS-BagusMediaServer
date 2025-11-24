@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Register - BMS</title>
+    <link rel="stylesheet" href="/static/css/BMSadmin.css">
+</head>
+<body>
+
+<div class="section-box">
+    <h2>[ 🧾 REGISTER USER ]</h2>
+
+    <form action="/auth/register" method="POST">
+
+        <label>Username:</label>
+        <input type="text" name="username" class="input-text" required>
+
+        <label>Password:</label>
+        <input type="password" name="password" class="input-text" required>
+
+        <label>Pilih Role:</label>
+        <select name="role" class="input-text">
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+        </select>
+
+        <br><br>
+        <button type="submit">Daftar</button>
+    </form>
+</div>
+
+</body>
+</html>
