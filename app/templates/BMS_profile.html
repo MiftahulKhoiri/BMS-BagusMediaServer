@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>BMS - Profil User</title>
+
+    <!-- Neon Theme -->
+    <link rel="stylesheet" href="/static/css/BMSadmin.css">
+</head>
+<body>
+
+<div class="section-box">
+
+    <h2>[ 👤 PROFIL USER ]</h2>
+
+    <p>
+        <strong>Username:</strong> {{ session.username }} <br>
+        <strong>Role:</strong> {{ session.role }}
+    </p>
+
+    <hr style="border-color:#00ff88;">
+
+    <!-- =============================== -->
+    <!--       UPDATE USERNAME           -->
+    <!-- =============================== -->
+    <h3>✏ Update Username</h3>
+
+    <form action="/profile/update_username" method="POST" style="margin-bottom:20px;">
+        <input type="text" name="username" class="input-text" placeholder="Username baru" required>
+        <br><br>
+        <button type="submit">Simpan Username</button>
+    </form>
+
+    <hr style="border-color:#00ff88;">
+
+    <!-- =============================== -->
+    <!--        UPDATE PASSWORD          -->
+    <!-- =============================== -->
+    <h3>🔐 Update Password</h3>
+
+    <form action="/profile/update_password" method="POST">
+        <input type="password" name="old" class="input-text" placeholder="Password lama" required>
+
+        <input type="password" name="new" class="input-text" placeholder="Password baru" required>
+
+        <br><br>
+        <button type="submit">Simpan Password</button>
+    </form>
+
+</div>
+
+</body>
+</html>
