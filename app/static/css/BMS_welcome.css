@@ -7,7 +7,7 @@ body {
     background: black;
 }
 
-/* MATRIX CANVAS */
+/* MATRIX */
 #matrixCanvas {
     position: fixed;
     inset: 0;
@@ -17,94 +17,109 @@ body {
 }
 
 /* ============================
-   FLEX CENTER SYSTEM
+   AUTO CENTER + BIG MOBILE FIX
    ============================ */
 .welcome-container {
     position: relative;
     width: 100%;
-    height: 100vh;
-
+    min-height: 100dvh;     /* Mobile friendly */
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
 
-    padding: 20px;
-
     text-align: center;
-    color: #00ff99;
+    padding: 10px;
 }
 
-/* JUDUL */
+/* H1 BESAR */
 .welcome-container h1 {
-    font-size: clamp(22px, 6vw, 40px);
+    font-size: clamp(28px, 8vw, 55px);
     font-weight: bold;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
+    color: #00ff9d;
 }
 
 /* SUBTITLE */
 .subtitle {
-    font-size: clamp(12px, 3.2vw, 18px);
+    font-size: clamp(14px, 4vw, 22px);
+    color: #9effdd;
     margin-bottom: 30px;
-    color: #99ffdd;
 }
 
 /* BUTTON GROUP */
 .button-group {
     display: flex;
-    flex-direction: row;
+    gap: 15px;
     flex-wrap: wrap;
-    gap: 12px;
     justify-content: center;
-    margin-bottom: 30px;
 }
 
 /* BUTTON */
 .btn {
-    padding: 12px 22px;
-    min-width: 120px;
+    padding: 14px 26px;
+    min-width: 130px;
 
-    background: rgba(0, 255, 153, 0.15);
+    border-radius: 12px;
     border: 2px solid #00ff99;
-    border-radius: 10px;
+    background: rgba(0, 255, 153, 0.2);
 
     color: #00ffcc;
     text-decoration: none;
 
-    font-size: clamp(14px, 4vw, 20px);
+    font-size: clamp(16px, 5vw, 24px);
     font-weight: bold;
 
     transition: 0.25s ease;
 }
 
 .btn:hover {
-    background: rgba(0, 255, 153, 0.25);
+    background: rgba(0, 255, 153, 0.30);
 }
 
 /* FOOTER */
 footer {
-    font-size: clamp(10px, 2.5vw, 14px);
-    color: #55ffdd;
-
     position: absolute;
-    bottom: 18px;
-    left: 0;
+    bottom: 10px;
     width: 100%;
     text-align: center;
+    color: #66ffcc;
+    font-size: clamp(10px, 3vw, 14px);
 }
 
-/* ============================
-   OPTIMASI TAMBAHAN MOBILE
-   ============================ */
+/* ===============================
+   --- HP MODE: SCREEN < 420PX ---
+   =============================== */
 
-@media (max-height: 540px) {
+@media (max-height: 420px) {
     .welcome-container {
-        justify-content: flex-start;
-        padding-top: 40px;
+        transform: scale(1.25);  /* PERBESAR HP KECIL */
+        margin-top: -40px;
     }
+}
 
+/* ===============================
+   --- TABLET MODE ---
+   =============================== */
+@media (min-width: 768px) and (max-width: 1024px) {
+    .welcome-container h1 {
+        font-size: 48px;
+    }
+    .btn {
+        font-size: 22px;
+        padding: 16px 32px;
+        min-width: 150px;
+    }
+}
+
+/* ===============================
+   --- PC LARGE MONITOR ---
+   =============================== */
+@media (min-width: 1200px) {
+    .welcome-container {
+        transform: scale(1.1);
+    }
     footer {
-        position: static;
-        margin-top: 20px;
+        bottom: 30px;
     }
 }
