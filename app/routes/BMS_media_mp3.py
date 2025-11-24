@@ -1,42 +1,29 @@
 import os
-from flask import Blueprint, render_template, send_from_directory, jsonify
+from flask import Blueprint, jsonify, request, send_from_directory, session
 from app.routes.BMS_auth import (
     BMS_auth_is_login,
-    BMS_auth_is_admin,
-    BMS_auth_is_root
 )
+from app.routes.BMS_logger import BMS_write_log
 
 media_mp3 = Blueprint("media_mp3", __name__, url_prefix="/mp3")
 
-# Folder MP3 (silakan sesuaikan dengan lokasi kamu)
-MP3_FOLDER = "/storage/emulated/0/BMS/MP3"
+# Folder MP3
+MP3_FOLDER = "/storage/emulated/0/BMS/MP3/"
+os.makedirs(MP3_FOLDER, exist_ok=True)
 
 
 # ======================================================
-#   🔐 Proteksi akses MP3 Player
+#   🔐 Proteksi login
 # ======================================================
 def BMS_mp3_required():
-    """Hanya user login yang boleh akses MP3 Player."""
     if not BMS_auth_is_login():
-        return "❌ Anda belum login!"
+        BMS_write_log("Akses MP3 ditolak (belum login)", "UNKNOWN")
+        return jsonify({"error": "Belum login!"}), 403
     return None
 
 
 # ======================================================
-#   🎵 Halaman MP3 Player
-# ======================================================
-@media_mp3.route("/player")
-def BMS_mp3_player_page():
-    check = BMS_mp3_required()
-    if check:
-        return check
-
-    # load file HTML: BMS_mp3.html
-    return render_template("BMS_mp3.html")
-
-
-# ======================================================
-#   🎵 API: Ambil daftar file MP3
+#   🎵 List file MP3
 # ======================================================
 @media_mp3.route("/list")
 def BMS_mp3_list():
@@ -44,24 +31,38 @@ def BMS_mp3_list():
     if check:
         return check
 
-    if not os.path.exists(MP3_FOLDER):
-        return jsonify({"error": "Folder MP3 tidak ditemukan!"})
+    username = session.get("username")
+    BMS_write_log("Meminta daftar MP3", username)
 
-    files = [
-        f for f in os.listdir(MP3_FOLDER)
-        if f.lower().endswith(".mp3")
-    ]
+    files = []
+    for fname in os.listdir(MP3_FOLDER):
+        if fname.lower().endswith(".mp3"):
+            files.append(fname)
 
-    return jsonify(files)
+    return jsonify({"files": files})
 
 
 # ======================================================
-#   🎵 API: Streaming file MP3
+#   ▶ Memutar MP3 (stream file)
 # ======================================================
-@media_mp3.route("/stream/<filename>")
-def BMS_mp3_stream(filename):
+@media_mp3.route("/play")
+def BMS_mp3_play():
     check = BMS_mp3_required()
     if check:
         return check
 
-    return send_from_directory(MP3_FOLDER, filename)
+    file = request.args.get("file")
+    username = session.get("username")
+
+    if not file:
+        return "❌ Parameter file kosong!"
+
+    filepath = os.path.join(MP3_FOLDER, file)
+
+    if not os.path.exists(filepath):
+        BMS_write_log(f"File MP3 tidak ditemukan: {file}", username)
+        return "❌ File tidak ditemukan!"
+
+    BMS_write_log(f"Memutar MP3: {file}", username)
+
+    return send_from_directory(MP3_FOLDER, file)
