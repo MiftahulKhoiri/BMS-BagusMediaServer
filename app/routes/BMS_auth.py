@@ -61,9 +61,12 @@ def BMS_auth_register():
     if request.method == "GET":
         return render_template("BMS_register.html")
 
-    username = request.form.get("username")
-    password = request.form.get("password")
+    username = request.form.get("username", "").strip()
+    password = request.form.get("password", "").strip()
     role = request.form.get("role", "user")
+
+    if not username or not password:
+        return "❌ Username & password tidak boleh kosong!"
 
     conn = get_db()
     try:
@@ -72,14 +75,16 @@ def BMS_auth_register():
             (username, password, role)
         )
         conn.commit()
+
         BMS_write_log(f"Registrasi akun baru (role: {role})", username)
 
-    except Exception:
+    except sqlite3.IntegrityError:
         return "❌ Username sudah digunakan!"
+
     finally:
         conn.close()
 
-    return "✔ Registrasi berhasil! <a href='/auth/login'>Login</a>"
+    return redirect("/auth/login")
 
 
 # ======================================================
@@ -90,8 +95,11 @@ def BMS_auth_login():
     if request.method == "GET":
         return render_template("BMS_login.html")
 
-    username = request.form.get("username")
-    password = request.form.get("password")
+    username = request.form.get("username", "").strip()
+    password = request.form.get("password", "").strip()
+
+    if not username or not password:
+        return "❌ Tidak boleh kosong!"
 
     conn = get_db()
     user = conn.execute(
@@ -108,12 +116,11 @@ def BMS_auth_login():
     session["username"] = user["username"]
     session["role"] = user["role"]
 
-    # Catat log
     BMS_write_log("Login berhasil", user["username"])
 
-    # Arahkan sesuai role
     if user["role"] in ("root", "admin"):
         return redirect("/admin/dashboard")
+
     return redirect("/user/home")
 
 
@@ -122,11 +129,9 @@ def BMS_auth_login():
 # ======================================================
 @auth.route("/logout")
 def BMS_auth_logout():
-
-    # Catat log sebelum session dihapus
-    user = session.get("username")
-    if user:
-        BMS_write_log("Logout", user)
+    username = session.get("username")
+    if username:
+        BMS_write_log("Logout", username)
 
     session.clear()
 
