@@ -1,61 +1,107 @@
+/* Reset & basic */
 body {
     margin: 0;
+    padding: 0;
     overflow: hidden;
     font-family: Arial, sans-serif;
+    color: #00ff99;
+    background: black;
 }
 
 /* Matrix background */
 #matrixCanvas {
     position: fixed;
-    top: 0;
-    left: 0;
+    inset: 0;
     width: 100%;
     height: 100%;
-    background: black;
     z-index: -1;
 }
 
+/* Welcome container */
 .welcome-container {
+    width: 100%;
+    max-width: 650px;
+    margin: auto;
+    padding: 20px;
     text-align: center;
-    margin-top: 120px;
-    color: #00ff99;
+    margin-top: 12vh;
 }
 
+/* Judul */
 .welcome-container h1 {
-    font-size: 32px;
+    font-size: clamp(24px, 6vw, 38px);
     font-weight: bold;
-    margin-bottom: 10px;
+    margin-bottom: 12px;
 }
 
+/* Subjudul */
 .subtitle {
-    font-size: 16px;
-    color: #66ffcc;
+    font-size: clamp(12px, 3.2vw, 18px);
+    color: #88ffcc;
     margin-bottom: 40px;
 }
 
+/* Tombol */
 .button-group {
     display: flex;
+    flex-wrap: wrap;
     justify-content: center;
-    gap: 15px;
+    gap: 14px;
+    margin-bottom: 40px;
 }
 
 .btn {
-    background: rgba(0, 255, 153, 0.12);
     border: 2px solid #00ff99;
     padding: 12px 22px;
     border-radius: 10px;
     color: #00ffcc;
+    background: rgba(0, 255, 153, 0.10);
     text-decoration: none;
-    font-size: 16px;
+    font-size: clamp(14px, 4vw, 20px);
     transition: 0.3s;
+    min-width: 120px;
+    text-align: center;
 }
 
 .btn:hover {
     background: rgba(0, 255, 153, 0.25);
 }
 
+/* Footer */
 footer {
-    margin-top: 50px;
-    font-size: 12px;
+    margin-top: 30px;
+    font-size: clamp(10px, 2.5vw, 14px);
     color: #44ffcc;
+}
+
+/* ================================
+   RESPONSIVE TUNING
+   ================================ */
+
+/* Mobile (max 480px) */
+@media (max-width: 480px) {
+    .welcome-container {
+        margin-top: 18vh;
+        padding: 15px;
+    }
+
+    .btn {
+        min-width: 95px;
+        padding: 10px 16px;
+    }
+}
+
+/* Tablet (481–768px) */
+@media (max-width: 768px) {
+    .welcome-container {
+        margin-top: 14vh;
+    }
+}
+
+/* PC Large Screen */
+@media (min-width: 1200px) {
+    .welcome-container {
+        margin-top: 18vh;
+        max-width: 750px;
+    }
 }
