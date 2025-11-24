@@ -13,41 +13,97 @@
 </head>
 <body>
 
-<!-- CANVAS MATRIX -->
+<!-- MATRIX BACKGROUND -->
 <canvas id="matrixCanvas"></canvas>
 
 <div class="admin-container">
 
-    <div class="admin-header">
-        <h2>[ BMS ADMIN PANEL ]</h2>
-        <p>Root access granted</p>
+    <!-- ================================= -->
+    <!--            HEADER TITLE            -->
+    <!-- ================================= -->
+    <div class="section-box">
+        <h1>[ BAGUS MEDIA SERVER ]</h1>
     </div>
 
-    <!-- Tombol control -->
-    <div class="admin-buttons">
-        <button class="btn-update">Update</button>
-        <button class="btn-install">Install</button>
-        <button class="btn-restart">Restart</button>
+    <!-- ================================= -->
+    <!--             USER TABLE             -->
+    <!-- ================================= -->
+    <div class="section-box">
+        <h2>ID USER:</h2>
+
+        <table class="user-table">
+            <tr>
+                <th>ID</th>
+                <th>Username</th>
+                <th>Role</th>
+                <th>Aksi</th>
+            </tr>
+
+            <tr>
+                <td>1</td>
+                <td>root</td>
+                <td>root</td>
+                <td>Locked</td>
+            </tr>
+        </table>
     </div>
 
-    <!-- Kotak log -->
-    <div class="admin-log-box">
+    <!-- ================================= -->
+    <!--               TOOLS                -->
+    <!-- ================================= -->
+    <div class="section-box">
+        <h2>[ TOOLS ]</h2>
+
+        <div class="tool-grid">
+            <button onclick="goTo('/media')">MEDIA</button>
+            <button onclick="goTo('/profile')">Profil</button>
+
+            <button onclick="goTo('/upload')">Unggah File</button>
+            <button onclick="goTo('/admin/filemanager')">File Manager</button>
+
+            <button onclick="goTo('/update')">System Update</button>
+            <button onclick="goTo('/systeminfo')">System Info</button>
+        </div>
+    </div>
+
+    <!-- ================================= -->
+    <!--           POWER CONTROL            -->
+    <!-- ================================= -->
+    <div class="section-box">
+        <h2>[ POWER CONTROL ]</h2>
+
+        <div class="power-grid">
+            <button class="btn-danger" onclick="goTo('/shutdown')">Shutdown Server</button>
+            <button class="btn-warning" onclick="goTo('/restart')">Restart Server</button>
+        </div>
+    </div>
+
+    <!-- ================================= -->
+    <!--             LOG SYSTEM             -->
+    <!-- ================================= -->
+    <div class="section-box">
+        <h2>[ SERVER LOG ]</h2>
+
         <textarea id="logArea" readonly>
 --- LOG BMS SERVER ---
         </textarea>
-    </div>
 
-    <!-- Clear Log -->
-    <div class="admin-clear-box">
-        <button class="btn-clear" onclick="document.getElementById('logArea').value = '';">
-            CLEAR LOG
-        </button>
+        <div class="center">
+            <button class="btn-clear" onclick="document.getElementById('logArea').value = '';">
+                CLEAR LOG
+            </button>
+        </div>
     </div>
 
 </div>
 
-<!-- JS Background Matrix -->
 <script src="/static/js/begron/BMSmatrik_begron.js"></script>
+
+<script>
+    function goTo(path){
+        window.location.href = path;
+    }
+</script>
 
 </body>
 </html>
