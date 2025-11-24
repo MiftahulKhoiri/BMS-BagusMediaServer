@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>BMS Explorer Touchscreen</title>
+    <link rel="stylesheet" href="/static/css/BMS_explorer.css">
+</head>
+<body>
+
+<div class="explorer-container">
+
+    <!-- HEADER -->
+    <div class="explorer-header">
+        <h3>BMS Explorer</h3>
+        <button id="refreshBtn">🔄</button>
+    </div>
+
+    <!-- BREADCRUMB -->
+    <div id="breadcrumb" class="breadcrumb"></div>
+
+    <!-- FILE AREA -->
+    <div id="fileArea" class="file-area">
+        <p class="loading">Loading...</p>
+    </div>
+
+</div>
+
+<!-- Floating Action Menu -->
+<div id="actionMenu" class="action-menu hidden">
+    <button onclick="openFile()">📄 Open</button>
+    <button onclick="renameFile()">✏ Rename</button>
+    <button onclick="deleteFile()">🗑 Delete</button>
+    <button onclick="closeMenu()">❌ Close</button>
+</div>
+
+<script src="/static/js/BMS_explorer.js"></script>
+</body>
+</html>
