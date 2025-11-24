@@ -1,47 +1,48 @@
 import os
 from datetime import datetime
-from flask import Blueprint, jsonify, request
-from app.routes.BMS_auth import (
-    BMS_auth_is_login,
-    BMS_auth_is_admin,
-    BMS_auth_is_root
-)
+from flask import Blueprint, jsonify, request, session
 
 logger = Blueprint("logger", __name__, url_prefix="/logger")
 
-LOG_FILE = "/storage/emulated/0/BMS/logs/system.log"
+LOG_FOLDER = "/storage/emulated/0/BMS/logs/"
+LOG_FILE = LOG_FOLDER + "system.log"
 
-# pastikan folder log ada
-os.makedirs("/storage/emulated/0/BMS/logs", exist_ok=True)
+# Pastikan folder log tersedia
+os.makedirs(LOG_FOLDER, exist_ok=True)
 
 
 # ======================================================
-#   📌 Fungsi internal untuk modul lain
+#   📝 Fungsi internal untuk modul lain (tanpa circular)
 # ======================================================
 def BMS_write_log(text, username="SYSTEM"):
-
     time_now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     formatted = f"[{time_now}] [{username}] {text}"
 
-    with open(LOG_FILE, "a") as f:
-        f.write(formatted + "\n")
+    try:
+        with open(LOG_FILE, "a") as f:
+            f.write(formatted + "\n")
+    except:
+        pass
 
     return formatted
 
 
 # ======================================================
-#   🔐 Proteksi admin
+#   🔐 Proteksi admin (tanpa import auth!)
 # ======================================================
 def BMS_log_required():
-    if not BMS_auth_is_login():
+    if not session.get("user_id"):
         return jsonify({"error": "Belum login!"}), 403
-    if not (BMS_auth_is_admin() or BMS_auth_is_root()):
+
+    role = session.get("role", "user")
+    if role not in ("admin", "root"):
         return jsonify({"error": "Hanya admin/root!"}), 403
+
     return None
 
 
 # ======================================================
-#   📄 Ambil log
+#   📄 READ LOG
 # ======================================================
 @logger.route("/read")
 def BMS_logger_read():
@@ -59,7 +60,7 @@ def BMS_logger_read():
 
 
 # ======================================================
-#   🧹 Clear log
+#   🧹 CLEAR LOG
 # ======================================================
 @logger.route("/clear")
 def BMS_logger_clear():
@@ -67,12 +68,16 @@ def BMS_logger_clear():
     if check:
         return check
 
-    open(LOG_FILE, "w").close()
-    return jsonify({"status": "cleared"})
+    # Kosongkan file
+    try:
+        open(LOG_FILE, "w").close()
+        return jsonify({"status": "cleared"})
+    except:
+        return jsonify({"error": "Gagal clear log!"})
 
 
 # ======================================================
-#   📝 Endpoint manual write
+#   ✍ WRITE LOG MANUAL
 # ======================================================
 @logger.route("/write", methods=["POST"])
 def BMS_logger_manual():
@@ -81,7 +86,10 @@ def BMS_logger_manual():
         return check
 
     text = request.form.get("msg", "")
-    username = request.form.get("user", "UNKNOWN")
+    username = session.get("username", "UNKNOWN")
+
+    if not text:
+        return jsonify({"error": "msg kosong!"})
 
     BMS_write_log(text, username)
     return jsonify({"status": "ok"})
