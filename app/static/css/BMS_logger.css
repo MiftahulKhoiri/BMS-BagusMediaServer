@@ -1,0 +1,12 @@
+.log-box {
+    background: rgba(0, 20, 0, 0.55);
+    padding: 15px;
+    height: 450px;
+    overflow-y: auto;
+    border: 1px solid #00ff88;
+    border-radius: 12px;
+    color: #00ff88;
+    font-family: monospace;
+    white-space: pre-wrap;
+    box-shadow: 0 0 20px #00ff88;
+}
