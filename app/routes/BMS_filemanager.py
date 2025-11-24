@@ -1,155 +1,126 @@
-from flask import Blueprint, request, jsonify, send_from_directory
 import os
 import shutil
-from werkzeug.utils import secure_filename
+from flask import Blueprint, request, jsonify, send_from_directory
+from app.routes.BMS_auth import (
+    BMS_auth_is_login,
+    BMS_auth_is_admin,
+    BMS_auth_is_root
+)
 
-filem = Blueprint("filem", __name__, url_prefix="/files")
+filemanager = Blueprint("filemanager", __name__, url_prefix="/filemanager")
 
-# ======================================
-#  Konfigurasi dasar
-# ======================================
-
-BASE_PATH = os.path.abspath("storage")   # semua file disimpan di folder storage/
-
-
-# Pastikan folder storage ada
-if not os.path.exists(BASE_PATH):
-    os.makedirs(BASE_PATH)
+# Folder dasar untuk file manager
+ROOT_PATH = "/storage/emulated/0/BMS/"
 
 
-# ======================================
-#  DAFTAR FILE & FOLDER
-# ======================================
+# ======================================================
+#   🔐 Proteksi Admin
+# ======================================================
+def BMS_fm_required():
+    if not BMS_auth_is_login():
+        return jsonify({"error": "Anda belum login!"}), 403
 
-@filem.route("/list")
+    if not (BMS_auth_is_root() or BMS_auth_is_admin()):
+        return jsonify({"error": "Akses ditolak!"}), 403
+
+    return None
+
+
+# ======================================================
+#   📁 API: List Folder dan File
+# ======================================================
+@filemanager.route("/list")
 def BMS_file_list():
-    path = request.args.get("path", "")
-    target = os.path.join(BASE_PATH, path)
+    check = BMS_fm_required()
+    if check:
+        return check
 
-    if not os.path.exists(target):
-        return jsonify({"error": "Path tidak ditemukan"}), 400
+    path = request.args.get("path", ROOT_PATH)
 
-    items = os.listdir(target)
+    if not os.path.exists(path):
+        return jsonify({"error": "Path tidak ditemukan!"})
 
-    folders = [x for x in items if os.path.isdir(os.path.join(target, x))]
-    files   = [x for x in items if os.path.isfile(os.path.join(target, x))]
+    items = []
+
+    for name in os.listdir(path):
+        fullpath = os.path.join(path, name)
+        items.append({
+            "name": name,
+            "path": fullpath,
+            "is_dir": os.path.isdir(fullpath)
+        })
 
     return jsonify({
-        "path": path,
-        "folders": folders,
-        "files": files
+        "current": path,
+        "items": items
     })
 
 
-# ======================================
-#  RENAME FILE / FOLDER
-# ======================================
+# ======================================================
+#   📤 Download File
+# ======================================================
+@filemanager.route("/download")
+def BMS_file_download():
+    check = BMS_fm_required()
+    if check:
+        return check
 
-@filem.route("/rename", methods=["POST"])
+    path = request.args.get("path")
+    if not path:
+        return "❌ Path kosong!"
+
+    folder = os.path.dirname(path)
+    filename = os.path.basename(path)
+
+    return send_from_directory(folder, filename, as_attachment=True)
+
+
+# ======================================================
+#   🗑 Hapus File / Folder
+# ======================================================
+@filemanager.route("/delete", methods=["POST"])
+def BMS_file_delete():
+    check = BMS_fm_required()
+    if check:
+        return check
+
+    path = request.form.get("path")
+
+    if os.path.isdir(path):
+        shutil.rmtree(path)
+        return "✔ Folder dihapus!"
+    else:
+        os.remove(path)
+        return "✔ File dihapus!"
+
+
+# ======================================================
+#   ✏ Rename File / Folder
+# ======================================================
+@filemanager.route("/rename", methods=["POST"])
 def BMS_file_rename():
+    check = BMS_fm_required()
+    if check:
+        return check
+
     old = request.form.get("old")
     new = request.form.get("new")
 
-    old_path = os.path.join(BASE_PATH, old)
-    new_path = os.path.join(BASE_PATH, new)
+    os.rename(old, new)
 
-    if not os.path.exists(old_path):
-        return "File tidak ditemukan!"
-
-    os.rename(old_path, new_path)
-    return "Rename berhasil!"
+    return "✔ Berhasil rename!"
 
 
-# ======================================
-#  DELETE FILE
-# ======================================
+# ======================================================
+#   📂 Buat Folder Baru
+# ======================================================
+@filemanager.route("/mkdir", methods=["POST"])
+def BMS_file_mkdir():
+    check = BMS_fm_required()
+    if check:
+        return check
 
-@filem.route("/delete", methods=["POST"])
-def BMS_file_delete():
-    path = request.form.get("path")
-    target = os.path.join(BASE_PATH, path)
+    newpath = request.form.get("path")
+    os.makedirs(newpath, exist_ok=True)
 
-    if not os.path.exists(target):
-        return "File tidak ditemukan!"
-
-    if os.path.isfile(target):
-        os.remove(target)
-        return "File dihapus!"
-
-    return "Bukan file!"
-
-
-# ======================================
-#  DELETE FOLDER
-# ======================================
-
-@filem.route("/delete-folder", methods=["POST"])
-def BMS_file_delete_folder():
-    path = request.form.get("path")
-    target = os.path.join(BASE_PATH, path)
-
-    if not os.path.exists(target):
-        return "Folder tidak ditemukan!"
-
-    if os.path.isdir(target):
-        shutil.rmtree(target)
-        return "Folder dihapus!"
-
-    return "Bukan folder!"
-
-
-# ======================================
-#  UPLOAD FILE
-# ======================================
-
-@filem.route("/upload", methods=["POST"])
-def BMS_file_upload():
-    if "file" not in request.files:
-        return "Tidak ada file!"
-
-    file = request.files["file"]
-    folder = request.form.get("folder", "")
-
-    save_path = os.path.join(BASE_PATH, folder)
-
-    if not os.path.exists(save_path):
-        os.makedirs(save_path)
-
-    filename = secure_filename(file.filename)
-    file.save(os.path.join(save_path, filename))
-
-    return "Upload berhasil!"
-
-
-# ======================================
-#  BUAT FOLDER BARU
-# ======================================
-
-@filem.route("/newfolder", methods=["POST"])
-def BMS_file_newfolder():
-    folder = request.form.get("folder")
-    target = os.path.join(BASE_PATH, folder)
-
-    if os.path.exists(target):
-        return "Folder sudah ada!"
-
-    os.makedirs(target)
-    return "Folder berhasil dibuat!"
-
-
-# ======================================
-#  DOWNLOAD FILE
-# ======================================
-
-@filem.route("/download")
-def BMS_file_download():
-    path = request.args.get("path")
-    folder = os.path.dirname(path)
-    file = os.path.basename(path)
-
-    full_path = os.path.join(BASE_PATH, folder)
-
-    if not os.path.exists(os.path.join(full_path, file)):
-        return "File tidak ditemukan!"
-
-    return send_from_directory(full_path, file, as_attachment=True)
+    return "✔ Folder berhasil dibuat!"
