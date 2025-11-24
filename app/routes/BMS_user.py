@@ -1,23 +1,27 @@
-from flask import Blueprint, render_template, request, redirect
+import os
+from flask import Blueprint, render_template, request, redirect, session
 from app.routes.BMS_auth import (
     BMS_auth_is_login,
+    BMS_auth_is_admin,
+    BMS_auth_is_root
 )
+from app.routes.BMS_logger import BMS_write_log
 
 user = Blueprint("user", __name__, url_prefix="/user")
 
 
 # ======================================================
-#   🔐 Proteksi Halaman User
+#   🔐 Proteksi User
 # ======================================================
 def BMS_user_required():
-    """Cek apakah user sudah login."""
     if not BMS_auth_is_login():
+        BMS_write_log("Akses ditolak (belum login)", "UNKNOWN")
         return redirect("/auth/login")
     return None
 
 
 # ======================================================
-#   🏠 Dashboard User
+#   🏠 Halaman Home User
 # ======================================================
 @user.route("/home")
 def BMS_user_home():
@@ -25,31 +29,32 @@ def BMS_user_home():
     if check:
         return check
 
+    username = session.get("username")
+    BMS_write_log("Akses halaman user home", username)
+
     return render_template("BMSuser_home.html")
 
 
 # ======================================================
-#   📄 AJAX Loader langsung ambil file dari templates/
+#   📄 AJAX Loader Halaman User (Modern)
 # ======================================================
 @user.route("/page")
 def BMS_user_page_loader():
-    """
-    Contoh pemanggilan:
-    /user/page?name=BMS_mp3
-    /user/page?name=BMS_video
-    /user/page?name=BMS_upload
-    /user/page?name=BMS_profile
-
-    Maka akan load:
-    app/templates/<name>.html
-    """
     check = BMS_user_required()
     if check:
         return check
 
     page = request.args.get("name")
+    username = session.get("username")
 
-    try:
-        return render_template(f"{page}.html")
-    except:
-        return "❌ Halaman user tidak ditemukan."
+    # Catat akses halaman
+    BMS_write_log(f"Membuka halaman user: {page}", username)
+
+    # Muat file HTML sesuai nama
+    html_file = f"{page}.html"
+
+    template_path = os.path.join("app", "templates", html_file)
+    if not os.path.exists(template_path):
+        return "<p>Halaman tidak ditemukan!</p>"
+
+    return render_template(html_file)
