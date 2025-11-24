@@ -2,32 +2,36 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Register - BMS</title>
-    <link rel="stylesheet" href="/static/css/BMSadmin.css">
+    <title>BMS Register</title>
+    <link rel="stylesheet" href="/static/css/BMS_register.css">
 </head>
 <body>
 
-<div class="section-box">
-    <h2>[ 🧾 REGISTER USER ]</h2>
+<canvas id="matrixCanvas"></canvas>
 
-    <form action="/auth/register" method="POST">
+<div class="register-container">
+    <h2>Daftar Akun Baru</h2>
 
-        <label>Username:</label>
-        <input type="text" name="username" class="input-text" required>
+    <form method="POST">
 
-        <label>Password:</label>
-        <input type="password" name="password" class="input-text" required>
+        <label>Username</label>
+        <input type="text" name="username" required>
 
-        <label>Pilih Role:</label>
-        <select name="role" class="input-text">
+        <label>Password</label>
+        <input type="password" name="password" required>
+
+        <label>Pilih Role</label>
+        <select name="role">
             <option value="user">User</option>
             <option value="admin">Admin</option>
         </select>
 
-        <br><br>
-        <button type="submit">Daftar</button>
+        <button type="submit" class="btn">Register</button>
+
+        <a href="/auth/login" class="back-link">Sudah punya akun? Login</a>
     </form>
 </div>
 
+<script src="/static/js/BMS_welcome.js"></script>
 </body>
 </html>
