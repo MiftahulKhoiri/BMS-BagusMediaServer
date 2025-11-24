@@ -1,10 +1,5 @@
-/* ------------------------------
-   GLOBAL STYLE
------------------------------- */
-
 body {
     margin: 0;
-    padding: 0;
     font-family: "Courier New", monospace;
     color: #00ff99;
     text-shadow: 0 0 8px #00ff99;
@@ -12,132 +7,149 @@ body {
 
 .admin-container {
     width: 95%;
-    max-width: 800px;
+    max-width: 900px;
     margin: 0 auto;
-    padding-top: 40px;
+    padding-top: 30px;
 }
 
 
-/* ------------------------------
-   HEADER
------------------------------- */
-
-.admin-header {
+/* ===========================
+   SECTION BOX
+=========================== */
+.section-box {
     background: rgba(0, 20, 0, 0.45);
-    padding: 20px;
-    border-radius: 15px;
     border: 1px solid #00ff88;
+    border-radius: 15px;
+    box-shadow: 0 0 25px #00ff88;
+    padding: 20px;
+    margin-bottom: 35px;
+}
+
+.section-box h1,
+.section-box h2 {
+    margin-top: 0;
     text-align: center;
-    margin-bottom: 25px;
-    box-shadow: 0 0 30px #00ff88;
-}
-
-.admin-header h2 {
-    margin: 0;
-    font-size: 26px;
 }
 
 
-/* ------------------------------
-   BUTTON GROUP
------------------------------- */
+/* ===========================
+   USER TABLE
+=========================== */
+.user-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+}
 
-.admin-buttons {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
+.user-table th, .user-table td {
+    padding: 10px;
+    border-bottom: 1px solid #00ff88;
+    text-align: center;
+}
+
+.user-table th {
+    color: #00ffaa;
+    font-size: 18px;
+}
+
+
+/* ===========================
+   TOOL GRID
+=========================== */
+.tool-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
     gap: 15px;
-    margin-bottom: 25px;
 }
 
-.admin-buttons button {
-    flex: 1;
-    min-width: 120px;
+.tool-grid button {
     padding: 15px;
-    font-size: 16px;
-    background: rgba(0, 50, 0, 0.5);
+    font-size: 18px;
+    background: rgba(0,40,0,0.5);
     color: #00ff99;
     border: 1px solid #00ff88;
-    border-radius: 10px;
-    text-shadow: 0 0 8px #00ff99;
-    box-shadow: 0 0 15px #00ff88;
-    transition: 0.2s;
+    border-radius: 12px;
+    text-shadow: 0 0 7px #00ff99;
+    box-shadow: 0 0 20px #00ff88;
 }
 
-.admin-buttons button:hover {
+.tool-grid button:hover {
     background: #00ff66;
     color: black;
-    text-shadow: none;
     box-shadow: 0 0 25px #00ff66;
 }
 
 
-/* ------------------------------
-   LOG BOX
------------------------------- */
-
-.admin-log-box {
-    background: rgba(0, 20, 0, 0.45);
-    padding: 15px;
-    border-radius: 15px;
-    border: 1px solid #00ff88;
-    box-shadow: 0 0 30px #00ff88;
-    margin-bottom: 20px;
+/* ===========================
+   POWER CONTROL
+=========================== */
+.power-grid {
+    display: flex;
+    justify-content: space-between;
+    gap: 15px;
 }
 
-.admin-log-box textarea {
+.btn-danger {
+    background: rgba(60,0,0,0.8);
+    border: 1px solid red;
+    color: #ff4444;
+    padding: 15px;
+    border-radius: 12px;
+    width: 100%;
+    text-shadow: 0 0 5px #ff4444;
+    box-shadow: 0 0 25px red;
+    font-size: 18px;
+}
+
+.btn-warning {
+    background: rgba(60,60,0,0.8);
+    border: 1px solid yellow;
+    color: #ffff55;
+    padding: 15px;
+    width: 100%;
+    border-radius: 12px;
+    text-shadow: 0 0 5px yellow;
+    box-shadow: 0 0 25px yellow;
+    font-size: 18px;
+}
+
+.btn-danger:hover, .btn-warning:hover {
+    opacity: 0.7;
+}
+
+
+/* ===========================
+   LOG AREA
+=========================== */
+textarea {
     width: 100%;
     height: 200px;
     background: black;
-    border: none;
+    border: 1px solid #00ff88;
     color: #00ff99;
-    font-family: monospace;
     font-size: 14px;
     padding: 10px;
+    border-radius: 10px;
     resize: none;
-    outline: none;
-    text-shadow: 0 0 7px #00ff99;
+    text-shadow: 0 0 8px #00ff99;
 }
 
-
-/* ------------------------------
-   CLEAR LOG BUTTON
------------------------------- */
-
-.admin-clear-box {
+.center {
     text-align: center;
-    margin-bottom: 40px;
+    margin-top: 15px;
 }
 
-.admin-clear-box button {
-    background: rgba(0, 60, 0, 0.7);
-    border: 1px solid #00ff88;
+.btn-clear {
     padding: 12px 25px;
     border-radius: 10px;
-    font-size: 16px;
+    background: rgba(0,60,0,0.7);
+    border: 1px solid #00ff88;
     color: #00ff99;
-    text-shadow: 0 0 5px #00ff99;
-    box-shadow: 0 0 20px #00ff88;
+    text-shadow: 0 0 8px #00ff99;
+    box-shadow: 0 0 25px #00ff88;
 }
 
-.admin-clear-box button:hover {
+.btn-clear:hover {
     background: #00ff66;
     color: black;
-    text-shadow: none;
-    box-shadow: 0 0 30px #00ff66;
-}
-
-
-/* ------------------------------
-   RESPONSIVE
------------------------------- */
-
-@media (max-width: 480px) {
-    .admin-buttons {
-        flex-direction: column;
-    }
-
-    .admin-buttons button {
-        width: 100%;
-    }
 }
