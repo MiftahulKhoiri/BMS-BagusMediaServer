@@ -2,56 +2,142 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Update Panel - BMS</title>
-    <link rel="stylesheet" href="/static/css/BMSadmin.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMS - Update Server</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #0b0e12;
+            color: #eee;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: auto;
+            padding: 20px;
+        }
+
+        h2 {
+            text-align: center;
+            margin-top: 20px;
+            color: #4fc3f7;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            margin: 6px;
+            background: #1e88e5;
+            border: none;
+            border-radius: 6px;
+            color: white;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        .btn:hover {
+            background: #1565c0;
+        }
+
+        .log-box {
+            width: 100%;
+            height: 350px;
+            background: #111;
+            padding: 10px;
+            border-radius: 6px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin-top: 15px;
+            font-size: 13px;
+            border: 1px solid #333;
+        }
+
+        .section-title {
+            margin-top: 25px;
+            color: #90caf9;
+        }
+    </style>
 </head>
 <body>
 
-<div class="section-box">
-    <h2>[ 🔄 UPDATE PANEL ]</h2>
+<div class="container">
 
-    <h3>Git Update</h3>
-    <button onclick="runUpdate()">Update (git pull)</button>
+    <h2>⚙️ BMS Server Update Panel</h2>
 
-    <h3>Install PIP Package</h3>
-    <input id="pkg" placeholder="Nama package" class="input-text"/>
-    <button onclick="installPkg()">Install Package</button>
+    <div class="section-title">🔄 Update dan Install Otomatis</div>
+    <button class="btn" onclick="runUpdate()">Jalankan Update</button>
 
-    <h3>Server Control</h3>
-    <button onclick="runRestart()">Restart Server</button>
-    <button onclick="runShutdown()">Shutdown Server</button>
+    <div class="section-title">🔁 Restart Server</div>
+    <button class="btn" onclick="restartServer()">Restart</button>
 
-    <h3>Logs</h3>
-    <button onclick="loadLog()">Load Log</button>
-    <button onclick="clearLog()">Clear Log</button>
+    <div class="section-title">📜 Log Sistem</div>
+    <button class="btn" onclick="loadLog()">Reload Log</button>
+    <button class="btn" onclick="clearLog()">Clear Log</button>
 
-    <pre id="logbox"
-         style="background:black;color:#0f0;padding:10px;height:300px;overflow:auto;">
-    </pre>
+    <div id="logBox" class="log-box">Log belum dimuat...</div>
+
 </div>
 
 <script>
-function runUpdate(){
-    fetch('/tools/update').then(r=>r.text()).then(alert);
-}
-function installPkg(){
-    let p = document.getElementById("pkg").value;
-    let f = new FormData();
-    f.append("package", p);
-    fetch('/tools/install',{method:"POST",body:f}).then(r=>r.text()).then(alert);
-}
-function runRestart(){
-    fetch('/tools/restart').then(r=>r.text()).then(alert);
-}
-function runShutdown(){
-    fetch('/tools/shutdown').then(r=>r.text()).then(alert);
-}
-function loadLog(){
-    fetch('/tools/log').then(r=>r.text()).then(t=>{document.getElementById("logbox").textContent = t;});
-}
-function clearLog(){
-    fetch('/tools/log/clear').then(r=>r.text()).then(()=>loadLog());
-}
+    // ================================
+    // 🔄 Jalankan Update (git pull + auto install)
+    // ================================
+    function runUpdate() {
+        document.getElementById("logBox").innerHTML = "Memproses update...";
+
+        fetch("/tools/update/run")
+            .then(r => r.json())
+            .then(data => {
+                if (data.error) {
+                    document.getElementById("logBox").innerHTML = "❌ ERROR: " + data.error;
+                } else {
+                    let txt = "=== HASIL UPDATE ===\n\n";
+                    txt += ">>> Git Pull Output:\n" + data.git_output + "\n\n";
+                    txt += ">>> Install Output:\n" + data.install_output + "\n";
+                    document.getElementById("logBox").innerHTML = txt;
+                }
+            });
+    }
+
+
+    // ================================
+    // 🔁 Restart Server
+    // ================================
+    function restartServer() {
+        fetch("/tools/restart")
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById("logBox").innerHTML =
+                    "=== RESTART SERVER ===\n" + data.message;
+            });
+    }
+
+
+    // ================================
+    // 📜 Load Log
+    // ================================
+    function loadLog() {
+        fetch("/tools/log")
+            .then(r => r.json())
+            .then(data => {
+                document.getElementById("logBox").innerHTML = data.log || "(Log kosong)";
+            });
+    }
+
+
+    // ================================
+    // 🧹 Clear Log
+    // ================================
+    function clearLog() {
+        fetch("/tools/log/clear")
+            .then(r => r.json())
+            .then(() => {
+                document.getElementById("logBox").innerHTML = "(Log telah dibersihkan)";
+            });
+    }
 </script>
 
 </body>
