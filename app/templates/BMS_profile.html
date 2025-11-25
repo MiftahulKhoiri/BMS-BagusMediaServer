@@ -4,48 +4,68 @@
     <meta charset="UTF-8">
     <title>BMS - Profil User</title>
 
-    <!-- Neon Theme -->
-    <link rel="stylesheet" href="/static/css/BMS_profile.css"/>
+    <link rel="stylesheet" href="/static/css/BMS_profile.css">
 </head>
 <body>
 
-<div class="section-box">
+<!-- ====================================== -->
+<!--          SIDEBAR + LOGOUT BUTTON       -->
+<!-- ====================================== -->
+<div class="sidebar">
 
-    <h2>[ 👤 PROFIL USER ]</h2>
+    <div class="sidebar-header">
+        <h3>BMS</h3>
+        <small>Profile Panel</small>
+    </div>
 
-    <p>
-        <strong>Username:</strong> {{ session.username }} <br>
-        <strong>Role:</strong> {{ session.role }}
-    </p>
+    <a href="/user/home" class="menu-link">🏠 Home</a>
+    <a href="/profile" class="menu-link active">👤 Profil</a>
 
-    <hr style="border-color:#00ff88;">
+    <!-- Tombol EDIT PROFILE di bagian bawah -->
+    <div class="edit-box">
+        <a class="edit-btn" href="/profile/edit">✏ Edit Profile</a>
+    </div>
 
-    <!-- =============================== -->
-    <!--       UPDATE USERNAME           -->
-    <!-- =============================== -->
-    <h3>✏ Update Username</h3>
+    <!-- Tombol Logout di paling bawah -->
+    <div class="logout-box">
+        <a class="logout-btn" href="/auth/logout">🚪 Logout</a>
+    </div>
 
-    <form action="/profile/update_username" method="POST" style="margin-bottom:20px;">
-        <input type="text" name="username" class="input-text" placeholder="Username baru" required>
-        <br><br>
-        <button type="submit">Simpan Username</button>
-    </form>
+</div>
 
-    <hr style="border-color:#00ff88;">
 
-    <!-- =============================== -->
-    <!--        UPDATE PASSWORD          -->
-    <!-- =============================== -->
-    <h3>🔐 Update Password</h3>
+<!-- ====================================== -->
+<!--               PROFILE CONTENT          -->
+<!-- ====================================== -->
+<div class="content">
 
-    <form action="/profile/update_password" method="POST">
-        <input type="password" name="old" class="input-text" placeholder="Password lama" required>
+    <div class="profile-box">
 
-        <input type="password" name="new" class="input-text" placeholder="Password baru" required>
+        <h2>[ 👤 PROFIL USER ]</h2>
 
-        <br><br>
-        <button type="submit">Simpan Password</button>
-    </form>
+        <p>
+            <strong>Username:</strong> {{ session['username'] }} <br>
+            <strong>Role:</strong> {{ session['role'] }}
+        </p>
+
+        <hr class="line">
+
+        <h3>✏ Ubah Username</h3>
+        <form action="/profile/update_username" method="POST" class="form-block">
+            <input type="text" name="username" class="input-text" placeholder="Username baru" required>
+            <button type="submit" class="btn-primary">Simpan Username</button>
+        </form>
+
+        <hr class="line">
+
+        <h3>🔐 Ubah Password</h3>
+        <form action="/profile/update_password" method="POST" class="form-block">
+            <input type="password" name="old" class="input-text" placeholder="Password lama" required>
+            <input type="password" name="new" class="input-text" placeholder="Password baru" required>
+            <button type="submit" class="btn-primary">Simpan Password</button>
+        </form>
+
+    </div>
 
 </div>
 
