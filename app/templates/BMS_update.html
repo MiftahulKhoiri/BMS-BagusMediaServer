@@ -7,19 +7,52 @@
 
     <!-- CSS -->
     <link rel="stylesheet" href="/static/css/BMS_update.css">
+
+    <style>
+        /* Notifikasi sederhana */
+        #notifyBox {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #00ff95;
+            color: #000;
+            padding: 12px 18px;
+            border-radius: 8px;
+            display: none;
+            font-weight: bold;
+            box-shadow: 0 0 10px #00ff95;
+        }
+    </style>
 </head>
 <body>
+
+<div id="notifyBox"></div>
 
 <div class="container">
 
     <h2>⚙️ BMS Server Update Panel</h2>
 
+    <!-- ----------------------- -->
+    <!-- UPDATE OTOMATIS -->
+    <!-- ----------------------- -->
     <div class="section-title">🔄 Update dan Install Otomatis</div>
     <button class="btn" onclick="runUpdate()">Jalankan Update</button>
 
+    <!-- ----------------------- -->
+    <!-- UPDATE MANUAL -->
+    <!-- ----------------------- -->
+    <div class="section-title">🔧 Update Manual (Install Requirements)</div>
+    <button class="btn" onclick="runManualUpdate()">Update Manual</button>
+
+    <!-- ----------------------- -->
+    <!-- RESTART -->
+    <!-- ----------------------- -->
     <div class="section-title">🔁 Restart Server</div>
     <button class="btn" onclick="restartServer()">Restart</button>
 
+    <!-- ----------------------- -->
+    <!-- LOG VIEWER -->
+    <!-- ----------------------- -->
     <div class="section-title">📜 Log Sistem</div>
     <button class="btn" onclick="loadLog()">Reload Log</button>
     <button class="btn" onclick="clearLog()">Clear Log</button>
@@ -28,8 +61,95 @@
 
 </div>
 
-<!-- JS -->
-<script src="/static/js/BMS_update.js"></script>
+<!-- =========================== -->
+<!-- JAVASCRIPT -->
+<!-- =========================== -->
+<script>
+
+// ----------- NOTIFIKASI -------------
+function showNotify(msg) {
+    const box = document.getElementById("notifyBox");
+    box.innerText = msg;
+    box.style.display = "block";
+
+    setTimeout(() => {
+        box.style.display = "none";
+    }, 3000);
+}
+
+// ----------- UPDATE OTOMATIS -------------
+function runUpdate() {
+    fetch("/tools/update/run")
+        .then(res => res.json())
+        .then(data => {
+            if (data.error) {
+                showNotify("❌ " + data.error);
+                return;
+            }
+
+            if (data.notify) showNotify("✔ " + data.notify);
+
+            let text = "";
+
+            if (data.updated) {
+                text += "=== UPDATE BERHASIL ===\n";
+                text += data.git_output + "\n\n";
+                text += data.pip_output + "\n";
+            } else {
+                text += "=== TIDAK ADA PEMBARUAN ===\n";
+                text += data.message + "\n";
+            }
+
+            document.getElementById("logBox").innerText = text;
+        });
+}
+
+// ----------- UPDATE MANUAL -------------
+function runManualUpdate() {
+    fetch("/tools/update/manual")
+        .then(res => res.json())
+        .then(data => {
+            if (data.notify) showNotify("✔ " + data.notify);
+
+            document.getElementById("logBox").innerText =
+                "=== UPDATE MANUAL ===\n" + data.pip_output;
+        });
+}
+
+
+// ----------- RESTART -------------
+function restartServer() {
+    fetch("/tools/restart")
+        .then(res => res.json())
+        .then(data => {
+            showNotify("🔁 Restart diminta");
+            document.getElementById("logBox").innerText =
+                "=== RESTART ===\n" + data.message;
+        });
+}
+
+
+// ----------- LOAD LOG -------------
+function loadLog() {
+    fetch("/tools/log")
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById("logBox").innerText = data.log;
+        });
+}
+
+
+// ----------- CLEAR LOG -------------
+function clearLog() {
+    fetch("/tools/log/clear")
+        .then(res => res.json())
+        .then(() => {
+            showNotify("🧹 Log dibersihkan");
+            document.getElementById("logBox").innerText = "Log dibersihkan!";
+        });
+}
+
+</script>
 
 </body>
 </html>
