@@ -13,28 +13,32 @@ function showNotify(msg) {
 
 
 // ========================
-//  UPDATE OTAOMATIS
+//  UPDATE OTOMATIS
 // ========================
 function runUpdate() {
     fetch("/tools/update/run")
         .then(res => res.json())
         .then(data => {
+
             if (data.error) {
                 showNotify("❌ " + data.error);
                 return;
             }
 
-            if (data.notify) showNotify("✔ " + data.notify);
+            if (data.notify)
+                showNotify("✔ " + data.notify);
 
             let text = "";
 
             if (data.updated) {
-                text += "=== UPDATE BERHASIL ===\n";
-                text += data.git_output + "\n\n";
-                text += data.pip_output + "\n";
+                text = 
+                    "=== UPDATE BERHASIL ===\n\n" +
+                    data.git_output + "\n\n" +
+                    data.pip_output;
             } else {
-                text += "=== TIDAK ADA PEMBARUAN ===\n";
-                text += data.message + "\n";
+                text =
+                    "=== TIDAK ADA PEMBARUAN ===\n" +
+                    data.message;
             }
 
             document.getElementById("logBox").innerText = text;
@@ -54,7 +58,7 @@ function runManualUpdate() {
                 showNotify("✔ " + data.notify);
 
             document.getElementById("logBox").innerText =
-                "=== UPDATE MANUAL ===\n" + data.pip_output;
+                "=== UPDATE MANUAL ===\n\n" + data.pip_output;
         });
 }
 
@@ -66,7 +70,7 @@ function restartServer() {
     fetch("/tools/restart")
         .then(res => res.json())
         .then(data => {
-            showNotify("🔁 Restart diminta");
+            showNotify("🔁 Restart diproses...");
             document.getElementById("logBox").innerText =
                 "=== RESTART ===\n" + data.message;
         });
@@ -74,7 +78,7 @@ function restartServer() {
 
 
 // ========================
-//  LOAD LOG
+//  BACA LOG
 // ========================
 function loadLog() {
     fetch("/tools/log")
