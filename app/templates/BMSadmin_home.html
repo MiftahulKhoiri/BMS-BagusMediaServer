@@ -3,33 +3,24 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BMS Admin Panel</title>
+    <title>ADMIN TERMINAL - BAGUS MEDIA SERVER</title>
 
-    <!-- Background Matrix -->
-    <link rel="stylesheet" href="/static/css/begron/BMSmatrik_begron.css">
-
-    <!-- Style utama admin -->
-    <link rel="stylesheet" href="/static/css/BMSadmin.css">
+    <link rel="stylesheet" href="/static/css/admin-hacker.css">
 </head>
 <body>
 
 <!-- MATRIX BACKGROUND -->
 <canvas id="matrixCanvas"></canvas>
 
-<div class="admin-container">
+<!-- TERMINAL WRAPPER -->
+<div class="terminal">
+    <h1 class="title">[BAGUS MEDIA SERVER]</h1>
 
-    <!-- ================================= -->
-    <!--            HEADER TITLE            -->
-    <!-- ================================= -->
-    <div class="section-box">
-        <h1>[ BAGUS MEDIA SERVER ]</h1>
-    </div>
-
-    <!-- ================================= -->
-    <!--             USER TABLE             -->
-    <!-- ================================= -->
-    <div class="section-box">
-        <h2>ID USER:</h2>
+    <!-- ============================
+         USER MANAGEMENT
+    ============================ -->
+    <div class="section">
+        <div class="section-title">ID USER:</div>
 
         <table class="user-table">
             <tr>
@@ -39,70 +30,78 @@
                 <th>Aksi</th>
             </tr>
 
+            {% for u in users %}
             <tr>
-                <td>1</td>
-                <td>root</td>
-                <td>root</td>
-                <td>Locked</td>
+                <td>{{ u[0] }}</td>
+                <td>{{ u[1] }}</td>
+                <td>{{ u[2] }}</td>
+                <td>
+                    {% if u[1] != "root" %}
+                        <button class="btn warn" onclick="changeRole({{ u[0] }}, 'root')">Set Root</button>
+                        <button class="btn" onclick="changeRole({{ u[0] }}, 'user')">Set User</button>
+                        <button class="btn danger" onclick="deleteUser({{ u[0] }})">Hapus</button>
+                    {% else %}
+                        <span class="locked">Locked</span>
+                    {% endif %}
+                </td>
             </tr>
+            {% endfor %}
         </table>
     </div>
 
-    <!-- ================================= -->
-    <!--               TOOLS                -->
-    <!-- ================================= -->
-    <div class="section-box">
-        <h2>[ TOOLS ]</h2>
+    <!-- ============================
+         ADMIN TOOLS
+    ============================ -->
+    <div class="section">
+        <div class="section-title">[ TOOLS ]</div>
 
-        <div class="tool-grid">
-            <button onclick="goTo('/media')">MEDIA</button>
-            <button onclick="goTo('/profile')">Profil</button>
-
-            <button onclick="goTo('/upload')">Unggah File</button>
-            <button onclick="goTo('/admin/filemanager')">File Manager</button>
-
-            <button onclick="goTo('/update')">System Update</button>
-            <button onclick="goTo('/systeminfo')">System Info</button>
+        <div class="tools">
+            <button class="btn tool" onclick="location.href='/home'">MEDIA</button>
+            <button class="btn tool" onclick="location.href='/profile'">Profil</button>
+            <button class="btn tool" onclick="location.href='/upload'">Unggah File</button>
+            <button class="btn tool" onclick="location.href='/filemanager'">File Manager</button>
+            <button class="btn tool" onclick="location.href='/update'">System Update</button>
+            <button class="btn tool" onclick="location.href='/about'">System Info</button>
         </div>
     </div>
 
-    <!-- ================================= -->
-    <!--           POWER CONTROL            -->
-    <!-- ================================= -->
-    <div class="section-box">
-        <h2>[ POWER CONTROL ]</h2>
+    <!-- ============================
+         POWER CONTROL (BARU)
+    ============================ -->
+    <div class="section">
+        <div class="section-title">[ POWER CONTROL ]</div>
 
-        <div class="power-grid">
-            <button class="btn-danger" onclick="goTo('/shutdown')">Shutdown Server</button>
-            <button class="btn-warning" onclick="goTo('/restart')">Restart Server</button>
+        <div class="tools">
+            <button class="btn danger" onclick="shutdownServer()">Shutdown Server</button>
+            <button class="btn warn" onclick="restartServer()">Restart Server</button>
         </div>
     </div>
 
-    <!-- ================================= -->
-    <!--             LOG SYSTEM             -->
-    <!-- ================================= -->
-    <div class="section-box">
-        <h2>[ SERVER LOG ]</h2>
-
-        <textarea id="logArea" readonly>
---- LOG BMS SERVER ---
-        </textarea>
-
-        <div class="center">
-            <button class="btn-clear" onclick="document.getElementById('logArea').value = '';">
-                CLEAR LOG
-            </button>
-        </div>
-    </div>
-
+    <footer class="footer">
+        © {{ current_year }} BAGUS MEDIA SERVER • TERMINAL MODE
+    </footer>
 </div>
 
-<script src="/static/js/begron/BMSmatrik_begron.js"></script>
+<!-- MATRIX EFFECT -->
+<script src="/static/Js/admin-hacker.js"></script>
 
+<!-- POWER SCRIPT -->
 <script>
-    function goTo(path){
-        window.location.href = path;
-    }
+function shutdownServer(){
+    if (!confirm("Yakin mau MEMATIKAN server Flask?")) return;
+
+    fetch("/api/shutdown", { method: "POST" })
+      .then(() => alert("Server dimatikan!"))
+      .catch(() => alert("Gagal shutdown"));
+}
+
+function restartServer(){
+    if (!confirm("Restart server Flask sekarang?")) return;
+
+    fetch("/api/restart", { method: "POST" })
+      .then(() => location.reload())
+      .catch(() => alert("Gagal restart"));
+}
 </script>
 
 </body>
