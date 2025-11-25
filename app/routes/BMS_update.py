@@ -41,7 +41,7 @@ def BMS_update_gui():
 
 
 # ======================================================
-#   🔄 Update Server (git pull + auto install requirements)
+#   🔄 Jalankan Update Git + Install
 # ======================================================
 @update.route("/update/run")
 def BMS_tool_update():
@@ -53,37 +53,73 @@ def BMS_tool_update():
     BMS_write_log("Menjalankan UPDATE (git pull)", username)
 
     try:
-        # Jalankan git pull
-        git_result = subprocess.getoutput("git pull")
-        BMS_write_log(f"Hasil git pull: {git_result}", username)
+        # INFO AWAL GIT
+        git_fetch = subprocess.getoutput("git fetch")
+        git_status = subprocess.getoutput("git status -uno")
 
-        # Cek apakah ada perubahan
-        updated = (
-            "Updating" in git_result
-            or "Fast-forward" in git_result
-            or "changed" in git_result
-        )
+        BMS_write_log(f"git status: {git_status}", username)
 
-        pip_result = ""
+        # DETEKSI ADA UPDATE
+        ada_update = "Your branch is behind" in git_status or "git pull" in git_status
 
-        # Jika ada perubahan → jalankan install
-        if updated:
-            BMS_write_log("Perubahan terdeteksi. Menjalankan install dependensi...", username)
+        # Jika ada update → jalankan git pull
+        if ada_update:
+            git_result = subprocess.getoutput("git pull")
+            BMS_write_log(f"git pull output: {git_result}", username)
+
             pip_result = subprocess.getoutput("pip install -r requirements.txt")
-            BMS_write_log(f"Hasil install requirements: {pip_result}", username)
+            BMS_write_log(f"pip install output: {pip_result}", username)
+
+            return jsonify({
+                "updated": True,
+                "message": "Update berhasil! Perubahan telah diterapkan.",
+                "git_output": git_result,
+                "pip_output": pip_result,
+                "notify": "UPDATE TERBARU TELAH DIINSTALL"
+            })
+
         else:
-            pip_result = "Tidak ada perubahan. Install dilewati."
-            BMS_write_log(pip_result, username)
+            BMS_write_log("Tidak ada pembaruan tersedia.", username)
+            return jsonify({
+                "updated": False,
+                "message": "Tidak ada pembaruan.",
+                "notify": "SERVER SUDAH VERSI TERBARU"
+            })
+
+    except Exception as e:
+        err_msg = f"Error update: {e}"
+        BMS_write_log(err_msg, username)
+        return jsonify({"error": str(e)})
+
+
+# ======================================================
+#   🔧 FUNGSI UPDATE SENDIRI (MANUAL)
+#   → update tanpa git pull
+# ======================================================
+@update.route("/update/manual")
+def BMS_tool_update_manual():
+    check = BMS_update_required()
+    if check:
+        return check
+
+    username = session.get("username")
+    BMS_write_log("Menjalankan Update Manual (pip install)", username)
+
+    try:
+        pip_result = subprocess.getoutput("pip install -r requirements.txt")
+        BMS_write_log(f"Pip manual install: {pip_result}", username)
 
         return jsonify({
             "status": "ok",
-            "git_output": git_result,
-            "install_output": pip_result
+            "message": "Install/manual update selesai.",
+            "pip_output": pip_result,
+            "notify": "UPDATE MANUAL BERHASIL"
         })
 
     except Exception as e:
-        BMS_write_log(f"Error update: {e}", username)
+        BMS_write_log(f"Manual update error: {e}", username)
         return jsonify({"error": str(e)})
+
 
 
 # ======================================================
