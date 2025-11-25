@@ -1,187 +1,228 @@
+/* ================================
+   ADMIN DASHBOARD - BAGUS SERVER
+================================== */
+
 body {
     margin: 0;
-    font-family: "Courier New", monospace;
-    color: #00ff99;
-    text-shadow: 0 0 8px #00ff99;
+    background: #eef1f5;
+    font-family: 'Segoe UI', Arial, sans-serif;
 }
 
-.admin-container {
-    width: 95%;
-    max-width: 900px;
-    margin: 0 auto;
-    padding-top: 30px;
-}
-
-
-/* ===========================
-   SECTION BOX
-=========================== */
-.section-box {
-    background: rgba(0, 20, 0, 0.45);
-    border: 1px solid #00ff88;
-    border-radius: 15px;
-    box-shadow: 0 0 25px #00ff88;
-    padding: 20px;
-    margin-bottom: 35px;
-}
-
-.section-box h1,
-.section-box h2 {
-    margin-top: 0;
+/* HEADER */
+header {
+    background: linear-gradient(90deg, #1976d2, #0d47a1);
+    color: white;
+    padding: 25px;
     text-align: center;
+    font-size: 24px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.25);
 }
 
+/* MAIN CONTAINER */
+.container {
+    padding: 25px;
+}
 
-/* ===========================
-   USER TABLE
-=========================== */
-.user-table {
+/* SECTION TITLE */
+.section-title {
+    margin: 25px 0 15px;
+    font-size: 22px;
+    font-weight: 600;
+    color: #222;
+    text-transform: uppercase;
+}
+
+/* CARDS */
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 14px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.12);
+    transition: .2s;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+}
+
+/* GRID 3 */
+.grid-3 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 25px;
+}
+
+/* TABLE */
+table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 10px;
+    margin-top: 12px;
 }
 
-.user-table th, .user-table td {
-    padding: 10px;
-    border-bottom: 1px solid #00ff88;
-    text-align: center;
+th, td {
+    padding: 12px 14px;
+    border-bottom: 1px solid #e0e0e0;
 }
 
-.user-table th {
-    color: #00ffaa;
-    font-size: 18px;
+th {
+    background: #f5f5f5;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 14px;
+    color: #444;
 }
 
-
-/* ===========================
-   TOOL GRID
-=========================== */
-.tool-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 15px;
+tr:hover td {
+    background: #f0f7ff;
 }
 
-.tool-grid button {
-    padding: 15px;
-    font-size: 18px;
-    background: rgba(0,40,0,0.5);
-    color: #00ff99;
-    border: 1px solid #00ff88;
-    border-radius: 12px;
-    text-shadow: 0 0 7px #00ff99;
-    box-shadow: 0 0 20px #00ff88;
+/* BUTTONS */
+.btn {
+    padding: 8px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    border: none;
+    background: #1976d2;
+    color: white;
+    transition: 0.25s;
 }
 
-.tool-grid button:hover {
-    background: #00ff66;
-    color: black;
-    box-shadow: 0 0 25px #00ff66;
-}
-
-
-/* ===========================
-   POWER CONTROL
-=========================== */
-.power-grid {
-    display: flex;
-    justify-content: space-between;
-    gap: 15px;
+.btn:hover {
+    background: #1259a5;
 }
 
 .btn-danger {
-    background: rgba(60,0,0,0.8);
-    border: 1px solid red;
-    color: #ff4444;
-    padding: 15px;
-    border-radius: 12px;
-    width: 100%;
-    text-shadow: 0 0 5px #ff4444;
-    box-shadow: 0 0 25px red;
-    font-size: 18px;
+    background: #d32f2f;
+}
+
+.btn-danger:hover {
+    background: #a32222;
 }
 
 .btn-warning {
-    background: rgba(60,60,0,0.8);
-    border: 1px solid yellow;
-    color: #ffff55;
-    padding: 15px;
-    width: 100%;
-    border-radius: 12px;
-    text-shadow: 0 0 5px yellow;
-    box-shadow: 0 0 25px yellow;
-    font-size: 18px;
+    background: #ffb300;
+    color: #000;
 }
 
-.btn-danger:hover, .btn-warning:hover {
-    opacity: 0.7;
+.btn-warning:hover {
+    background: #d19000;
 }
 
-
-/* ===========================
-   LOG AREA
-=========================== */
-textarea {
-    width: 100%;
-    height: 200px;
-    background: black;
-    border: 1px solid #00ff88;
-    color: #00ff99;
-    font-size: 14px;
-    padding: 10px;
-    border-radius: 10px;
-    resize: none;
-    text-shadow: 0 0 8px #00ff99;
-}
-
-.center {
+/* FOOTER */
+footer {
     text-align: center;
-    margin-top: 15px;
+    padding: 18px;
+    margin-top: 40px;
+    color: #666;
+    letter-spacing: .5px;
 }
 
-.btn-clear {
-    padding: 12px 25px;
-    border-radius: 10px;
-    background: rgba(0,60,0,0.7);
-    border: 1px solid #00ff88;
-    color: #00ff99;
-    text-shadow: 0 0 8px #00ff99;
-    box-shadow: 0 0 25px #00ff88;
+/* ========================================================
+   ✨ ATOM BACKGROUND NEON (Wallpaper Cyber Futuristik)
+   ======================================================== */
+
+.atom-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;  /* supaya tidak ganggu klik */
+    z-index: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0.18; /* lembut */
 }
 
-.btn-clear:hover {
-    background: #00ff66;
-    color: black;
+.atom {
+    position: relative;
+    width: 350px;
+    height: 350px;
 }
 
-/* ================================
-   RESPONSIVE TUNING
-   ================================ */
-
-/* Mobile (max 480px) */
-@media (max-width: 480px) {
-    .welcome-container {
-        margin-top: 18vh;
-        padding: 15px;
-    }
-
-    .btn {
-        min-width: 95px;
-        padding: 10px 16px;
-    }
+.nucleus {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 40px;
+    height: 40px;
+    background: radial-gradient(circle, #00faff, #004cff);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    box-shadow: 0 0 35px #00e4ff, 0 0 65px #0066ff;
 }
 
-/* Tablet (481–768px) */
-@media (max-width: 768px) {
-    .welcome-container {
-        margin-top: 14vh;
-    }
+.orbit {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    border: 2px solid rgba(0, 255, 255, 0.25);
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
 }
 
-/* PC Large Screen */
-@media (min-width: 1200px) {
-    .welcome-container {
-        margin-top: 18vh;
-        max-width: 750px;
-    }
+.orbit1 {
+    width: 260px;
+    height: 260px;
+    animation: spin 7s linear infinite;
+}
+
+.orbit2 {
+    width: 200px;
+    height: 200px;
+    animation: spin 5s linear infinite reverse;
+}
+
+.orbit3 {
+    width: 140px;
+    height: 140px;
+    animation: spin 6s linear infinite;
+}
+
+.electron {
+    width: 22px;
+    height: 22px;
+    background: #00ffee;
+    border-radius: 50%;
+    position: absolute;
+    top: -11px;
+    left: 50%;
+    transform: translateX(-50%);
+    box-shadow: 0 0 20px #00ffff, 0 0 40px #00ccff;
+}
+
+@keyframes spin {
+    0%   { transform: translate(-50%, -50%) rotate(0deg); }
+    100% { transform: translate(-50%, -50%) rotate(360deg); }
+}
+
+/* memastikan konten admin tampil di atas atom */
+header, .container, footer {
+    position: relative;
+    z-index: 2;
+}
+
+/* === Realtime Bars === */
+.bar {
+    width: 100%;
+    height: 14px;
+    background: #0a0a0a;
+    border: 1px solid #0f0;
+    margin: 4px 0 8px;
+    position: relative;
+}
+
+.bar-fill {
+    height: 100%;
+    width: 0%;
+    background: #00ff00;
+    transition: width .3s;
+}
+
+.bar-text {
+    font-size: 14px;
+    color: #00ff00;
 }
