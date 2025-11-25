@@ -7,25 +7,10 @@
 
     <!-- CSS -->
     <link rel="stylesheet" href="/static/css/BMS_update.css">
-
-    <style>
-        /* Notifikasi */
-        #notifyBox {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            background: #00ff95;
-            color: #000;
-            padding: 12px 18px;
-            border-radius: 8px;
-            display: none;
-            font-weight: bold;
-            box-shadow: 0 0 10px #00ff95;
-        }
-    </style>
 </head>
 <body>
 
+<!-- Box Notifikasi -->
 <div id="notifyBox"></div>
 
 <div class="container">
@@ -34,9 +19,6 @@
 
     <div class="section-title">🔄 Update dan Install Otomatis</div>
     <button class="btn" onclick="runUpdate()">Jalankan Update</button>
-
-    <div class="section-title">🔧 Update Manual (Install Requirements)</div>
-    <button class="btn" onclick="runManualUpdate()">Update Manual</button>
 
     <div class="section-title">🔁 Restart Server</div>
     <button class="btn" onclick="restartServer()">Restart</button>
@@ -49,7 +31,7 @@
 
 </div>
 
-<!-- JS DIPISAH DI FILE SENDIRI -->
+<!-- JAVASCRIPT -->
 <script src="/static/js/BMS_update.js"></script>
 
 </body>
