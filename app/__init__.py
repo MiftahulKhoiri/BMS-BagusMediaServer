@@ -43,22 +43,19 @@ def create_app():
     #   ✓ ROUTE HOME (WELCOME PAGE)
     # ======================================================
     @app.route("/")
-    def BMS_home():
-        """
-        Halaman utama BMS.
-        Jika user belum login → tampilkan Welcome Page.
-        Jika sudah login → arahkan sesuai role.
-        """
-        if "user_id" not in session:
-            return render_template("BMS_welcome.html")
+def BMS_home():
+    # Jika belum login → welcome page
+    if "user_id" not in session:
+        return render_template("BMS_welcome.html")
 
-        # user sudah login → arahkan ke panel berdasarkan role
-        role = session.get("role")
+    role = session.get("role", "user")
 
-        if role in ("root", "admin"):
-            return redirect("/admin/dashboard")
+    # Jika root / admin → ke admin home
+    if role in ("root", "admin"):
+        return redirect("/admin/home")
 
-        return redirect("/user/home")
+    # Jika user biasa
+    return redirect("/user/home")
 
     return app
 
