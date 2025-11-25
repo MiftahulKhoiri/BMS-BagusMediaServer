@@ -3,8 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>[BMS] </title>
-    <title>"Bagus Media Server"</title>
+    <title>ADMIN TERMINAL - BAGUS MEDIA SERVER</title>
 
     <!-- BACKGROUND MATRIX -->
     <link rel="stylesheet" href="/static/css/begron/BMSmatrik_begron.css">
@@ -14,86 +13,84 @@
 </head>
 <body>
 
-<!-- MATRIX CANVAS -->
 <canvas id="matrixCanvas"></canvas>
 
-<!-- MAIN TERMINAL BOX -->
-<div class="terminal">
-
-    <!-- LOGO -->
+<!-- ===========================
+     LOGO CARD
+=========================== -->
+<div class="card">
     <div class="logo">
         <div class="logo-title">BMS</div>
         <div class="logo-sub">Bagus MEDIA Server</div>
     </div>
-
-    <!-- ===========================
-         USER TABLE
-    ============================ -->
-    <div class="section">
-        <div class="section-title">📌 ID USER</div>
-
-        <table class="user-table">
-            <tr>
-                <th>ID</th>
-                <th>Username</th>
-                <th>Role</th>
-                <th>Aksi</th>
-            </tr>
-
-            {% for u in users %}
-            <tr>
-                <td>{{ u[0] }}</td>
-                <td>{{ u[1] }}</td>
-                <td>{{ u[2] }}</td>
-                <td>
-                    {% if u[1] != "root" %}
-                        <button class="btn warn" onclick="changeRole({{ u[0] }}, 'root')">Set Root</button>
-                        <button class="btn" onclick="changeRole({{ u[0] }}, 'user')">Set User</button>
-                        <button class="btn danger" onclick="deleteUser({{ u[0] }})">Hapus</button>
-                    {% else %}
-                        <span class="locked">Locked</span>
-                    {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </table>
-    </div>
-
-    <!-- ===========================
-         TOOLS ADMIN
-    ============================ -->
-    <div class="section">
-        <div class="section-title">🛠 TOOLS ADMIN</div>
-
-        <div class="tools-grid">
-            <button class="btn tool" onclick="location.href='/home'">Media</button>
-            <button class="btn tool" onclick="location.href='/profile'">Profil</button>
-            <button class="btn tool" onclick="location.href='/upload'">Unggah File</button>
-            <button class="btn tool" onclick="location.href='/filemanager'">File Manager</button>
-            <button class="btn tool" onclick="location.href='/tools/update/gui'">System Update</button>
-            <button class="btn tool" onclick="location.href='/system/gui'">System Info</button>
-        </div>
-    </div>
-
-    <!-- ===========================
-         POWER CONTROL
-    ============================ -->
-    <div class="section">
-        <div class="section-title">⚡ POWER CONTROL:</div>
-
-        <div class="tools-grid">
-            <button class="btn danger" onclick="shutdownServer()">Shutdown Server</button>
-            <button class="btn warn" onclick="restartServer()">Restart Server</button>
-        </div>
-    </div>
-
-    <!-- FOOTER -->
-    <footer class="footer">
-        © {{ current_year }} — BMS dibuat karena kegabutan melanda 😁😁😆😅😅🙏🙏🙏
-    </footer>
 </div>
 
-<!-- MATRIX EFFECT -->
+<!-- ===========================
+     USER TABLE CARD
+=========================== -->
+<div class="card">
+    <div class="section-title">📌 ID USER</div>
+
+    <table class="user-table">
+        <tr>
+            <th>ID</th>
+            <th>Username</th>
+            <th>Role</th>
+            <th>Aksi</th>
+        </tr>
+
+        {% for u in users %}
+        <tr>
+            <td>{{ u[0] }}</td>
+            <td>{{ u[1] }}</td>
+            <td>{{ u[2] }}</td>
+            <td>
+                {% if u[1] != "root" %}
+                    <button class="btn warn" onclick="changeRole({{ u[0] }}, 'root')">Root</button>
+                    <button class="btn" onclick="changeRole({{ u[0] }}, 'user')">User</button>
+                    <button class="btn danger" onclick="deleteUser({{ u[0] }})">Hapus</button>
+                {% else %}
+                    <span class="locked">Locked</span>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+</div>
+
+<!-- ===========================
+     TOOLS ADMIN CARD
+=========================== -->
+<div class="card">
+    <div class="section-title">🛠 TOOLS ADMIN</div>
+
+    <div class="tools-grid">
+        <button class="btn tool" onclick="location.href='/home'">Media</button>
+        <button class="btn tool" onclick="location.href='/profile'">Profil</button>
+        <button class="btn tool" onclick="location.href='/upload'">Unggah File</button>
+        <button class="btn tool" onclick="location.href='/filemanager'">File Manager</button>
+        <button class="btn tool" onclick="location.href='/tools/update/gui'">System Update</button>
+        <button class="btn tool" onclick="location.href='/system/gui'">System Info</button>
+    </div>
+</div>
+
+<!-- ===========================
+     POWER CONTROL CARD
+=========================== -->
+<div class="card">
+    <div class="section-title">⚡ POWER CONTROL</div>
+
+    <div class="tools-grid">
+        <button class="btn danger" onclick="shutdownServer()">Shutdown Server</button>
+        <button class="btn warn" onclick="restartServer()">Restart Server</button>
+    </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="footer">
+    © {{ current_year }} — BMS dibuat karena kegabutan melanda 😁😆😅🙏
+</footer>
+
 <script src="/static/js/begron/BMSmatrik_begron.js"></script>
 <script src="/static/js/BMSadmin_home.js"></script>
 
