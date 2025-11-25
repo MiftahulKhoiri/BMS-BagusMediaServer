@@ -34,7 +34,7 @@ def create_app():
     # Siapkan folder penting
     prepare_bms_folders()
 
-    # Daftarkan semuanya (auth, user, admin, explorer, media, logger, dll)
+    # Daftarkan semua blueprint
     register_blueprints(app)
 
     print(">> BMS Flask App berhasil dibuat!")
@@ -43,19 +43,19 @@ def create_app():
     #   ✓ ROUTE HOME (WELCOME PAGE)
     # ======================================================
     @app.route("/")
-def BMS_home():
-    # Jika belum login → welcome page
-    if "user_id" not in session:
-        return render_template("BMS_welcome.html")
+    def BMS_home():
+        # Jika belum login → welcome page
+        if "user_id" not in session:
+            return render_template("BMS_welcome.html")
 
-    role = session.get("role", "user")
+        role = session.get("role", "user")
 
-    # Jika root / admin → ke admin home
-    if role in ("root", "admin"):
-        return redirect("/admin/home")
+        # Jika root / admin → ke admin home
+        if role in ("root", "admin"):
+            return redirect("/admin/home")
 
-    # Jika user biasa
-    return redirect("/user/home")
+        # Jika user biasa
+        return redirect("/user/home")
 
     return app
 
