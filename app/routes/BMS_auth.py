@@ -1,12 +1,12 @@
 import os
 import sqlite3
 from flask import Blueprint, render_template, request, redirect, session
-from app.routes.BMS_logger import BMS_write_log
+from werkzeug.security import generate_password_hash, check_password_hash
 
 auth = Blueprint("auth", __name__, url_prefix="/auth")
 
-# Lokasi database user
-DB_PATH = "/storage/emulated/0/BMS/database/users.db"
+# Lokasi database user (bisa diubah lewat env jika perlu)
+DB_PATH = os.environ.get("BMS_USERS_DB", "/storage/emulated/0/BMS/database/users.db")
 
 # Pastikan folder database ada
 os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
@@ -31,11 +31,12 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             username TEXT UNIQUE,
             password TEXT,
-            role TEXT
+            role TEXT DEFAULT 'user'
         )
     """)
     conn.commit()
     conn.close()
+
 
 init_db()
 
@@ -46,8 +47,10 @@ init_db()
 def BMS_auth_is_login():
     return "user_id" in session
 
+
 def BMS_auth_is_admin():
     return session.get("role") == "admin"
+
 
 def BMS_auth_is_root():
     return session.get("role") == "root"
@@ -63,23 +66,33 @@ def BMS_auth_register():
 
     username = request.form.get("username", "").strip()
     password = request.form.get("password", "").strip()
-    role = request.form.get("role", "user")
+    role = request.form.get("role", "user").strip()
 
     if not username or not password:
-        return "❌ Username & password tidak boleh kosong!"
+        return "❌ Username & password tidak boleh kosong!", 400
+
+    # Hash password sebelum disimpan
+    pw_hash = generate_password_hash(password)
 
     conn = get_db()
     try:
         conn.execute(
             "INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
-            (username, password, role)
+            (username, pw_hash, role)
         )
         conn.commit()
 
-        BMS_write_log(f"Registrasi akun baru (role: {role})", username)
+        # import logger saat dipakai (hindari circular import)
+        try:
+            from app.routes.BMS_logger import BMS_write_log
+            BMS_write_log(f"Registrasi akun baru (role: {role})", username)
+        except Exception:
+            # Jika logger gagal, jangan crash app — cukup lewati
+            pass
 
     except sqlite3.IntegrityError:
-        return "❌ Username sudah digunakan!"
+        conn.close()
+        return "❌ Username sudah digunakan!", 409
 
     finally:
         conn.close()
@@ -99,27 +112,37 @@ def BMS_auth_login():
     password = request.form.get("password", "").strip()
 
     if not username or not password:
-        return "❌ Tidak boleh kosong!"
+        return "❌ Tidak boleh kosong!", 400
 
     conn = get_db()
     user = conn.execute(
-        "SELECT * FROM users WHERE username=? AND password=?",
-        (username, password)
+        "SELECT * FROM users WHERE username=?",
+        (username,)
     ).fetchone()
     conn.close()
 
     if not user:
-        return "❌ Username atau password salah!"
+        return "❌ Username atau password salah!", 401
+
+    # Periksa hash password
+    if not check_password_hash(user["password"], password):
+        return "❌ Username atau password salah!", 401
 
     # Simpan sesi login
     session["user_id"] = user["id"]
     session["username"] = user["username"]
     session["role"] = user["role"]
 
-    BMS_write_log("Login berhasil", user["username"])
+    # catat login (logger import di sini untuk hindari circular import)
+    try:
+        from app.routes.BMS_logger import BMS_write_log
+        BMS_write_log("Login berhasil", user["username"])
+    except Exception:
+        pass
 
+    # Redirect konsisten ke admin home atau user home
     if user["role"] in ("root", "admin"):
-        return redirect("/admin/dashboard")
+        return redirect("/admin/home")
 
     return redirect("/user/home")
 
@@ -131,8 +154,11 @@ def BMS_auth_login():
 def BMS_auth_logout():
     username = session.get("username")
     if username:
-        BMS_write_log("Logout", username)
+        try:
+            from app.routes.BMS_logger import BMS_write_log
+            BMS_write_log("Logout", username)
+        except Exception:
+            pass
 
     session.clear()
-
     return redirect("/auth/login")
