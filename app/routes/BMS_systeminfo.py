@@ -2,7 +2,7 @@ import os
 import platform
 import psutil
 import time
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, render_template
 from datetime import datetime
 
 systeminfo = Blueprint("systeminfo", __name__, url_prefix="/system")
@@ -50,3 +50,11 @@ def BMS_system_info():
         "os": f"{os_name} {os_version}",
         "python": python_ver
     })
+
+
+# ======================================================
+#   🌐 GUI PAGE — BMS_systeminfo.html
+# ======================================================
+@systeminfo.route("/gui")
+def BMS_systeminfo_gui():
+    return render_template("BMS_systeminfo.html")
