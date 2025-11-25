@@ -33,15 +33,23 @@ def BMS_profile_required():
 # ======================================================
 @profile.route("/")
 def BMS_profile_page():
-    """
-    Menampilkan file HTML:
-    BMS_profile.html
-    """
+    check = BMS_profile_required()
+    if check:
+        return check
+    return render_template("BMS_profile.html")
+
+
+# ======================================================
+#  ✏ Halaman Edit Profile
+# ======================================================
+@profile.route("/edit")
+def BMS_profile_edit_page():
     check = BMS_profile_required()
     if check:
         return check
 
-    return render_template("BMS_profile.html")
+    return render_template("BMS_editprofile.html") 
+    # File ini nanti kamu buat di folder templates/
 
 
 # ======================================================
@@ -61,14 +69,13 @@ def BMS_profile_update_username():
     user_id = session.get("user_id")
 
     conn = get_db()
-
     try:
         conn.execute("UPDATE users SET username=? WHERE id=?", (new_username, user_id))
         conn.commit()
     except:
         conn.close()
         return "❌ Username sudah digunakan!"
-    
+
     conn.close()
 
     session["username"] = new_username
