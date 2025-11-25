@@ -1,59 +1,98 @@
-// ================================
-// 🔄 Jalankan Update (git pull + auto install)
-// ================================
-function runUpdate() {
-    const logBox = document.getElementById("logBox");
-    logBox.innerHTML = "Memproses update...";
+// ========================
+//  NOTIFIKASI
+// ========================
+function showNotify(msg) {
+    const box = document.getElementById("notifyBox");
+    box.innerText = msg;
+    box.style.display = "block";
 
+    setTimeout(() => {
+        box.style.display = "none";
+    }, 3000);
+}
+
+
+// ========================
+//  UPDATE OTAOMATIS
+// ========================
+function runUpdate() {
     fetch("/tools/update/run")
-        .then(r => r.json())
+        .then(res => res.json())
         .then(data => {
             if (data.error) {
-                logBox.innerHTML = "❌ ERROR: " + data.error;
-            } else {
-                let txt = "=== HASIL UPDATE ===\n\n";
-                txt += ">>> Git Pull Output:\n" + data.git_output + "\n\n";
-                txt += ">>> Install Output:\n" + data.install_output + "\n";
-                logBox.innerHTML = txt;
+                showNotify("❌ " + data.error);
+                return;
             }
+
+            if (data.notify) showNotify("✔ " + data.notify);
+
+            let text = "";
+
+            if (data.updated) {
+                text += "=== UPDATE BERHASIL ===\n";
+                text += data.git_output + "\n\n";
+                text += data.pip_output + "\n";
+            } else {
+                text += "=== TIDAK ADA PEMBARUAN ===\n";
+                text += data.message + "\n";
+            }
+
+            document.getElementById("logBox").innerText = text;
         });
 }
 
 
-// ================================
-// 🔁 Restart Server
-// ================================
+// ========================
+//  UPDATE MANUAL
+// ========================
+function runManualUpdate() {
+    fetch("/tools/update/manual")
+        .then(res => res.json())
+        .then(data => {
+
+            if (data.notify)
+                showNotify("✔ " + data.notify);
+
+            document.getElementById("logBox").innerText =
+                "=== UPDATE MANUAL ===\n" + data.pip_output;
+        });
+}
+
+
+// ========================
+//  RESTART SERVER
+// ========================
 function restartServer() {
     fetch("/tools/restart")
-        .then(r => r.json())
+        .then(res => res.json())
         .then(data => {
-            document.getElementById("logBox").innerHTML =
-                "=== RESTART SERVER ===\n" + data.message;
+            showNotify("🔁 Restart diminta");
+            document.getElementById("logBox").innerText =
+                "=== RESTART ===\n" + data.message;
         });
 }
 
 
-// ================================
-// 📜 Load Log
-// ================================
+// ========================
+//  LOAD LOG
+// ========================
 function loadLog() {
     fetch("/tools/log")
-        .then(r => r.json())
+        .then(res => res.json())
         .then(data => {
-            document.getElementById("logBox").innerHTML =
-                data.log || "(Log kosong)";
+            document.getElementById("logBox").innerText = data.log;
         });
 }
 
 
-// ================================
-// 🧹 Clear Log
-// ================================
+// ========================
+//  CLEAR LOG
+// ========================
 function clearLog() {
     fetch("/tools/log/clear")
-        .then(r => r.json())
+        .then(res => res.json())
         .then(() => {
-            document.getElementById("logBox").innerHTML =
-                "(Log telah dibersihkan)";
+            showNotify("🧹 Log dibersihkan");
+            document.getElementById("logBox").innerText = "Log dibersihkan!";
         });
 }
