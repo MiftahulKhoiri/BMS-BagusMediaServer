@@ -1,39 +1,35 @@
-// ==========================================
-// BMS ADMIN PANEL – FRONTEND CONTROL SCRIPT
-// ==========================================
+function shutdownServer() {
+    if (!confirm("Yakin mau MEMATIKAN server Flask?")) return;
 
-// Memperbarui log ke dalam textarea
-function appendLog(text) {
-    const logArea = document.getElementById("logArea");
-    logArea.value += "\n" + text;
-    logArea.scrollTop = logArea.scrollHeight;  // auto scroll ke bawah
+    fetch("/api/shutdown", { method: "POST" })
+        .then(() => alert("Server dimatikan!"))
+        .catch(() => alert("Gagal shutdown"));
 }
 
-// Kirim perintah ke backend Flask
-function sendCommand(cmd) {
-    appendLog(`[CLIENT] Mengirim perintah: ${cmd.toUpperCase()}...`);
+function restartServer() {
+    if (!confirm("Restart server Flask sekarang?")) return;
 
-    fetch(`/admin/${cmd}`, { method: "POST" })
-        .then(response => response.text())
+    fetch("/api/restart", { method: "POST" })
+        .then(() => location.reload())
+        .catch(() => alert("Gagal restart"));
+}
+
+function changeRole(id, role) {
+    fetch(`/admin/user/role/${id}/${role}`, { method: "POST" })
+        .then(res => res.json())
         .then(data => {
-            appendLog(`[SERVER] ${data}`);
-        })
-        .catch(error => {
-            appendLog(`[ERROR] ${error}`);
+            alert(data.message || "Role diubah!");
+            location.reload();
         });
 }
 
-// ==============================
-// Koneksi tombol → perintah API
-// ==============================
-document.addEventListener("DOMContentLoaded", () => {
+function deleteUser(id) {
+    if (!confirm("Hapus user ini?")) return;
 
-    const btnUpdate = document.querySelector(".btn-update");
-    const btnInstall = document.querySelector(".btn-install");
-    const btnRestart = document.querySelector(".btn-restart");
-
-    if (btnUpdate) btnUpdate.onclick = () => sendCommand("update");
-    if (btnInstall) btnInstall.onclick = () => sendCommand("install");
-    if (btnRestart) btnRestart.onclick = () => sendCommand("restart");
-
-});
+    fetch(`/admin/user/delete/${id}`, { method: "POST" })
+        .then(res => res.json())
+        .then(data => {
+            alert(data.message || "User dihapus!");
+            location.reload();
+        });
+}
