@@ -4,7 +4,7 @@ const ctx = canvas.getContext("2d");
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-const chars = "0101010011101010101010010101010101";
+const chars = "0101010011101010101010010101010101BAGUSCHOIRI";
 const matrix = [];
 
 const fontSize = 14;
