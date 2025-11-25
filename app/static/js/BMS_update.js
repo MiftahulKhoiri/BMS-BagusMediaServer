@@ -1,164 +1,59 @@
-// =============================================
-//   BMS UPDATE PANEL JS
-// =============================================
-
-document.addEventListener("DOMContentLoaded", () => {
-    loadUpdateLog();
-});
-
-
-// =============================================
-// 🔄 Jalankan Update (git pull)
-// =============================================
+// ================================
+// 🔄 Jalankan Update (git pull + auto install)
+// ================================
 function runUpdate() {
-    showLoading("Menjalankan update server...");
+    const logBox = document.getElementById("logBox");
+    logBox.innerHTML = "Memproses update...";
 
-    fetch("/tools/update")
+    fetch("/tools/update/run")
         .then(r => r.json())
         .then(data => {
-            hideLoading();
-
             if (data.error) {
-                BMSnotify("Gagal update: " + data.error, "error");
-                return;
+                logBox.innerHTML = "❌ ERROR: " + data.error;
+            } else {
+                let txt = "=== HASIL UPDATE ===\n\n";
+                txt += ">>> Git Pull Output:\n" + data.git_output + "\n\n";
+                txt += ">>> Install Output:\n" + data.install_output + "\n";
+                logBox.innerHTML = txt;
             }
-
-            BMSnotify("Update selesai!", "success");
-            loadUpdateLog();
-        })
-        .catch(() => {
-            hideLoading();
-            BMSnotify("Koneksi error!", "error");
         });
 }
 
 
-// =============================================
-// 📦 Install Package
-// =============================================
-function installPkg() {
-    let pkg = document.getElementById("pkgName").value.trim();
-    if (!pkg) {
-        BMSnotify("Nama package kosong!", "error");
-        return;
-    }
-
-    showLoading("Install package: " + pkg);
-
-    let form = new FormData();
-    form.append("package", pkg);
-
-    fetch("/tools/install", {
-        method: "POST",
-        body: form
-    })
-        .then(r => r.json())
-        .then(data => {
-            hideLoading();
-
-            if (data.error) {
-                BMSnotify("Gagal install: " + data.error, "error");
-                return;
-            }
-
-            BMSnotify("Install selesai!", "success");
-            loadUpdateLog();
-        })
-        .catch(() => {
-            hideLoading();
-            BMSnotify("Koneksi error!", "error");
-        });
-}
-
-
-// =============================================
-// 🔁 Restart Server (simulasi)
-// =============================================
-function runRestart() {
-    showLoading("Restart server...");
-
+// ================================
+// 🔁 Restart Server
+// ================================
+function restartServer() {
     fetch("/tools/restart")
         .then(r => r.json())
         .then(data => {
-            hideLoading();
-            BMSnotify("Server restart (simulasi)!", "info");
-        })
-        .catch(() => {
-            hideLoading();
-            BMSnotify("Error koneksi!", "error");
+            document.getElementById("logBox").innerHTML =
+                "=== RESTART SERVER ===\n" + data.message;
         });
 }
 
 
-// =============================================
-// ⛔ Shutdown Server (simulasi)
-// =============================================
-function runShutdown() {
-    if (!confirm("Yakin mau shutdown server?")) return;
-
-    showLoading("Shutdown server...");
-
-    fetch("/tools/shutdown")
-        .then(r => r.json())
-        .then(data => {
-            hideLoading();
-            BMSnotify("Server shutdown!", "error");
-        })
-        .catch(() => {
-            hideLoading();
-            BMSnotify("Error koneksi!", "error");
-        });
-}
-
-
-// =============================================
-// 📜 Load Log Update
-// =============================================
-function loadUpdateLog() {
-
+// ================================
+// 📜 Load Log
+// ================================
+function loadLog() {
     fetch("/tools/log")
         .then(r => r.json())
         .then(data => {
-            let box = document.getElementById("updateLog");
-            box.textContent = data.log || "Log kosong.";
-            box.scrollTop = box.scrollHeight;
-        })
-        .catch(() => {
-            BMSnotify("Gagal memuat log!", "error");
+            document.getElementById("logBox").innerHTML =
+                data.log || "(Log kosong)";
         });
 }
 
 
-// =============================================
+// ================================
 // 🧹 Clear Log
-// =============================================
-function clearUpdateLog() {
-
+// ================================
+function clearLog() {
     fetch("/tools/log/clear")
         .then(r => r.json())
         .then(() => {
-            BMSnotify("Log dibersihkan!", "info");
-            loadUpdateLog();
+            document.getElementById("logBox").innerHTML =
+                "(Log telah dibersihkan)";
         });
-}
-
-
-// =============================================
-// ⏳ Loader efek
-// =============================================
-function showLoading(msg = "Loading...") {
-    let box = document.getElementById("update-loading");
-
-    if (box) {
-        box.style.display = "block";
-        box.innerText = msg;
-    }
-}
-
-function hideLoading() {
-    let box = document.getElementById("update-loading");
-
-    if (box) {
-        box.style.display = "none";
-    }
 }
