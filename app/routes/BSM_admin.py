@@ -1,4 +1,5 @@
 from flask import Blueprint, render_template, session, request
+from .BMS_utils import require_root
 
 admin = Blueprint("admin", __name__, url_prefix="/admin")
 
