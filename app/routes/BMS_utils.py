@@ -4,8 +4,6 @@
 
 from flask import session, abort
 
-utils = Blueprint("auth", __name__, url_prefix="/utils")
-
 
 def require_root():
     """
