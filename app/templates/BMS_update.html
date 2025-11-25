@@ -5,61 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BMS - Update Server</title>
 
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: #0b0e12;
-            color: #eee;
-            margin: 0;
-            padding: 0;
-        }
-
-        .container {
-            max-width: 900px;
-            margin: auto;
-            padding: 20px;
-        }
-
-        h2 {
-            text-align: center;
-            margin-top: 20px;
-            color: #4fc3f7;
-        }
-
-        .btn {
-            display: inline-block;
-            padding: 10px 20px;
-            margin: 6px;
-            background: #1e88e5;
-            border: none;
-            border-radius: 6px;
-            color: white;
-            cursor: pointer;
-            font-size: 15px;
-        }
-
-        .btn:hover {
-            background: #1565c0;
-        }
-
-        .log-box {
-            width: 100%;
-            height: 350px;
-            background: #111;
-            padding: 10px;
-            border-radius: 6px;
-            overflow-y: auto;
-            white-space: pre-wrap;
-            margin-top: 15px;
-            font-size: 13px;
-            border: 1px solid #333;
-        }
-
-        .section-title {
-            margin-top: 25px;
-            color: #90caf9;
-        }
-    </style>
+    <!-- CSS -->
+    <link rel="stylesheet" href="/static/css/update.css">
 </head>
 <body>
 
@@ -81,64 +28,8 @@
 
 </div>
 
-<script>
-    // ================================
-    // 🔄 Jalankan Update (git pull + auto install)
-    // ================================
-    function runUpdate() {
-        document.getElementById("logBox").innerHTML = "Memproses update...";
-
-        fetch("/tools/update/run")
-            .then(r => r.json())
-            .then(data => {
-                if (data.error) {
-                    document.getElementById("logBox").innerHTML = "❌ ERROR: " + data.error;
-                } else {
-                    let txt = "=== HASIL UPDATE ===\n\n";
-                    txt += ">>> Git Pull Output:\n" + data.git_output + "\n\n";
-                    txt += ">>> Install Output:\n" + data.install_output + "\n";
-                    document.getElementById("logBox").innerHTML = txt;
-                }
-            });
-    }
-
-
-    // ================================
-    // 🔁 Restart Server
-    // ================================
-    function restartServer() {
-        fetch("/tools/restart")
-            .then(r => r.json())
-            .then(data => {
-                document.getElementById("logBox").innerHTML =
-                    "=== RESTART SERVER ===\n" + data.message;
-            });
-    }
-
-
-    // ================================
-    // 📜 Load Log
-    // ================================
-    function loadLog() {
-        fetch("/tools/log")
-            .then(r => r.json())
-            .then(data => {
-                document.getElementById("logBox").innerHTML = data.log || "(Log kosong)";
-            });
-    }
-
-
-    // ================================
-    // 🧹 Clear Log
-    // ================================
-    function clearLog() {
-        fetch("/tools/log/clear")
-            .then(r => r.json())
-            .then(() => {
-                document.getElementById("logBox").innerHTML = "(Log telah dibersihkan)";
-            });
-    }
-</script>
+<!-- JS -->
+<script src="/static/js/update.js"></script>
 
 </body>
 </html>
