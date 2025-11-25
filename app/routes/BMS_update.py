@@ -1,6 +1,8 @@
 import os
 import subprocess
-from flask import Blueprint, request, jsonify, session
+from flask import (
+    Blueprint, request, jsonify, session, render_template
+)
 from app.routes.BMS_auth import (
     BMS_auth_is_login,
     BMS_auth_is_admin,
@@ -19,9 +21,6 @@ def BMS_update_required():
         BMS_write_log("Akses update ditolak (belum login)", "UNKNOWN")
         return jsonify({"error": "Belum login!"}), 403
 
-    # Jika hanya ROOT boleh update:
-    # if not BMS_auth_is_root():
-
     if not (BMS_auth_is_admin() or BMS_auth_is_root()):
         BMS_write_log("Akses update ditolak (tanpa izin)", session.get("username"))
         return jsonify({"error": "Akses ditolak!"}), 403
@@ -30,9 +29,21 @@ def BMS_update_required():
 
 
 # ======================================================
-#   🔄 Update Server (git pull)
+#   🌐 GUI Update Page
 # ======================================================
-@update.route("/update")
+@update.route("/update/gui")
+def BMS_update_gui():
+    check = BMS_update_required()
+    if check:
+        return check
+
+    return render_template("BMS_update.html")
+
+
+# ======================================================
+#   🔄 Update Server (git pull + auto install requirements)
+# ======================================================
+@update.route("/update/run")
 def BMS_tool_update():
     check = BMS_update_required()
     if check:
@@ -42,45 +53,36 @@ def BMS_tool_update():
     BMS_write_log("Menjalankan UPDATE (git pull)", username)
 
     try:
-        result = subprocess.getoutput("git pull")
-        BMS_write_log(f"Hasil update: {result}", username)
-        return jsonify({"status": "ok", "output": result})
+        # Jalankan git pull
+        git_result = subprocess.getoutput("git pull")
+        BMS_write_log(f"Hasil git pull: {git_result}", username)
+
+        # Cek apakah ada perubahan
+        updated = (
+            "Updating" in git_result
+            or "Fast-forward" in git_result
+            or "changed" in git_result
+        )
+
+        pip_result = ""
+
+        # Jika ada perubahan → jalankan install
+        if updated:
+            BMS_write_log("Perubahan terdeteksi. Menjalankan install dependensi...", username)
+            pip_result = subprocess.getoutput("pip install -r requirements.txt")
+            BMS_write_log(f"Hasil install requirements: {pip_result}", username)
+        else:
+            pip_result = "Tidak ada perubahan. Install dilewati."
+            BMS_write_log(pip_result, username)
+
+        return jsonify({
+            "status": "ok",
+            "git_output": git_result,
+            "install_output": pip_result
+        })
+
     except Exception as e:
         BMS_write_log(f"Error update: {e}", username)
-        return jsonify({"error": str(e)})
-
-
-# ======================================================
-#   📦 Install Package (pip install)
-# ======================================================
-@update.route("/install", methods=["POST"])
-def BMS_tool_install():
-    check = BMS_update_required()
-    if check:
-        return check
-
-    pkg = request.form.get("package", "").strip()
-    username = session.get("username")
-
-    if not pkg:
-        return jsonify({"error": "Nama package kosong!"})
-
-    # Sanitasi package (anti command injection)
-    bad_chars = [";", "&", "|", ">", "<", "$", "`", "&&", "||"]
-    for bad in bad_chars:
-        if bad in pkg:
-            BMS_write_log(f"[BLOCKED] Command injection pada pip install: {pkg}", username)
-            return jsonify({"error": "Nama package tidak valid!"})
-
-    BMS_write_log(f"Install package dimulai: {pkg}", username)
-
-    try:
-        cmd = f"pip install {pkg}"
-        result = subprocess.getoutput(cmd)
-        BMS_write_log(f"Hasil install {pkg}: {result}", username)
-        return jsonify({"status": "ok", "output": result})
-    except Exception as e:
-        BMS_write_log(f"Error install {pkg}: {e}", username)
         return jsonify({"error": str(e)})
 
 
@@ -97,21 +99,6 @@ def BMS_tool_restart():
     BMS_write_log("Server RESTART diminta", username)
 
     return jsonify({"status": "ok", "message": "Restart (simulasi)"})
-
-
-# ======================================================
-#   ⛔ Shutdown Server (Simulasi)
-# ======================================================
-@update.route("/shutdown")
-def BMS_tool_shutdown():
-    check = BMS_update_required()
-    if check:
-        return check
-
-    username = session.get("username")
-    BMS_write_log("Server SHUTDOWN diminta", username)
-
-    return jsonify({"status": "ok", "message": "Shutdown (simulasi)"})
 
 
 # ======================================================
