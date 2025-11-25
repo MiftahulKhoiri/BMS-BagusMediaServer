@@ -8,23 +8,28 @@
     <!-- BACKGROUND MATRIX -->
     <link rel="stylesheet" href="/static/css/begron/BMSmatrik_begron.css">
 
-    <!-- STYLE KHUSUS ADMIN HOME -->
+    <!-- STYLE ADMIN -->
     <link rel="stylesheet" href="/static/css/BMSadmin_home.css">
 </head>
 <body>
 
-<!-- MATRIX BACKGROUND -->
+<!-- MATRIX CANVAS -->
 <canvas id="matrixCanvas"></canvas>
 
-<!-- TERMINAL WRAPPER -->
+<!-- MAIN TERMINAL BOX -->
 <div class="terminal">
-    <h1 class="title">[BAGUS MEDIA SERVER]</h1>
 
-    <!-- ============================
-         USER MANAGEMENT
+    <!-- LOGO -->
+    <div class="logo">
+        <div class="logo-title">BMS</div>
+        <div class="logo-sub">Bagus MEDIA Server</div>
+    </div>
+
+    <!-- ===========================
+         USER TABLE
     ============================ -->
     <div class="section">
-        <div class="section-title">ID USER:</div>
+        <div class="section-title">📌 ID USER</div>
 
         <table class="user-table">
             <tr>
@@ -53,14 +58,14 @@
         </table>
     </div>
 
-    <!-- ============================
-         ADMIN TOOLS
+    <!-- ===========================
+         TOOLS ADMIN
     ============================ -->
     <div class="section">
-        <div class="section-title">[ TOOLS ]</div>
+        <div class="section-title">🛠 TOOLS ADMIN</div>
 
-        <div class="tools">
-            <button class="btn tool" onclick="location.href='/home'">MEDIA</button>
+        <div class="tools-grid">
+            <button class="btn tool" onclick="location.href='/home'">Media</button>
             <button class="btn tool" onclick="location.href='/profile'">Profil</button>
             <button class="btn tool" onclick="location.href='/upload'">Unggah File</button>
             <button class="btn tool" onclick="location.href='/filemanager'">File Manager</button>
@@ -69,44 +74,27 @@
         </div>
     </div>
 
-    <!-- ============================
+    <!-- ===========================
          POWER CONTROL
     ============================ -->
     <div class="section">
-        <div class="section-title">[ POWER CONTROL ]</div>
+        <div class="section-title">⚡ POWER CONTROL</div>
 
-        <div class="tools">
+        <div class="tools-grid">
             <button class="btn danger" onclick="shutdownServer()">Shutdown Server</button>
             <button class="btn warn" onclick="restartServer()">Restart Server</button>
         </div>
     </div>
 
+    <!-- FOOTER -->
     <footer class="footer">
-        © {{ current_year }} BAGUS MEDIA SERVER • TERMINAL MODE
+        © {{ current_year }} — BMS dibuat karena kegabutan melanda 😁😁😆😅😅🙏🙏🙏
     </footer>
 </div>
 
 <!-- MATRIX EFFECT -->
 <script src="/static/js/begron/BMSmatrik_begron.js"></script>
-
-<!-- POWER SCRIPT -->
-<script>
-function shutdownServer(){
-    if (!confirm("Yakin mau MEMATIKAN server Flask?")) return;
-
-    fetch("/api/shutdown", { method: "POST" })
-      .then(() => alert("Server dimatikan!"))
-      .catch(() => alert("Gagal shutdown"));
-}
-
-function restartServer(){
-    if (!confirm("Restart server Flask sekarang?")) return;
-
-    fetch("/api/restart", { method: "POST" })
-      .then(() => location.reload())
-      .catch(() => alert("Gagal restart"));
-}
-</script>
+<script src="/static/js/BMSadmin_home.js"></script>
 
 </body>
 </html>
