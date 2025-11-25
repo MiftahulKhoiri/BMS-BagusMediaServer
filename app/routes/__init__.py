@@ -5,7 +5,6 @@
 
 from .BMS_auth import auth
 from .BMS_logger import logger
-from .BMS_utils import utils
 
 from .BMS_user import user
 from .BMS_admin import admin
@@ -33,7 +32,6 @@ def register_blueprints(app):
     # --- Core Auth ---
     app.register_blueprint(auth)
     app.register_blueprint(logger)
-    app.register_blueprint(utils)
 
     # --- User & Admin Panel ---
     app.register_blueprint(user)
