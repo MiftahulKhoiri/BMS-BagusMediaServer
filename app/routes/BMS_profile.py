@@ -48,7 +48,7 @@ def BMS_profile_edit_page():
     if check:
         return check
 
-    return render_template("BMS_editprofile.html") 
+    return render_template("BMS_edit_profile.html") 
     # File ini nanti kamu buat di folder templates/
 
 
