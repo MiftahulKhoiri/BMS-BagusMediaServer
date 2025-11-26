@@ -9,7 +9,7 @@
 <body>
 
 <!-- ====================================== -->
-<!--          SIDEBAR + LOGOUT BUTTON       -->
+<!--     SIDEBAR: HOME, PROFILE, LOGOUT     -->
 <!-- ====================================== -->
 <div class="sidebar">
 
@@ -18,15 +18,16 @@
         <small>Profile Panel</small>
     </div>
 
-    <a href="/user/home" class="menu-link">🏠 Home</a>
+    <!-- Tombol Home sesuai ROLE -->
+    {% if session['role'] == 'admin' or session['role'] == 'root' %}
+        <a href="/admin/dashboard" class="menu-link">🏠 Home</a>
+    {% else %}
+        <a href="/user/home" class="menu-link">🏠 Home</a>
+    {% endif %}
+
     <a href="/profile" class="menu-link active">👤 Profil</a>
 
-    <!-- Tombol EDIT PROFILE di bagian bawah -->
-    <div class="edit-box">
-        <a class="edit-btn" href="/profile/edit">✏ Edit Profile</a>
-    </div>
-
-    <!-- Tombol Logout di paling bawah -->
+    <!-- Logout -->
     <div class="logout-box">
         <a class="logout-btn" href="/auth/logout">🚪 Logout</a>
     </div>
@@ -35,7 +36,7 @@
 
 
 <!-- ====================================== -->
-<!--               PROFILE CONTENT          -->
+<!--             PROFILE CONTENT            -->
 <!-- ====================================== -->
 <div class="content">
 
@@ -50,20 +51,9 @@
 
         <hr class="line">
 
-        <h3>✏ Ubah Username</h3>
-        <form action="/profile/update_username" method="POST" class="form-block">
-            <input type="text" name="username" class="input-text" placeholder="Username baru" required>
-            <button type="submit" class="btn-primary">Simpan Username</button>
-        </form>
-
-        <hr class="line">
-
-        <h3>🔐 Ubah Password</h3>
-        <form action="/profile/update_password" method="POST" class="form-block">
-            <input type="password" name="old" class="input-text" placeholder="Password lama" required>
-            <input type="password" name="new" class="input-text" placeholder="Password baru" required>
-            <button type="submit" class="btn-primary">Simpan Password</button>
-        </form>
+        <p style="color:#ccc; text-align:center;">
+            Tidak ada menu edit. Profil hanya untuk informasi.
+        </p>
 
     </div>
 
