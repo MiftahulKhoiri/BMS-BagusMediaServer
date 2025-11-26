@@ -72,7 +72,7 @@ def prepare_bms_folders():
 
     # Deteksi OS (Android / PC)
     if os.path.exists("/storage/emulated/0/"):
-        BASE = "/storage/emulated/0/BMS"
+        BASE = "/storage/emulated/BMS"
     else:
         BASE = os.path.expanduser("~/BMS")
 
