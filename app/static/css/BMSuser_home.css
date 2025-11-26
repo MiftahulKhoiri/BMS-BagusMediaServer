@@ -1,0 +1,47 @@
+.home-box {
+    text-align: center;
+    padding: 20px;
+}
+
+.home-logo .logo-text {
+    font-size: 38px;
+    font-weight: bold;
+    margin: 0;
+}
+
+.home-logo .logo-sub {
+    font-size: 16px;
+    margin-top: 5px;
+    color: #7cccff;
+}
+
+.home-line {
+    margin: 18px auto;
+    width: 80%;
+    border: 0;
+    border-top: 1px solid #44aaff55;
+}
+
+.home-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    margin: 20px 0;
+}
+
+.home-item {
+    cursor: pointer;
+    font-size: 20px;
+    padding: 10px 0;
+    border-radius: 6px;
+    transition: 0.2s;
+}
+
+.home-item:hover {
+    background-color: #1b8cff44;
+}
+
+.home-footer {
+    font-size: 14px;
+    opacity: 0.8;
+}
