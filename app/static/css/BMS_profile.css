@@ -1,118 +1,144 @@
 body {
     margin: 0;
     padding: 0;
-    font-family: "Arial", sans-serif;
+    font-family: Arial, sans-serif;
     color: #0f0;
 }
 
+/* Layout */
 .profile-container {
     display: flex;
     width: 100%;
     height: 100vh;
-    position: relative;
 }
 
-/* SIDEBAR */
+/* =================== SIDEBAR =================== */
 .sidebar {
     width: 230px;
-    background: rgba(0, 0, 0, 0.75);
+    background: rgba(0,0,0,0.75);
     border-right: 2px solid #00ff88;
-    padding: 20px;
-    box-sizing: border-box;
     backdrop-filter: blur(5px);
+    padding: 20px;
 }
 
 .sidebar-header {
     text-align: center;
-    margin-bottom: 30px;
+    margin-bottom: 25px;
 }
-
-.sidebar-header h2 {
-    color: #00ff88;
-    margin: 0;
-}
-
-.sidebar-header span {
-    font-size: 14px;
-    opacity: 0.8;
-}
+.sidebar-header h2 { margin: 0; color: #00ff88; }
 
 .menu-item {
     display: block;
-    padding: 10px 15px;
-    margin-bottom: 10px;
+    color: #00ff88;
+    text-decoration: none;
+    padding: 10px;
     border: 1px solid #00ff88;
     border-radius: 6px;
-    text-decoration: none;
-    color: #00ff88;
+    margin-bottom: 12px;
     transition: 0.2s;
 }
 
 .menu-item:hover {
-    background: #00ff8844;
-}
-
-.menu-item.active {
     background: #00ff8877;
-    color: black;
-    font-weight: bold;
 }
 
 .logout {
-    margin-top: 40px;
-    border-color: red;
     color: red;
+    border-color: red;
 }
-
 .logout:hover {
     background: #ff000044;
 }
 
-/* CONTENT */
+
+/* =================== CONTENT =================== */
 .content {
     width: 100%;
-    padding: 40px;
+    padding-bottom: 60px;
     overflow-y: auto;
 }
 
-.profile-box {
-    max-width: 500px;
-    margin: auto;
-    background: rgba(0, 0, 0, 0.65);
-    padding: 25px;
-    border-radius: 10px;
-    border: 1px solid #00ff88;
+/* Sampul */
+.cover-box {
+    width: 100%;
+    height: 220px;
+    overflow: hidden;
+}
+
+.cover-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+/* Foto profil */
+.profile-photo-box {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: -70px;
+}
+
+.profile-photo {
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    border: 4px solid #00ff55;
+    object-fit: cover;
+    background: black;
     box-shadow: 0 0 20px #00ff55;
 }
 
-.profile-box h1 {
+/* Info */
+.info-box {
     text-align: center;
-    margin-bottom: 20px;
+    margin-top: 20px;
 }
 
-.info {
-    font-size: 17px;
-    margin: 8px 0;
+.info-box h1 {
+    margin: 0;
+    font-size: 26px;
+    color: #00ff88;
 }
 
-.line {
-    border-bottom: 1px solid #00ff88;
-    margin: 20px 0;
+.role {
+    margin-top: 5px;
+    opacity: 0.8;
 }
 
-.no-edit {
-    text-align: center;
-    opacity: 0.6;
-    font-style: italic;
+/* Bio */
+.bio-box {
+    width: 80%;
+    margin: 20px auto;
+    padding: 12px;
+    background: rgba(0,0,0,0.45);
+    border: 1px solid #00ff88;
+    border-radius: 8px;
 }
 
-/* RESPONSIVE */
+/* Detail biodata */
+.detail-list {
+    width: 80%;
+    margin: auto;
+    text-align: left;
+    margin-top: 25px;
+    padding: 15px;
+    border: 1px solid #00ff88;
+    background: rgba(0,0,0,0.4);
+    border-radius: 8px;
+}
+
+.detail-list p {
+    margin: 6px 0;
+}
+
+/* Responsive */
 @media (max-width: 768px) {
     .sidebar {
         width: 180px;
     }
-
-    .profile-box {
-        width: 85%;
+    .profile-photo {
+        width: 110px;
+        height: 110px;
     }
 }
