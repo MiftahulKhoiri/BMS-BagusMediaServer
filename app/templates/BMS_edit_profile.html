@@ -28,7 +28,7 @@
 
         <!-- Tombol kembali sesuai role -->
         {% if session['role'] in ['admin', 'root'] %}
-            <a class="menu-item" href="/admin/dashboard">🏠 Home Admin</a>
+            <a class="menu-item" href="/admin/home">🏠 Home Admin</a>
         {% else %}
             <a class="menu-item" href="/user/home">🏠 Home User</a>
         {% endif %}
