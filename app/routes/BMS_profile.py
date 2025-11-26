@@ -1,13 +1,14 @@
+import os
 import sqlite3
 from flask import Blueprint, render_template, request, redirect, session
-from app.routes.BMS_auth import (
-    BMS_auth_is_login
-)
+from werkzeug.utils import secure_filename
+from app.routes.BMS_auth import BMS_auth_is_login
 
 profile = Blueprint("profile", __name__, url_prefix="/profile")
 
 DB_PATH = "/storage/emulated/0/BMS/database/users.db"
-
+PROFILE_FOLDER = "/storage/emulated/0/BMS/profile/"
+os.makedirs(PROFILE_FOLDER, exist_ok=True)   # folder upload foto
 
 # ======================================================
 #  📌 Helper Database
@@ -19,10 +20,35 @@ def get_db():
 
 
 # ======================================================
-#  🔐 Proteksi akses
+#  📌 Tambahkan kolom baru jika belum ada
+# ======================================================
+def ensure_profile_columns():
+    conn = get_db()
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT UNIQUE,
+            password TEXT,
+            role TEXT,
+            nama TEXT,
+            umur TEXT,
+            gender TEXT,
+            email TEXT,
+            bio TEXT,
+            foto_profile TEXT,
+            foto_background TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+ensure_profile_columns()
+
+
+# ======================================================
+#  🔐 Proteksi Halaman
 # ======================================================
 def BMS_profile_required():
-    """User harus login untuk mengakses modul profil."""
     if not BMS_auth_is_login():
         return redirect("/auth/login")
     return None
@@ -36,7 +62,12 @@ def BMS_profile_page():
     check = BMS_profile_required()
     if check:
         return check
-    return render_template("BMS_profile.html")
+
+    conn = get_db()
+    user = conn.execute("SELECT * FROM users WHERE id=?", (session.get("user_id"),)).fetchone()
+    conn.close()
+
+    return render_template("BMS_profile.html", user=user)
 
 
 # ======================================================
@@ -48,69 +79,94 @@ def BMS_profile_edit_page():
     if check:
         return check
 
-    return render_template("BMS_edit_profile.html") 
-    # File ini nanti kamu buat di folder templates/
-
-
-# ======================================================
-#  ✏ Update Username
-# ======================================================
-@profile.route("/update_username", methods=["POST"])
-def BMS_profile_update_username():
-    check = BMS_profile_required()
-    if check:
-        return check
-
-    new_username = request.form.get("username")
-
-    if not new_username:
-        return "❌ Username baru tidak boleh kosong!"
-
-    user_id = session.get("user_id")
-
     conn = get_db()
-    try:
-        conn.execute("UPDATE users SET username=? WHERE id=?", (new_username, user_id))
-        conn.commit()
-    except:
-        conn.close()
-        return "❌ Username sudah digunakan!"
-
+    user = conn.execute("SELECT * FROM users WHERE id=?", (session.get("user_id"),)).fetchone()
     conn.close()
 
-    session["username"] = new_username
-
-    return "✔ Username berhasil diupdate!"
+    return render_template("BMS_edit_profile.html", user=user)
 
 
 # ======================================================
-#  🔐 Update Password
+#  💾 SIMPAN PROFIL LENGKAP
 # ======================================================
-@profile.route("/update_password", methods=["POST"])
-def BMS_profile_update_password():
+@profile.route("/save", methods=["POST"])
+def BMS_profile_save():
     check = BMS_profile_required()
     if check:
         return check
 
-    old_pw = request.form.get("old")
-    new_pw = request.form.get("new")
-
-    if not old_pw or not new_pw:
-        return "❌ Password tidak boleh kosong!"
-
     user_id = session.get("user_id")
 
+    # Data teks
+    nama = request.form.get("nama")
+    umur = request.form.get("umur")
+    gender = request.form.get("gender")
+    email = request.form.get("email")
+    bio = request.form.get("bio")
+
+    # =======================
+    # Upload Foto Profil
+    # =======================
+    foto_profile_path = None
+    foto_profile = request.files.get("foto_profile")
+
+    if foto_profile and foto_profile.filename != "":
+        filename = f"profile_{user_id}_" + secure_filename(foto_profile.filename)
+        foto_profile_path = os.path.join(PROFILE_FOLDER, filename)
+        foto_profile.save(foto_profile_path)
+        foto_profile_path = foto_profile_path  # path final
+
+    # =======================
+    # Upload Foto Background
+    # =======================
+    foto_background_path = None
+    foto_background = request.files.get("foto_background")
+
+    if foto_background and foto_background.filename != "":
+        filename = f"background_{user_id}_" + secure_filename(foto_background.filename)
+        foto_background_path = os.path.join(PROFILE_FOLDER, filename)
+        foto_background.save(foto_background_path)
+
+
+    # =======================
+    # Update ke database
+    # =======================
     conn = get_db()
-    user = conn.execute("SELECT * FROM users WHERE id=?", (user_id,)).fetchone()
 
-    # cek password lama
-    if user["password"] != old_pw:
-        conn.close()
-        return "❌ Password lama salah!"
+    # Build dynamic update query
+    update_fields = {
+        "nama": nama,
+        "umur": umur,
+        "gender": gender,
+        "email": email,
+        "bio": bio,
+    }
 
-    # update password baru
-    conn.execute("UPDATE users SET password=? WHERE id=?", (new_pw, user_id))
+    if foto_profile_path:
+        update_fields["foto_profile"] = foto_profile_path
+
+    if foto_background_path:
+        update_fields["foto_background"] = foto_background_path
+
+    # Generate query otomatis
+    set_query = ", ".join([f"{k}=?" for k in update_fields.keys()])
+    values = list(update_fields.values())
+    values.append(user_id)
+
+    conn.execute(f"UPDATE users SET {set_query} WHERE id=?", values)
     conn.commit()
     conn.close()
 
-    return "✔ Password berhasil diupdate!"
+    # =======================
+    # Update session supaya real-time
+    # =======================
+    session["nama"] = nama
+    session["foto_profile"] = foto_profile_path
+    session["foto_background"] = foto_background_path
+
+    # Redirect kembali sesuai role
+    role = session.get("role")
+    
+    if role in ("admin", "root"):
+        return redirect("/admin/dashboard")
+    return redirect("/user/home")
