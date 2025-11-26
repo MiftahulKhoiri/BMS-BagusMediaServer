@@ -20,7 +20,7 @@
 
     <!-- Tombol Home sesuai ROLE -->
     {% if session['role'] == 'admin' or session['role'] == 'root' %}
-        <a href="/admin/dashboard" class="menu-link">🏠 Home</a>
+        <a href="/admin/home" class="menu-link">🏠 Home</a>
     {% else %}
         <a href="/user/home" class="menu-link">🏠 Home</a>
     {% endif %}
