@@ -2,62 +2,65 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BMS - Profil User</title>
 
+    <!-- Background Matrix -->
+    <link rel="stylesheet" href="/static/css/begron/BMSmatrik_begron.css">
+
+    <!-- Style Profil -->
     <link rel="stylesheet" href="/static/css/BMS_profile.css">
 </head>
 <body>
 
-<!-- ====================================== -->
-<!--     SIDEBAR: HOME, PROFILE, LOGOUT     -->
-<!-- ====================================== -->
-<div class="sidebar">
+<!-- MATRIX BG -->
+<canvas id="matrixCanvas"></canvas>
 
-    <div class="sidebar-header">
-        <h3>BMS</h3>
-        <small>Profile Panel</small>
+<div class="profile-container">
+
+    <!-- ============= SIDEBAR ============= -->
+    <div class="sidebar">
+
+        <div class="sidebar-header">
+            <h2>BMS</h2>
+            <span>Profile Panel</span>
+        </div>
+
+        <!-- Tombol Home sesuai ROLE -->
+        {% if session['role'] == 'admin' or session['role'] == 'root' %}
+            <a href="/admin/home" class="menu-item">🏠 Home Admin</a>
+        {% else %}
+            <a href="/user/home" class="menu-item">🏠 Home User</a>
+        {% endif %}
+
+        <a class="menu-item active" href="/profile/edit">👤 Profil</a>
+
+        <a class="menu-item logout" href="/auth/logout">🚪 Logout</a>
     </div>
 
-    <!-- Tombol Home sesuai ROLE -->
-    {% if session['role'] == 'admin' or session['role'] == 'root' %}
-        <a href="/admin/home" class="menu-link">🏠 Home</a>
-    {% else %}
-        <a href="/user/home" class="menu-link">🏠 Home</a>
-    {% endif %}
 
-    <a href="/profile" class="menu-link active">👤 Profil</a>
+    <!-- ============= ISI PROFIL ============= -->
+    <div class="content">
 
-    <!-- Logout -->
-    <div class="logout-box">
-        <a class="logout-btn" href="/auth/logout">🚪 Logout</a>
-    </div>
+        <div class="profile-box">
+            <h1>[ 👤 PROFIL USER ]</h1>
 
-</div>
+            <p class="info"><strong>Username:</strong> {{ session['username'] }}</p>
+            <p class="info"><strong>Role:</strong> {{ session['role'] }}</p>
 
+            <div class="line"></div>
 
-<!-- ====================================== -->
-<!--             PROFILE CONTENT            -->
-<!-- ====================================== -->
-<div class="content">
-
-    <div class="profile-box">
-
-        <h2>[ 👤 PROFIL USER ]</h2>
-
-        <p>
-            <strong>Username:</strong> {{ session['username'] }} <br>
-            <strong>Role:</strong> {{ session['role'] }}
-        </p>
-
-        <hr class="line">
-
-        <p style="color:#ccc; text-align:center;">
-            Tidak ada menu edit. Profil hanya untuk informasi.
-        </p>
+            <p class="no-edit">
+                Profil ini hanya untuk informasi.  
+                Tidak ada menu edit.
+            </p>
+        </div>
 
     </div>
 
 </div>
+
+<script src="/static/js/begron/BMSmatrik_begron.js"></script>
 
 </body>
 </html>
