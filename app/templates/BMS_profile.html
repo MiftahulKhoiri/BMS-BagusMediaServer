@@ -27,7 +27,7 @@
         </div>
 
         {% if session['role'] in ['admin','root'] %}
-            <a href="/admin/dashboard" class="menu-item">🏠 Home Admin</a>
+            <a href="/admin/home" class="menu-item">🏠 Home Admin</a>
         {% else %}
             <a href="/user/home" class="menu-item">🏠 Home User</a>
         {% endif %}
