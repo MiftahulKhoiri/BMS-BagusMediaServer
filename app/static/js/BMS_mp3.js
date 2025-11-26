@@ -1,56 +1,153 @@
-// =============================
-//   BMS MP3 PLAYER
-// =============================
+let playlist = [];
+let currentIndex = 0;
+let repeatMode = "none";  // none, one, all
+let shuffleMode = false;
 
-let mp3Audio = new Audio();
-let mp3List = [];
-let mp3Index = 0;
+const audio = document.getElementById("audioPlayer");
+const playlistHTML = document.getElementById("playlistContainer");
+const songTitle = document.getElementById("songTitle");
+const songIndex = document.getElementById("songIndex");
 
-// Load daftar MP3 dari server
-function loadMP3List() {
-    fetch("/mp3/list")
-        .then(r => r.json())
-        .then(data => {
-            mp3List = data.files || [];
-            if (mp3List.length > 0) {
-                loadMP3(0);
-            } else {
-                document.getElementById("mp3Title").innerText = "Tidak ada file MP3.";
-            }
-        });
+
+// =============================================
+// 🔥 1. LOAD PLAYLIST DARI SERVER
+// =============================================
+async function loadPlaylist() {
+    const res = await fetch("/mp3/scan");
+    const data = await res.json();
+
+    playlist = data.files;
+    renderPlaylist();
+    updateInfo();
 }
 
-// Load file MP3 berdasarkan index
-function loadMP3(i) {
-    if (mp3List.length === 0) return;
 
-    mp3Index = i;
-    let file = mp3List[i];
-    
-    mp3Audio.src = "/mp3/play?file=" + encodeURIComponent(file);
-    mp3Audio.play();
+// =============================================
+// 🔥 2. RENDER PLAYLIST DI HTML
+// =============================================
+function renderPlaylist() {
+    playlistHTML.innerHTML = "";
 
-    document.getElementById("mp3Title").innerText = file;
+    playlist.forEach((path, index) => {
+        let name = path.split("/").pop();
+
+        let li = document.createElement("li");
+        li.textContent = name;
+        li.onclick = () => playSong(index);
+
+        playlistHTML.appendChild(li);
+    });
 }
 
-// Control
-function mp3Play() { mp3Audio.play(); }
-function mp3Pause() { mp3Audio.pause(); }
 
-function mp3Next() {
-    if (mp3List.length === 0) return;
-    mp3Index = (mp3Index + 1) % mp3List.length;
-    loadMP3(mp3Index);
+// =============================================
+// 🔥 3. MEMUTAR LAGU
+// =============================================
+function playSong(index) {
+    currentIndex = index;
+
+    const file = playlist[currentIndex];
+    const name = file.split("/").pop();
+
+    audio.src = "/mp3/play?file=" + encodeURIComponent(file);
+    audio.play();
+
+    document.getElementById("btnPlay").style.display = "none";
+    document.getElementById("btnPause").style.display = "inline-block";
+
+    songTitle.textContent = name;
+    updateInfo();
 }
 
-function mp3Prev() {
-    if (mp3List.length === 0) return;
-    mp3Index = (mp3Index - 1 + mp3List.length) % mp3List.length;
-    loadMP3(mp3Index);
+
+// =============================================
+// 🔥 4. NEXT, PREV
+// =============================================
+function nextSong() {
+    if (shuffleMode) {
+        currentIndex = Math.floor(Math.random() * playlist.length);
+    } else {
+        currentIndex++;
+        if (currentIndex >= playlist.length) currentIndex = 0;
+    }
+    playSong(currentIndex);
 }
 
-// Auto next ketika musik selesai
-mp3Audio.onended = () => mp3Next();
+function prevSong() {
+    currentIndex--;
+    if (currentIndex < 0) currentIndex = playlist.length - 1;
+    playSong(currentIndex);
+}
 
-// Auto load playlist saat halaman siap
-document.addEventListener("DOMContentLoaded", loadMP3List);
+
+// =============================================
+// 🔥 5. AUTO NEXT
+// =============================================
+audio.onended = () => {
+    if (repeatMode === "one") {
+        playSong(currentIndex);
+    } else if (repeatMode === "all") {
+        nextSong();
+    }
+};
+
+
+// =============================================
+// 🔥 6. TOMBOL PLAY/PAUSE
+// =============================================
+document.getElementById("btnPlay").onclick = () => {
+    audio.play();
+    document.getElementById("btnPlay").style.display = "none";
+    document.getElementById("btnPause").style.display = "inline-block";
+};
+
+document.getElementById("btnPause").onclick = () => {
+    audio.pause();
+    document.getElementById("btnPause").style.display = "none";
+    document.getElementById("btnPlay").style.display = "inline-block";
+};
+
+
+// =============================================
+// 🔥 7. MODE REPEAT
+// =============================================
+document.getElementById("btnRepeatOne").onclick = () => {
+    repeatMode = "one";
+    alert("Repeat One aktif");
+};
+
+document.getElementById("btnRepeatAll").onclick = () => {
+    repeatMode = "all";
+    alert("Repeat All aktif");
+};
+
+
+// =============================================
+// 🔥 8. SHUFFLE
+// =============================================
+document.getElementById("btnShuffle").onclick = () => {
+    shuffleMode = !shuffleMode;
+    alert(shuffleMode ? "Shuffle ON" : "Shuffle OFF");
+};
+
+
+// =============================================
+// 🔥 9. NEXT / PREV BUTTONS
+// =============================================
+document.getElementById("btnNext").onclick = nextSong;
+document.getElementById("btnPrev").onclick = prevSong;
+
+
+// =============================================
+// 🔥 10. INFO PLAYLIST
+// =============================================
+function updateInfo() {
+    songIndex.textContent =
+        (currentIndex + 1) + " / " + playlist.length;
+}
+
+
+// =============================================
+// 🔥 11. LOAD AWAL
+// =============================================
+loadPlaylist();
