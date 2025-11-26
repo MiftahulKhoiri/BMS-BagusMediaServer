@@ -2,12 +2,15 @@ import os
 from flask import Flask, redirect, render_template, session
 from flask_cors import CORS
 
-# Register blueprint dari app/routes
+# Import config BMS
+from app.BMS_config import BASE
+
+# Import Blueprint register
 from app.routes import register_blueprints
 
 
 # ======================================================
-#   FUNGSI UTAMA: MEMBUAT APLIKASI FLASK
+#   FUNGSI UTAMA
 # ======================================================
 def create_app():
 
@@ -17,13 +20,12 @@ def create_app():
         static_folder="static"
     )
 
-    # --- Secret Key (aman & fleksibel) ---
     app.config["SECRET_KEY"] = os.environ.get(
         "BMS_SECRET",
         "BAGUS-MEDIA-SERVER-KEY-99999"
     )
 
-    # --- CORS aman: hanya izinkan internal access ---
+    # CORS internal only
     CORS(app, resources={r"/*": {"origins": [
         "http://localhost",
         "http://127.0.0.1",
@@ -31,69 +33,36 @@ def create_app():
         "http://localhost:5000"
     ]}})
 
-    # Siapkan folder penting
-    prepare_bms_folders()
-
-    # Daftarkan semua blueprint
+    # Register semua blueprint
     register_blueprints(app)
 
     print(">> BMS Flask App berhasil dibuat!")
+    print(f">> BASE Folder: {BASE}")
 
     # ======================================================
-    #   ✓ ROUTE HOME (WELCOME PAGE)
+    #   ROUTE HOME (Welcome)
     # ======================================================
     @app.route("/")
     def BMS_home():
+
         # Jika belum login → welcome page
         if "user_id" not in session:
             return render_template("BMS_welcome.html")
 
         role = session.get("role", "user")
 
-        # Jika root / admin → ke admin home
+        # ADMIN / ROOT
         if role in ("root", "admin"):
             return redirect("/admin/home")
 
-        # Jika user biasa
+        # USER
         return redirect("/user/home")
 
     return app
 
 
-
 # ======================================================
-#   MEMBUAT FOLDER WAJIB UNTUK BMS
-# ======================================================
-def prepare_bms_folders():
-    """
-    Membuat folder penting agar BMS berjalan stabil
-    di Android (Termux), Linux, dan Windows.
-    """
-
-    # Deteksi OS (Android / PC)
-    if os.path.exists("/storage/downloads/"):
-        BASE = "/storage/downloads/BMS"
-    else:
-        BASE = os.path.expanduser("~/BMS")
-
-    base_paths = [
-        BASE,
-        f"{BASE}/MP3",
-        f"{BASE}/VIDEO",
-        f"{BASE}/UPLOAD",
-        f"{BASE}/database",
-        f"{BASE}/logs"
-    ]
-
-    for path in base_paths:
-        try:
-            os.makedirs(path, exist_ok=True)
-        except Exception as e:
-            print(f"[WARN] Tidak bisa membuat folder: {path} -> {e}")
-
-
-# ======================================================
-#   JALANKAN SERVER (standalone mode)
+#   RUN SERVER
 # ======================================================
 if __name__ == "__main__":
     app = create_app()
