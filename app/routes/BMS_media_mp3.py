@@ -1,15 +1,27 @@
 import os
-from flask import Blueprint, jsonify, request, send_from_directory, session
-from app.routes.BMS_auth import (
-    BMS_auth_is_login
-)
+from flask import Blueprint, jsonify, request, send_file, session, render_template
+from app.routes.BMS_auth import BMS_auth_is_login
 from app.routes.BMS_logger import BMS_write_log
 
 media_mp3 = Blueprint("media_mp3", __name__, url_prefix="/mp3")
 
-# Folder MP3
-MP3_FOLDER = "/storage/emulated/0/BMS/MP3/"
-os.makedirs(MP3_FOLDER, exist_ok=True)
+# -----------------------------------------------
+# FOLDER DEFAULT BMS
+# -----------------------------------------------
+BMS_MP3_FOLDER = "/storage/emulated/0/BMS/MP3/"
+os.makedirs(BMS_MP3_FOLDER, exist_ok=True)
+
+# -----------------------------------------------
+# FOLDER YANG DISCAN UNTUK MP3
+# (bisa kamu tambah sesuka hati)
+# -----------------------------------------------
+SCAN_PATHS = [
+    "/storage/emulated/0/Music",
+    "/storage/emulated/0/Download",
+    "/storage/emulated/0/WhatsApp/Media",
+    "/storage/emulated/0/",         # full scan (berat)
+    BMS_MP3_FOLDER
+]
 
 
 # ======================================================
@@ -25,25 +37,66 @@ def BMS_mp3_required():
 # ======================================================
 #   🛡 Sanitasi nama file (anti path traversal)
 # ======================================================
-def sanitize_filename(filename):
-    if not filename:
+def sanitize_filename(path):
+    if not path:
         return None
 
-    # Blokir karakter berbahaya
-    bad_chars = ["..", "/", "\\", ";", "&", "|", "$", "`"]
-    for bad in bad_chars:
-        if bad in filename:
+    bad = ["..", ";", "&", "|", "$", "`"]
+    for b in bad:
+        if b in path:
             return None
-
-    # Hanya izinkan .mp3
-    if not filename.lower().endswith(".mp3"):
+    
+    if not path.lower().endswith(".mp3"):
         return None
 
-    return filename
+    return path
 
 
 # ======================================================
-#   🎵 List file MP3
+#   🔍 Fungsi scan recursive MP3
+# ======================================================
+def scan_all_mp3():
+    mp3_list = []
+
+    for root_path in SCAN_PATHS:
+        if not os.path.exists(root_path):
+            continue
+
+        for root, dirs, files in os.walk(root_path):
+            for f in files:
+                if f.lower().endswith(".mp3"):
+                    full_path = os.path.join(root, f)
+                    mp3_list.append(full_path)
+
+    return mp3_list
+
+
+# ======================================================
+#   🎵 API: SCAN semua MP3
+# ======================================================
+@media_mp3.route("/scan")
+def BMS_mp3_scan():
+    check = BMS_mp3_required()
+    if check:
+        return check
+
+    username = session.get("username")
+
+    BMS_write_log("Menjalankan SCAN MP3 seluruh perangkat", username)
+
+    mp3_files = scan_all_mp3()
+
+    # Simpan list di session biar cepat
+    session["mp3_list"] = mp3_files
+
+    return jsonify({
+        "total": len(mp3_files),
+        "files": mp3_files
+    })
+
+
+# ======================================================
+#   🎶 API: LIST MP3 (hasil scan)
 # ======================================================
 @media_mp3.route("/list")
 def BMS_mp3_list():
@@ -51,19 +104,16 @@ def BMS_mp3_list():
     if check:
         return check
 
-    username = session.get("username")
-    BMS_write_log("Meminta daftar MP3", username)
+    mp3_files = session.get("mp3_list", [])
 
-    files = [
-        f for f in os.listdir(MP3_FOLDER)
-        if f.lower().endswith(".mp3")
-    ]
-
-    return jsonify({"files": files})
+    return jsonify({
+        "total": len(mp3_files),
+        "files": mp3_files
+    })
 
 
 # ======================================================
-#   ▶ Memutar MP3 (stream file)
+#   ▶ PLAY FILE MP3
 # ======================================================
 @media_mp3.route("/play")
 def BMS_mp3_play():
@@ -71,21 +121,33 @@ def BMS_mp3_play():
     if check:
         return check
 
-    filename = request.args.get("file")
+    file_path = request.args.get("file")
     username = session.get("username")
 
-    safe_name = sanitize_filename(filename)
+    if not file_path:
+        return "❌ Parameter file kosong!"
 
-    if not safe_name:
-        BMS_write_log(f"Nama file MP3 ilegal: {filename}", username)
+    safe_path = sanitize_filename(file_path)
+    if not safe_path:
+        BMS_write_log("Nama file ilegal", username)
         return "❌ File tidak valid!"
 
-    filepath = os.path.join(MP3_FOLDER, safe_name)
-
-    if not os.path.exists(filepath):
-        BMS_write_log(f"File MP3 tidak ditemukan: {safe_name}", username)
+    if not os.path.exists(file_path):
+        BMS_write_log(f"MP3 Tidak ditemukan: {file_path}", username)
         return "❌ File tidak ditemukan!"
 
-    BMS_write_log(f"Memutar MP3: {safe_name}", username)
+    BMS_write_log(f"Memutar MP3: {file_path}", username)
 
-    return send_from_directory(MP3_FOLDER, safe_name)
+    return send_file(file_path)
+
+
+# ======================================================
+#   🎧 GUI MP3 PLAYER
+# ======================================================
+@media_mp3.route("/player")
+def BMS_mp3_gui():
+    check = BMS_mp3_required()
+    if check:
+        return check
+
+    return render_template("BMS_mp3.html")    # GUI pemutar musik
