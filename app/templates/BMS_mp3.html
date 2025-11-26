@@ -2,22 +2,59 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>MP3 Player - BMS</title>
-    <link rel="stylesheet" href="/static/css/BMSadmin.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMS MP3 Player</title>
+
+    <!-- Background Neon -->
+    <link rel="stylesheet" href="/static/css/begron/neon.css">
+
+    <!-- MP3 Player Style -->
+    <link rel="stylesheet" href="/static/css/BMS_mp3.css">
 </head>
 <body>
 
-<div class="section-box">
-    <h2>[ 🎵 MP3 PLAYER ]</h2>
+<canvas id="neonBackground"></canvas>
 
-    <p>Pemutar musik dari folder server.</p>
+<div class="player-container">
 
-    <iframe src="/mp3/player" 
-            width="100%" 
-            height="450px" 
-            style="border:none;background:black;">
-    </iframe>
+    <!-- =============================== -->
+    <!--           NOW PLAYING           -->
+    <!-- =============================== -->
+    <div class="now-playing">
+        <h2 id="songTitle">Tidak ada lagu</h2>
+        <p id="songIndex">0 / 0</p>
+    </div>
+
+    <!-- =============================== -->
+    <!--         AUDIO CONTROLLER        -->
+    <!-- =============================== -->
+    <audio id="audioPlayer"></audio>
+
+    <div class="controls">
+
+        <button id="btnPrev">⏮</button>
+        <button id="btnPlay">▶</button>
+        <button id="btnPause" style="display:none;">⏸</button>
+        <button id="btnNext">⏭</button>
+
+        <button id="btnRepeatOne">🔂 1</button>
+        <button id="btnRepeatAll">🔁</button>
+        <button id="btnShuffle">🔀</button>
+
+    </div>
+
+    <!-- =============================== -->
+    <!--            PLAYLIST             -->
+    <!-- =============================== -->
+    <div class="playlist">
+        <h3>Playlist</h3>
+        <ul id="playlistContainer"></ul>
+    </div>
+
 </div>
+
+<script src="/static/js/neon.js"></script>
+<script src="/static/js/BMS_mp3.js"></script>
 
 </body>
 </html>
