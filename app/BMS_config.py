@@ -21,8 +21,8 @@ def detect_bms_base():
         return os.path.join(os.path.expanduser("~"), "BMS")
 
     # LINUX
-    if "linux" in system:
-        return os.path.join(os.path.expanduser("~"), "BMS")
+    #if "linux" in system:
+       # return #os.path.join(os.path.expanduser("~"), "BMS")
 
     # MAC
     if "darwin" in system:
