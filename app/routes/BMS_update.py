@@ -1,9 +1,8 @@
 import os
-import shutil
+import subprocess
 import zipfile
-import requests
-from flask import Blueprint, jsonify, session, render_template
-
+import shutil
+from flask import Blueprint, jsonify, session, render_template, current_app
 from app.routes.BMS_auth import (
     BMS_auth_is_login,
     BMS_auth_is_admin,
@@ -14,11 +13,8 @@ from app.BMS_config import BASE
 
 update = Blueprint("update", __name__, url_prefix="/update")
 
-# ======================================================
-#   CONFIG REPO GITHUB
-# ======================================================
-GITHUB_REPO = "https://github.com/baguschoiri/BMS-BagusMediaServer/archive/refs/heads/main.zip"
-
+# Path default (pastikan PROJECT_ROOT di config app)
+# current_app.config["PROJECT_ROOT"] harus di-set di app.py
 UPDATE_PATH = os.path.join(BASE, "UPDATE")
 BACKUP_PATH = os.path.join(BASE, "BACKUP")
 
@@ -26,48 +22,43 @@ os.makedirs(UPDATE_PATH, exist_ok=True)
 os.makedirs(BACKUP_PATH, exist_ok=True)
 
 
-# ======================================================
-#   🔐 Proteksi Akses Update
-# ======================================================
-def BMS_update_required():
-    """Hanya admin / root yang boleh update"""
+# --------- Helper: hak akses ----------
+def BMS_update_required_simple():
+    """
+    Kembalikan True jika user boleh melakukan update (admin/root).
+    Gunakan ini di WebSocket dan endpoint yang butuh autentikasi.
+    """
     if not BMS_auth_is_login():
-        return jsonify({"error": "Belum login!"}), 403
-
+        return False
     if not (BMS_auth_is_admin() or BMS_auth_is_root()):
-        return jsonify({"error": "Akses update hanya untuk admin/root!"}), 403
+        return False
+    return True
 
-    return None
 
-
-# ======================================================
-#   🖥 HALAMAN GUI UPDATE
-# ======================================================
+# --------- UI route ----------
 @update.route("/ui")
 def BMS_update_ui():
-    check = BMS_update_required()
-    if check:
-        return check
-
+    if not BMS_update_required_simple():
+        return jsonify({"error": "Akses ditolak"}), 403
     return render_template("BMS_update.html")
 
-# ============================================
-# API : CEK UPDATE
-# ============================================
+
+# --------- Check update via git (HTTP API) ----------
 @update.route("/check-update")
 def check_update():
     """
-    Cek apakah server tertinggal dari GitHub.
-    - git fetch → ambil update
-    - git status -uno → cek apakah "behind"
+    Cek apakah ada update upstream dengan git fetch + git status.
+    Memerlukan config PROJECT_ROOT di app config.
     """
     try:
-        base_dir = current_app.config["PROJECT_ROOT"]
+        base_dir = current_app.config.get("PROJECT_ROOT", None)
+        if not base_dir or not os.path.isdir(base_dir):
+            return jsonify({"update_available": False, "error": "PROJECT_ROOT tidak disetting atau tidak ada"}), 500
 
-        # Ambil update terbaru dari remote
-        subprocess.run(["git", "fetch"], cwd=base_dir)
+        # git fetch
+        subprocess.run(["git", "fetch"], cwd=base_dir, check=False)
 
-        # Cek status branch
+        # git status -uno
         status = subprocess.run(
             ["git", "status", "-uno"],
             cwd=base_dir,
@@ -75,73 +66,103 @@ def check_update():
             text=True
         )
 
-        update_available = "behind" in status.stdout.lower()
+        update_available = "behind" in status.stdout.lower() or "behind" in status.stderr.lower()
 
         return jsonify({
             "update_available": update_available,
-            "output": status.stdout
+            "output": status.stdout + ("\n" + status.stderr if status.stderr else "")
         })
 
     except Exception as e:
         return jsonify({
             "update_available": False,
             "error": str(e)
-        })
+        }), 500
 
 
-# ============================================
-# WEBSOCKET UPDATE REALTIME
-# ============================================
+# --------- WebSocket realtime update (register via register_ws) ----------
 def register_ws(sock):
     """
-    Websocket tidak bisa masuk blueprint default,
-    jadi kita daftar websocket manual di app.py.
-
-    Cara pemanggilan di app.py:
+    Daftarkan WebSocket route. Panggil register_ws(sock) di app.py setelah
+    membuat Sock(app).
+    Contoh di app.py:
+        from app.routes.BMS_update import register_ws
         register_ws(sock)
     """
 
     @sock.route("/ws/update")
     def ws_update(ws):
-        base_dir = current_app.config["PROJECT_ROOT"]
-
-        # Fungsi aman untuk mengirim pesan
-        def safe_send(msg):
+        # Periksa auth dulu
+        try:
+            if not BMS_update_required_simple():
+                try:
+                    ws.send("[ERROR] Unauthorized: hanya admin/root yang boleh menjalankan update")
+                except:
+                    pass
+                return
+        except Exception:
+            # Jika cek auth error, kirim pesan dan stop
             try:
-                ws.send(msg)
+                ws.send("[ERROR] Gagal memeriksa autentikasi")
             except:
-                pass  # WebSocket tertutup → biarkan tanpa error
+                pass
+            return
 
-        safe_send("[INFO] Memulai update...\n")
+        # Ambil project root
+        base_dir = current_app.config.get("PROJECT_ROOT", None)
+        if not base_dir or not os.path.isdir(base_dir):
+            try:
+                ws.send("[ERROR] PROJECT_ROOT tidak disetting di konfigurasi server")
+            except:
+                pass
+            return
+
+        def safe_send(txt):
+            try:
+                ws.send(txt)
+            except:
+                # jika socket tertutup, hentikan pengiriman tapi jangan raise
+                pass
+
+        safe_send("[INFO] Memulai proses git pull...\n")
 
         try:
-            # Jalankan git pull
-            process = subprocess.Popen(
-                ["git", "pull"],
+            # jalankan git pull
+            proc = subprocess.Popen(
+                ["git", "pull", "--no-edit"],
                 cwd=base_dir,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.STDOUT,
-                text=True
+                text=True,
+                bufsize=1
             )
 
-            # Kirim output baris demi baris
-            for line in process.stdout:
-                safe_send(line.strip())
+            # baca stdout baris per baris dan kirim ke client
+            for raw_line in proc.stdout:
+                line = raw_line.rstrip("\n")
+                if line:
+                    safe_send(line)
+
+            proc.wait()
+            code = proc.returncode
+            if code == 0:
+                safe_send("[DONE] git pull selesai (exit 0)")
+                # log
+                try:
+                    username = session.get("username")
+                except Exception:
+                    username = None
+                BMS_write_log(f"Git pull sukses oleh {username}", username)
+            else:
+                safe_send(f"[ERROR] git pull exit code {code}")
+                BMS_write_log(f"Git pull gagal exit {code}", session.get("username"))
 
         except Exception as e:
-            safe_send(f"[ERROR] {e}")
+            safe_send(f"[ERROR] Exception saat menjalankan git pull: {e}")
+            try:
+                BMS_write_log(f"Exception saat git pull: {e}", session.get("username"))
+            except:
+                pass
 
-        safe_send("[DONE]")
-
-# ======================================================
-#   📄 LOG UPDATE
-# ======================================================
-@update.route("/logs")
-def BMS_update_logs():
-    try:
-        log_file = os.path.join(BASE, "logs", "system.log")
-        with open(log_file, "r") as f:
-            data = f.read()
-        return jsonify({"log": data})
-    except:
-        return jsonify({"log": ""})
+        # Inform akhir
+        safe_send("[END]")
