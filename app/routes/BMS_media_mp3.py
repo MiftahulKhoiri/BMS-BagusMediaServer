@@ -8,7 +8,7 @@ media_mp3 = Blueprint("media_mp3", __name__, url_prefix="/mp3")
 # -----------------------------------------------
 # FOLDER DEFAULT BMS
 # -----------------------------------------------
-BMS_MP3_FOLDER = "/storage/emulated/0/BMS/MP3/"
+BMS_MP3_FOLDER = "/storage/emulated/BMS/MP3/"
 os.makedirs(BMS_MP3_FOLDER, exist_ok=True)
 
 # -----------------------------------------------
