@@ -1,53 +1,32 @@
 <!doctype html>
 <html lang="id">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>BMS - Update Server</title>
-
-  <!-- LOAD CSS -->
-  <link rel="stylesheet" href="/static/css/BMS_update.css">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>BMS - Update Realtime</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/BMS_update_realtime.css') }}">
 </head>
 <body>
-
   <div class="wrap">
     <div class="card">
-      <h1>⚙️ Panel Update — BMS</h1>
-      <p class="lead">Cek versi, buat backup, dan terapkan update dari GitHub.</p>
+      <h1>⚙️ Update Realtime — BMS</h1>
+      <p class="lead">Menjalankan <strong>git pull</strong> realtime. Hanya untuk admin/root.</p>
 
-      <div class="row">
-        <button id="btnCheck" class="btn btn-ghost">🔎 Cek Update</button>
-        <button id="/update/check-update" class="btn btn-primary">🚀 Jalankan Update</button>
-        <button id="btnLogs" class="btn">📄 Lihat Log</button>
-        <button id="btnClearLog" class="btn btn-danger">🧹 Bersihkan Log</button>
+      <div class="controls">
+        <button id="btnConnect" class="btn">🔌 Start Realtime Update</button>
+        <button id="btnStop" class="btn btn-danger" disabled>✖ Stop</button>
+        <button id="btnCheck" class="btn btn-ghost">🔎 Cek Update (HTTP)</button>
       </div>
 
       <div class="status">
-        <div class="status-head">
-          <div id="statusIcon" class="spinner" style="display:none"></div>
-          <div>
-            <div id="statusText">Status: Siap</div>
-            <div class="hint">
-              Versi terpasang: <span id="currentVersion">-</span> • 
-              Versi online: <span id="onlineVersion">-</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="progress">
-          <span id="progressBar"></span>
-        </div>
-        <div class="hint" id="progressLabel">Belum ada aktivitas</div>
+        <div id="statusText">Status: Idle</div>
+        <div class="hint">Project root: <code id="projRoot"></code></div>
       </div>
 
-      <div class="logbox" id="logbox">
-        Log akan muncul di sini
-      </div>
+      <div class="logbox" id="logbox" aria-live="polite"></div>
     </div>
   </div>
 
-  <!-- LOAD JS -->
-  <script src="/static/js/BMS_update.js"></script>
-
+  <script src="{{ url_for('static', filename='js/BMS_update_realtime.js') }}"></script>
 </body>
 </html>
