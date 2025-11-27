@@ -1,50 +1,61 @@
 import os
+import sys
 import platform
 
 # =====================================================
-# 🔥 DETEKSI LOKASI BMS (PRIORITAS TERMUX)
+# 🔥  DETEKSI TERMUX SUPER AKURAT (berdasarkan Python PATH)
+# =====================================================
+def is_termux():
+    exe = sys.executable
+    home = os.path.expanduser("~")
+
+    # Python Termux selalu ada dalam lokasi ini:
+    if exe.startswith("/data/data/com.termux/"):
+        return True
+
+    # HOME Termux juga selalu seperti ini:
+    if home.startswith("/data/data/com.termux/"):
+        return True
+
+    return False
+
+
+# =====================================================
+# 🔥  PILIH BASE PATH
 # =====================================================
 def detect_bms_base():
-    system = platform.system().lower()
 
     # -------------------------------------------------
-    # 1️⃣ DETEKSI TERMUX (PRIORITAS MUTLAK)
+    # 🟢 1. JIKA TERMUX → PAKAI PATH INI & HENTI, SELESAI
     # -------------------------------------------------
-    termux_storage = "/data/data/com.termux/files/home/storage"
-    termux_download = os.path.join(termux_storage, "downloads")
-
-    if os.path.exists(termux_download):
-        # JIKA TERMUX TERDETEKSI → HENTIKAN DISINI
-        return os.path.join(termux_download, "BMS")
+    if is_termux():
+        return "/data/data/com.termux/files/home/storage/downloads/BMS"
 
     # -------------------------------------------------
-    # 2️⃣ ANDROID BIASA (HANYA jika BUKAN Termux)
+    # 🟡 2. ANDROID NON-TERMUX
     # -------------------------------------------------
-    android_download = "/storage/emulated/0/Download"
-    android_download2 = "/sdcard/Download"
+    if os.path.exists("/storage/emulated/0/Download"):
+        return "/storage/emulated/0/Download/BMS"
 
-    if os.path.exists(android_download):
-        return os.path.join(android_download, "BMS")
-
-    if os.path.exists(android_download2):
-        return os.path.join(android_download2, "BMS")
+    if os.path.exists("/sdcard/Download"):
+        return "/sdcard/Download/BMS"
 
     # -------------------------------------------------
-    # 3️⃣ WINDOWS
+    # 🔵 3. Windows
     # -------------------------------------------------
-    if "windows" in system:
+    if platform.system().lower() == "windows":
         return os.path.join(os.path.expanduser("~"), "BMS")
 
     # -------------------------------------------------
-    # 4️⃣ LINUX PC
+    # 🔴 4. Linux
     # -------------------------------------------------
-    if "linux" in system:
+    if platform.system().lower() == "linux":
         return os.path.join(os.path.expanduser("~"), "BMS")
 
     # -------------------------------------------------
-    # 5️⃣ MAC
+    # 🟣 5. MacOS
     # -------------------------------------------------
-    if "darwin" in system:
+    if platform.system().lower() == "darwin":
         return os.path.join(os.path.expanduser("~"), "BMS")
 
     # -------------------------------------------------
@@ -54,13 +65,13 @@ def detect_bms_base():
 
 
 # =====================================================
-# 📌 HASIL DETEKSI
+# 📌  HASIL DETEKSI BASE
 # =====================================================
 BASE = detect_bms_base()
 
 
 # =====================================================
-# 📁 DEFINISI FOLDER
+# 📁  DEFINISI FOLDER
 # =====================================================
 DB_FOLDER       = os.path.join(BASE, "database")
 LOG_FOLDER      = os.path.join(BASE, "logs")
@@ -69,31 +80,20 @@ MP3_FOLDER      = os.path.join(BASE, "MP3")
 VIDEO_FOLDER    = os.path.join(BASE, "VIDEO")
 UPLOAD_FOLDER   = os.path.join(BASE, "UPLOAD")
 
-
-# =====================================================
-# 📦 FILE UTAMA
-# =====================================================
-DB_PATH  = os.path.join(DB_FOLDER, "users.db")
+DB_PATH = os.path.join(DB_FOLDER, "users.db")
 LOG_PATH = os.path.join(LOG_FOLDER, "system.log")
 
-
 # =====================================================
-# 📌 BUAT SEMUA FOLDER
+# 📌 BUAT FOLDER
 # =====================================================
-REQUIRED_FOLDERS = [
-    BASE,
-    DB_FOLDER,
-    LOG_FOLDER,
-    PROFILE_FOLDER,
-    MP3_FOLDER,
-    VIDEO_FOLDER,
-    UPLOAD_FOLDER,
-]
-
-for folder in REQUIRED_FOLDERS:
+for folder in [
+    BASE, DB_FOLDER, LOG_FOLDER,
+    PROFILE_FOLDER, MP3_FOLDER,
+    VIDEO_FOLDER, UPLOAD_FOLDER
+]:
     try:
         os.makedirs(folder, exist_ok=True)
-    except Exception as e:
-        print(f"[WARN] Tidak bisa membuat folder '{folder}': {e}")
+    except:
+        pass
 
-print("Folder selesai dibuat:", BASE)
+print("[BMS] BASE:", BASE)
