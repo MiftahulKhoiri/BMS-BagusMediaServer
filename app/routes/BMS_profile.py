@@ -3,8 +3,8 @@ import sqlite3
 from flask import Blueprint, render_template, request, redirect, session
 from werkzeug.utils import secure_filename
 
-# 🔗 Import config pusat (supaya path selalu sinkron)
-from app.BMS_config import DATABASE_PATH, PROFILE_FOLDER
+# 🔗 Import config pusat (path sinkron)
+from app.BMS_config import DB_PATH, PROFILE_FOLDER
 
 # 🔐 Import login check
 from app.routes.BMS_auth import BMS_auth_is_login
@@ -26,7 +26,7 @@ os.makedirs(PROFILE_FOLDER, exist_ok=True)
 #  📌 DB Helper
 # ======================================================
 def get_db():
-    conn = sqlite3.connect(DATABASE_PATH)
+    conn = sqlite3.connect(DB_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
@@ -38,7 +38,6 @@ def ensure_profile_columns():
     conn = get_db()
     cur = conn.cursor()
 
-    # Kolom wajib
     required = {
         "nama": "TEXT",
         "umur": "TEXT",
@@ -49,11 +48,11 @@ def ensure_profile_columns():
         "foto_background": "TEXT"
     }
 
-    # Cek kolom yang ada
+    # Cek kolom tabel
     cur.execute("PRAGMA table_info(users)")
     existing_cols = [col[1] for col in cur.fetchall()]
 
-    # Tambahkan kolom yang belum ada
+    # Tambah kolom jika belum ada
     for col, tipe in required.items():
         if col not in existing_cols:
             try:
@@ -65,6 +64,7 @@ def ensure_profile_columns():
     conn.close()
 
 
+# Jalankan auto repair
 ensure_profile_columns()
 
 
@@ -87,7 +87,9 @@ def BMS_profile_page():
         return check
 
     conn = get_db()
-    user = conn.execute("SELECT * FROM users WHERE id=?", (session.get("user_id"),)).fetchone()
+    user = conn.execute(
+        "SELECT * FROM users WHERE id=?", (session.get("user_id"),)
+    ).fetchone()
     conn.close()
 
     return render_template("BMS_profile.html", user=user)
@@ -103,7 +105,9 @@ def BMS_profile_edit_page():
         return check
 
     conn = get_db()
-    user = conn.execute("SELECT * FROM users WHERE id=?", (session.get("user_id"),)).fetchone()
+    user = conn.execute(
+        "SELECT * FROM users WHERE id=?", (session.get("user_id"),)
+    ).fetchone()
     conn.close()
 
     return render_template("BMS_edit_profile.html", user=user)
@@ -186,7 +190,9 @@ def BMS_profile_save():
     if foto_background_path:
         session["foto_background"] = foto_background_path
 
+    # =======================
     # Redirect sesuai role
+    # =======================
     role = session.get("role")
 
     if role in ("admin", "root"):
