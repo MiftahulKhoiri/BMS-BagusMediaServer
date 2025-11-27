@@ -28,6 +28,7 @@ def create_app():
     # ===========================================
     # 🔥 Jalankan Auto Repair DB sebelum blueprint
     # ===========================================
+    app.config["PROJECT_ROOT"] = "/data/data/com.termux/files/home/BMS-BagusMediaServer"
     ensure_users_table()
     ensure_root_user()
 
