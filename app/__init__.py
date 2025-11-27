@@ -6,7 +6,7 @@ from flask_cors import CORS
 from app.BMS_config import BASE
 
 # Auto repair DB
-from app.database.BMS_auto_repair import ensure_users_table
+from app.database.BMS_auto_repair import ensure_users_table, ensure_root_user
 
 # Import Blueprint register
 from app.routes import register_blueprints
@@ -29,6 +29,7 @@ def create_app():
     # 🔥 Jalankan Auto Repair DB sebelum blueprint
     # ===========================================
     ensure_users_table()
+    ensure_root_user()
 
     # ===========================================
     # 🔥 CORS
