@@ -7,31 +7,49 @@ import platform
 def detect_bms_base():
     system = platform.system().lower()
 
-    # 1️⃣ DETEKSI TERMUX
-    termux_base = "/data/data/com.termux/files/home/storage"
-    if os.path.exists(os.path.join(termux_base, "downloads")):
-        return os.path.join(termux_base, "downloads", "BMS")
+    # -------------------------------------------------
+    # 1️⃣ DETEKSI TERMUX (PRIORITAS UTAMA)
+    # -------------------------------------------------
+    termux_storage = "/data/data/com.termux/files/home/storage"
+    termux_download = os.path.join(termux_storage, "downloads")
 
-    # 2️⃣ ANDROID BIASA
-    if os.path.exists("/storage/emulated/0/Download"):
-        return "/storage/emulated/0/Download/BMS"
+    if os.path.exists(termux_download):
+        # INI DIPAKAI DI TERMUX DAN DIHENTIKAN DISINI
+        return os.path.join(termux_download, "BMS")
 
-    if os.path.exists("/sdcard/Download"):
-        return "/sdcard/Download/BMS"
+    # -------------------------------------------------
+    # 2️⃣ DETEKSI ANDROID BIASA
+    # -------------------------------------------------
+    android_download_1 = "/storage/emulated/0/Download"
+    android_download_2 = "/sdcard/Download"
 
+    if os.path.exists(android_download_1):
+        return os.path.join(android_download_1, "BMS")
+
+    if os.path.exists(android_download_2):
+        return os.path.join(android_download_2, "BMS")
+
+    # -------------------------------------------------
     # 3️⃣ WINDOWS
+    # -------------------------------------------------
     if "windows" in system:
         return os.path.join(os.path.expanduser("~"), "BMS")
 
-    # 4️⃣ LINUX (PC)
+    # -------------------------------------------------
+    # 4️⃣ LINUX
+    # -------------------------------------------------
     if "linux" in system:
         return os.path.join(os.path.expanduser("~"), "BMS")
 
+    # -------------------------------------------------
     # 5️⃣ MAC
+    # -------------------------------------------------
     if "darwin" in system:
         return os.path.join(os.path.expanduser("~"), "BMS")
 
-    # Default fallback
+    # -------------------------------------------------
+    # Fallback aman
+    # -------------------------------------------------
     return os.path.join(os.path.expanduser("~"), "BMS")
 
 
@@ -53,14 +71,7 @@ UPLOAD_FOLDER   = os.path.join(BASE, "UPLOAD")
 
 
 # =====================================================
-# 📦 FILE UTAMA
-# =====================================================
-DB_PATH  = os.path.join(DB_FOLDER, "users.db")
-LOG_PATH = os.path.join(LOG_FOLDER, "system.log")
-
-
-# =====================================================
-# 📌 BUAT SEMUA FOLDER SECARA AUTOMATIS
+# 📌 BUAT SEMUA FOLDER
 # =====================================================
 REQUIRED_FOLDERS = [
     BASE,
@@ -79,7 +90,4 @@ for folder in REQUIRED_FOLDERS:
         print(f"[WARN] Tidak bisa membuat folder '{folder}': {e}")
 
 
-# =====================================================
-# 🧪 DEBUG INFO (opsional)
-# =====================================================
-print("folder selesai di buat")
+print("Folder selesai dibuat:", BASE)
