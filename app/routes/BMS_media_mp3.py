@@ -1,5 +1,7 @@
 import os
 from flask import Blueprint, jsonify, request, send_file, session, render_template
+# 🔗 Import config pusat (path sinkron)
+from app.BMS_config import DB_PATH, MP3_FOLDER
 from app.routes.BMS_auth import BMS_auth_is_login
 from app.routes.BMS_logger import BMS_write_log
 
