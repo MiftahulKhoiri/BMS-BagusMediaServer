@@ -29,7 +29,7 @@
   const NUM_BLOBS = Math.max(6, Math.floor(Math.min(window.innerWidth, 900) / 130));
   const MIN_RADIUS = 20;
   const MAX_RADIUS = 48;
-  const MAX_SPEED = 0.25; // px per ms (small for smoothness)
+  const MAX_SPEED = 0.50; // px per ms (small for smoothness)
   const COLOR_SETS = [
     ['#33fff6', '#00ff99', '#88ffdd'],
     ['#ff6bcb', '#ffb86b', '#ffd36b'],
