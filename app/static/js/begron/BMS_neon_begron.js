@@ -1,219 +1,95 @@
-/**
- * neon.js
- * Soft random-moving neon blobs on a fullscreen canvas.
- * - Circles are medium size (not too big / not too small)
- * - Move smoothly with gentle velocity and easing
- * - Color palette rotates every 30 seconds
- *
- * Usage: include <canvas id="neonBackground"></canvas> in HTML,
- * and load this file after the canvas.
- */
+// Membuat canvas untuk efek neon
+const canvas = document.createElement("canvas");
+canvas.id = "neonCanvas";
+document.body.appendChild(canvas);
 
-(() => {
-  const canvas = document.getElementById('neonBackground');
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d', { alpha: true });
+const ctx = canvas.getContext("2d");
 
-  let DPR = Math.max(1, window.devicePixelRatio || 1);
+// Resize canvas agar full layar
+function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener("resize", resize);
 
-  function resize() {
-    DPR = Math.max(1, window.devicePixelRatio || 1);
-    canvas.width = Math.floor(canvas.clientWidth * DPR);
-    canvas.height = Math.floor(canvas.clientHeight * DPR);
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  }
-  window.addEventListener('resize', resize, { passive: true });
-  resize();
+// Daftar warna neon cerah
+const neonColors = [
+    "#ff00ff", "#ff33cc", "#ff0099",
+    "#00ffff", "#33ccff", "#0099ff",
+    "#39FF14", "#66ff66", "#00ff99",
+    "#ffaa00", "#ff4444", "#ff0066"
+];
 
-  // --- CONFIG ---
-  const NUM_BLOBS = Math.max(30, Math.floor(Math.min(window.innerWidth, 900) / 130));
-  const MIN_RADIUS = 5;
-  const MAX_RADIUS = 15;
-  const MAX_SPEED = 0.03; // px per ms (small for smoothness)
-  const COLOR_SETS = [
-    ['#33fff6', '#00ff99', '#88ffdd'],
-    ['#ff6bcb', '#ffb86b', '#ffd36b'],
-    ['#8bff6b', '#4dffb4', '#6fffd4'],
-    ['#6b8bff', '#6bdcff', '#a3b6ff'],
-    ['#ff6b6b', '#ff8bdb', '#ffd6a6']
-  ];
-  let paletteIndex = 0;
-  let currentPalette = COLOR_SETS[paletteIndex];
+// Pilih warna neon acak yang halus
+function randomColor() {
+    return neonColors[Math.floor(Math.random() * neonColors.length)];
+}
 
-  // change palette every 30 seconds
-  const PALETTE_INTERVAL = 30_000;
-  setInterval(() => {
-    paletteIndex = (paletteIndex + 1) % COLOR_SETS.length;
-    currentPalette = COLOR_SETS[paletteIndex];
-  }, PALETTE_INTERVAL);
+// Membuat titik-titik neon
+const particles = [];
 
-  // Utility: random helpers
-  const rand = (a, b) => a + Math.random() * (b - a);
-  const choose = (arr) => arr[Math.floor(Math.random() * arr.length)];
+for (let i = 0; i < 80; i++) {
+    particles.push({
+        x: Math.random() * canvas.width,
+        y: Math.random() * canvas.height,
 
-  // Blob object
-  class Blob {
-    constructor(i) {
-      this.reset(i);
-    }
+        // TITIK LEBIH BESAR di sini
+        size: Math.random() * 4 + 2, // ukuran 2px - 6px
 
-    reset(i) {
-      // Place blobs across the canvas with padding
-      const w = canvas.clientWidth;
-      const h = canvas.clientHeight;
-      this.r = rand(MIN_RADIUS, MAX_RADIUS);
-      this.x = rand(this.r, w - this.r);
-      this.y = rand(this.r, h - this.r);
-      // give small random velocities
-      const angle = Math.random() * Math.PI * 2;
-      const speed = rand(0.03, MAX_SPEED); // px per ms
-      this.vx = Math.cos(angle) * speed;
-      this.vy = Math.sin(angle) * speed;
-      // color
-      this.color = choose(currentPalette);
-      // soft target movement to produce gentle wandering
-      this.targetTime = Date.now() + rand(2000, 7000);
-      this.targetX = this.x + rand(-60, 60);
-      this.targetY = this.y + rand(-60, 60);
-      // subtle phase for pulsation
-      this.phase = Math.random() * Math.PI * 2;
-    }
+        color: randomColor(),
+        alpha: Math.random(),
 
-    update(dt) {
-      // Occasionally pick a new small target
-      if (Date.now() > this.targetTime) {
-        this.targetTime = Date.now() + rand(2000, 8000);
-        this.targetX = Math.min(Math.max(this.r, this.x + rand(-120, 120)), canvas.clientWidth - this.r);
-        this.targetY = Math.min(Math.max(this.r, this.y + rand(-120, 120)), canvas.clientHeight - this.r);
-      }
+        // gerakan lembut
+        speedX: (Math.random() - 0.5) * 0.6,
+        speedY: (Math.random() - 0.5) * 0.6,
 
-      // Steer towards target gently
-      const steerX = (this.targetX - this.x) * 0.00005 * dt;
-      const steerY = (this.targetY - this.y) * 0.00005 * dt;
-      this.vx += steerX;
-      this.vy += steerY;
+        // kedip lembut
+        blinkSpeed: Math.random() * 0.02 + 0.005,
 
-      // apply velocity
-      this.x += this.vx * dt;
-      this.y += this.vy * dt;
+        // warna berganti otomatis
+        colorTimer: Math.random() * 200 + 100
+    });
+}
 
-      // slight damping
-      this.vx *= 0.999;
-      this.vy *= 0.999;
-
-      // keep inside with soft rebound
-      if (this.x < this.r) { this.x = this.r; this.vx = Math.abs(this.vx) * 0.3; }
-      if (this.x > canvas.clientWidth - this.r) { this.x = canvas.clientWidth - this.r; this.vx = -Math.abs(this.vx) * 0.3; }
-      if (this.y < this.r) { this.y = this.r; this.vy = Math.abs(this.vy) * 0.3; }
-      if (this.y > canvas.clientHeight - this.r) { this.y = canvas.clientHeight - this.r; this.vy = -Math.abs(this.vy) * 0.3; }
-
-      // pulsation phase
-      this.phase += dt * 0.002;
-    }
-
-    draw(ctx) {
-      // gentle pulsation in size
-      const pulse = 1 + Math.sin(this.phase) * 0.06;
-      const radius = this.r * pulse;
-
-      // glow
-      ctx.save();
-      ctx.globalCompositeOperation = 'lighter';
-
-      // outer blur
-      ctx.beginPath();
-      ctx.fillStyle = this.color;
-      ctx.shadowColor = this.color;
-      ctx.shadowBlur = Math.max(20, Math.min(80, radius * 0.8));
-      ctx.globalAlpha = 0.18;
-      ctx.arc(this.x, this.y, radius * 1.9, 0, Math.PI * 2);
-      ctx.fill();
-
-      // mid glow
-      ctx.beginPath();
-      ctx.globalAlpha = 0.28;
-      ctx.arc(this.x, this.y, radius * 1.2, 0, Math.PI * 2);
-      ctx.fill();
-
-      // core
-      ctx.beginPath();
-      ctx.globalAlpha = 0.95;
-      ctx.shadowBlur = 10;
-      ctx.arc(this.x, this.y, radius * 0.6, 0, Math.PI * 2);
-      ctx.fillStyle = '#ffffff';
-      ctx.fill();
-
-      ctx.restore();
-    }
-  }
-
-  // create blobs
-  let blobs = [];
-  function rebuildBlobs() {
-    blobs = [];
-    for (let i = 0; i < NUM_BLOBS; i++) {
-      blobs.push(new Blob(i));
-    }
-  }
-  rebuildBlobs();
-
-  // update colors gradually when palette changes
-  function refreshPalette() {
-    for (let b of blobs) {
-      b.color = choose(currentPalette);
-    }
-  }
-  // watch color change by timing (same as setInterval earlier)
-  let lastPaletteChange = Date.now();
-  setInterval(() => {
-    refreshPalette();
-    lastPaletteChange = Date.now();
-  }, PALETTE_INTERVAL);
-
-  // animation loop
-  let last = performance.now();
-  function loop(now) {
-    const dt = Math.min(40, now - last); // cap dt for stability (ms)
-    last = now;
-
-    // clear with slight alpha to create trailing
+// Animasi utama
+function animate() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = 'rgba(0,0,0,0.12)';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // draw blobs
-    for (let b of blobs) {
-      b.update(dt);
-      b.draw(ctx);
-    }
+    particles.forEach(p => {
 
-    // subtle moving vignette gradient
-    const g = ctx.createRadialGradient(
-      canvas.clientWidth * 0.5, canvas.clientHeight * 0.4, canvas.clientWidth * 0.05,
-      canvas.clientWidth * 0.5, canvas.clientHeight * 0.5, Math.max(canvas.clientWidth, canvas.clientHeight) * 0.9
-    );
-    g.addColorStop(0, 'rgba(0,0,0,0.00)');
-    g.addColorStop(1, 'rgba(0,0,0,0.35)');
-    ctx.fillStyle = g;
-    ctx.fillRect(0, 0, canvas.clientWidth, canvas.clientHeight);
+        // Ubah warna otomatis
+        p.colorTimer--;
+        if (p.colorTimer <= 0) {
+            p.color = randomColor();
+            p.colorTimer = Math.random() * 200 + 100;
+        }
 
-    requestAnimationFrame(loop);
-  }
-  requestAnimationFrame(loop);
+        // Gerakan lembut acak
+        p.x += p.speedX;
+        p.y += p.speedY;
 
-  // handle window focus/blur to pause updates when not visible (save battery)
-  let visible = true;
-  document.addEventListener('visibilitychange', () => {
-    visible = !document.hidden;
-    if (!visible) {
-      // reduce work by stopping animation frame loops - we keep RAF running but minimal drawing handled by loop using dt cap
-    }
-  });
+        if (p.x < 0 || p.x > canvas.width) p.speedX *= -1;
+        if (p.y < 0 || p.y > canvas.height) p.speedY *= -1;
 
-  // react to resize and rebuild blobs for density
-  window.addEventListener('resize', () => {
-    resize();
-    rebuildBlobs();
-  });
+        // Kedipan halus
+        p.alpha += p.blinkSpeed;
+        if (p.alpha <= 0.3 || p.alpha >= 1) {
+            p.blinkSpeed *= -1;
+        }
 
-})();
+        // Gambar titik neon besar
+        ctx.globalAlpha = p.alpha;
+        ctx.fillStyle = p.color;
+        ctx.shadowColor = p.color;
+        ctx.shadowBlur = 25;   // glow sedikit ditambah biar sesuai ukuran
+
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+    });
+
+    requestAnimationFrame(animate);
+}
+
+animate();
