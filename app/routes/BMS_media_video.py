@@ -1,14 +1,14 @@
 import os
 from flask import Blueprint, jsonify, request, send_from_directory, session
-from app.routes.BMS_auth import (
-    BMS_auth_is_login,
-)
+from app.routes.BMS_auth import BMS_auth_is_login
 from app.routes.BMS_logger import BMS_write_log
+
+# 🔗 Path sinkron dari Config
+from app.BMS_config import VIDEO_FOLDER
 
 media_video = Blueprint("media_video", __name__, url_prefix="/video")
 
-# Folder video
-VIDEO_FOLDER = "/storage/emulated/BMS/VIDEO/"
+# Pastikan folder video ada
 os.makedirs(VIDEO_FOLDER, exist_ok=True)
 
 
@@ -23,19 +23,19 @@ def BMS_video_required():
 
 
 # ======================================================
-#   🛡 Sanitasi nama file (anti path traversal)
+#   🛡 Sanitasi nama file (anti hack traversal)
 # ======================================================
 def sanitize_filename(filename):
     if not filename:
         return None
 
-    # Karakter terlarang
+    # karakter berbahaya / traversal
     bad_chars = ["..", "/", "\\", "|", "&", ";", "$", "`", ">", "<", "$("]
-    for bad in bad_chars:
-        if bad in filename:
+    for b in bad_chars:
+        if b in filename:
             return None
 
-    # Hanya video tertentu
+    # format video yang diizinkan
     valid_ext = (".mp4", ".mkv", ".webm", ".avi", ".mov")
     if not filename.lower().endswith(valid_ext):
         return None
@@ -44,7 +44,7 @@ def sanitize_filename(filename):
 
 
 # ======================================================
-#   🎬 List file video
+#   🎬 LIST VIDEO
 # ======================================================
 @media_video.route("/list")
 def BMS_video_list():
@@ -57,16 +57,20 @@ def BMS_video_list():
 
     valid_ext = (".mp4", ".mkv", ".webm", ".avi", ".mov")
 
-    files = [
-        f for f in os.listdir(VIDEO_FOLDER)
-        if f.lower().endswith(valid_ext)
-    ]
+    try:
+        files = [
+            f for f in os.listdir(VIDEO_FOLDER)
+            if f.lower().endswith(valid_ext)
+        ]
+    except Exception as e:
+        BMS_write_log(f"Error membaca folder video: {e}", username)
+        return jsonify({"error": "Folder video tidak dapat dibaca!"}), 500
 
     return jsonify({"files": files})
 
 
 # ======================================================
-#   ▶ Putar video
+#   ▶ PUTAR VIDEO
 # ======================================================
 @media_video.route("/play")
 def BMS_video_play():
@@ -79,15 +83,16 @@ def BMS_video_play():
 
     safe_name = sanitize_filename(filename)
     if not safe_name:
-        BMS_write_log(f"Nama file video ilegal: {filename}", username)
-        return "❌ File tidak valid!"
+        BMS_write_log(f"Nama file ilegal: {filename}", username)
+        return "❌ Nama file tidak valid!"
 
-    filepath = os.path.join(VIDEO_FOLDER, safe_name)
+    target = os.path.join(VIDEO_FOLDER, safe_name)
 
-    if not os.path.exists(filepath):
-        BMS_write_log(f"File video tidak ditemukan: {safe_name}", username)
+    if not os.path.exists(target):
+        BMS_write_log(f"Video tidak ditemukan: {safe_name}", username)
         return "❌ File tidak ditemukan!"
 
     BMS_write_log(f"Memutar video: {safe_name}", username)
 
+    # Kakak: gunakan send_from_directory agar aman
     return send_from_directory(VIDEO_FOLDER, safe_name)
