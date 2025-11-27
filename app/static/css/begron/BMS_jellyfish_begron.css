@@ -1,0 +1,17 @@
+/* jellyfish_neon.css */
+:root {
+  --bg-color: #000014;
+}
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg-color);
+  overflow: hidden;
+}
+
+#jellyCanvas {
+  width: 100vw;
+  height: 100vh;
+  display: block;
+}
