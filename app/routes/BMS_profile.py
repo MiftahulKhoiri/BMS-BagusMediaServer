@@ -32,43 +32,6 @@ def get_db():
 
 
 # ======================================================
-#  📌 Pastikan semua kolom profile ada (auto repair)
-# ======================================================
-def ensure_profile_columns():
-    conn = get_db()
-    cur = conn.cursor()
-
-    required = {
-        "nama": "TEXT",
-        "umur": "TEXT",
-        "gender": "TEXT",
-        "email": "TEXT",
-        "bio": "TEXT",
-        "foto_profile": "TEXT",
-        "foto_background": "TEXT"
-    }
-
-    # Cek kolom tabel
-    cur.execute("PRAGMA table_info(users)")
-    existing_cols = [col[1] for col in cur.fetchall()]
-
-    # Tambah kolom jika belum ada
-    for col, tipe in required.items():
-        if col not in existing_cols:
-            try:
-                cur.execute(f"ALTER TABLE users ADD COLUMN {col} {tipe}")
-            except:
-                pass
-
-    conn.commit()
-    conn.close()
-
-
-# Jalankan auto repair
-ensure_profile_columns()
-
-
-# ======================================================
 #  🔐 Proteksi Halaman
 # ======================================================
 def BMS_profile_required():
