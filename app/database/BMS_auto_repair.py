@@ -43,3 +43,23 @@ def ensure_users_table():
     conn.close()
 
     print("[DB FIX] Users table repair complete.")
+
+def ensure_root_user():
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+
+    # cek apakah root sudah ada
+    cur.execute("SELECT id FROM users WHERE username='root'")
+    user = cur.fetchone()
+
+    if not user:
+        cur.execute("""
+            INSERT INTO users (username, password, role, nama)
+            VALUES ('root', 'root123', 'root', 'System Root')
+        """)
+        print("[DB FIX] User ROOT dibuat: username=root password=root123")
+    else:
+        print("[DB FIX] User ROOT sudah ada.")
+
+    conn.commit()
+    conn.close()
