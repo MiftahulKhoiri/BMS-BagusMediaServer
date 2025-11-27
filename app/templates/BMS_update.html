@@ -1,122 +1,53 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BMS - Update Server</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BMS - Update Server</title>
 
-    <!-- CSS -->
-    <link rel="stylesheet" href="/static/css/BMS_update.css">
+  <!-- LOAD CSS -->
+  <link rel="stylesheet" href="/static/css/BMS_update.css">
 </head>
 <body>
 
-<h2>⚙️ BMS Server Update Panel</h2>
+  <div class="wrap">
+    <div class="card">
+      <h1>⚙️ Panel Update — BMS</h1>
+      <p class="lead">Cek versi, buat backup, dan terapkan update dari GitHub.</p>
 
-<!-- Box Notifikasi -->
-<div id="notifyBox"></div>
+      <div class="row">
+        <button id="btnCheck" class="btn btn-ghost">🔎 Cek Update</button>
+        <button id="btnDo" class="btn btn-primary">🚀 Jalankan Update</button>
+        <button id="btnLogs" class="btn">📄 Lihat Log</button>
+        <button id="btnClearLog" class="btn btn-danger">🧹 Bersihkan Log</button>
+      </div>
 
+      <div class="status">
+        <div class="status-head">
+          <div id="statusIcon" class="spinner" style="display:none"></div>
+          <div>
+            <div id="statusText">Status: Siap</div>
+            <div class="hint">
+              Versi terpasang: <span id="currentVersion">-</span> • 
+              Versi online: <span id="onlineVersion">-</span>
+            </div>
+          </div>
+        </div>
 
-<!-- ======================================================
-    🔄 UPDATE SYSTEM
-====================================================== -->
-<div class="section-title">🔄 Jalankan Update Otomatis</div>
+        <div class="progress">
+          <span id="progressBar"></span>
+        </div>
+        <div class="hint" id="progressLabel">Belum ada aktivitas</div>
+      </div>
 
-<button class="btn" onclick="runUpdate()">Jalankan Pembaruan</button>
+      <div class="logbox" id="logbox">
+        Log akan muncul di sini
+      </div>
+    </div>
+  </div>
 
-
-
-<!-- ======================================================
-    🔁 RESTART SERVER (MANUAL)
-====================================================== -->
-<button class="btn warn" onclick="restartServer()">Restart Server</button>
-
-
-
-<!-- ======================================================
-    📜 LOG SYSTEM
-====================================================== -->
-<div class="container">
-    <div class="section-title">📜 Log Sistem</div>
-
-    <button class="btn" onclick="loadLog()">Reload Log</button>
-    <button class="btn" onclick="clearLog()">Clear Log</button>
-
-    <div id="logBox" class="log-box">Log belum dimuat...</div>
-</div>
-
-
-<!-- ======================================================
-    JAVASCRIPT
-====================================================== -->
-<script>
-/* -------------------------------
-    🔔 Notifikasi
---------------------------------*/
-function notify(msg, type="info") {
-    const box = document.getElementById("notifyBox");
-    box.innerHTML = msg;
-    box.className = "notify " + type;
-    setTimeout(() => { box.innerHTML = ""; box.className = "" }, 3500);
-}
-
-
-
-/* -------------------------------
-    🔄 Jalankan Update
---------------------------------*/
-function runUpdate() {
-    notify("Menjalankan update...", "info");
-
-    fetch("/update/do")
-        .then(res => res.json())
-        .then(data => {
-            if (data.status === "ok") {
-                notify("✔ Update berhasil!", "success");
-                loadLog();
-            } else {
-                notify("❌ Gagal update: " + (data.error || data.msg), "error");
-            }
-        })
-        .catch(err => notify("❌ Error: " + err, "error"));
-}
-
-
-
-/* -------------------------------
-    🔁 Restart Server
---------------------------------*/
-function restartServer() {
-    alert("⚠ Restart server dilakukan secara manual di Termux:\n\n$ pkill -f flask\n$ python run.py");
-}
-
-
-
-/* -------------------------------
-    📜 Load Log
---------------------------------*/
-function loadLog() {
-    fetch("/update/logs")
-        .then(res => res.json())
-        .then(data => {
-            document.getElementById("logBox").innerText = data.log || "Log kosong.";
-        });
-}
-
-
-
-/* -------------------------------
-    🧹 Clear Log
---------------------------------*/
-function clearLog() {
-    fetch("/logger/clear")
-        .then(res => res.json())
-        .then(data => {
-            notify("✔ Log berhasil dibersihkan!", "success");
-            document.getElementById("logBox").innerText = "Log kosong.";
-        })
-        .catch(err => notify("❌ Error: " + err, "error"));
-}
-</script>
+  <!-- LOAD JS -->
+  <script src="/static/js/BMS_update.js"></script>
 
 </body>
 </html>
