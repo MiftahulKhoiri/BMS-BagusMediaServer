@@ -10,7 +10,7 @@ if os.path.exists("/storage/downloads/"):
 
 # Jika Android versi lama (fallback)
 #elif os.path.exists("/storage/emulated/0/"):
-    BASE = "/storage/emulated/0/BMS"
+   # BASE = "/storage/emulated/0/BMS"
 
 # Jika PC (Windows / Linux)
 else:
