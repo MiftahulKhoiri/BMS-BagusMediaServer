@@ -26,10 +26,10 @@
   resize();
 
   // --- CONFIG ---
-  const NUM_BLOBS = Math.max(10, Math.floor(Math.min(window.innerWidth, 900) / 130));
-  const MIN_RADIUS = 10;
-  const MAX_RADIUS = 24;
-  const MAX_SPEED = 0.010; // px per ms (small for smoothness)
+  const NUM_BLOBS = Math.max(30, Math.floor(Math.min(window.innerWidth, 900) / 130));
+  const MIN_RADIUS = 5;
+  const MAX_RADIUS = 15;
+  const MAX_SPEED = 0.0010; // px per ms (small for smoothness)
   const COLOR_SETS = [
     ['#33fff6', '#00ff99', '#88ffdd'],
     ['#ff6bcb', '#ffb86b', '#ffd36b'],
@@ -88,8 +88,8 @@
       }
 
       // Steer towards target gently
-      const steerX = (this.targetX - this.x) * 0.00030 * dt;
-      const steerY = (this.targetY - this.y) * 0.00030 * dt;
+      const steerX = (this.targetX - this.x) * 0.00020 * dt;
+      const steerY = (this.targetY - this.y) * 0.00020 * dt;
       this.vx += steerX;
       this.vy += steerY;
 
