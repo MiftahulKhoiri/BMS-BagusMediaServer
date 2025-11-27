@@ -1,102 +1,91 @@
-// ========================
-//  NOTIFIKASI
-// ========================
-function showNotify(msg) {
-    const box = document.getElementById("notifyBox");
-    box.innerText = msg;
-    box.style.display = "block";
+const $ = id => document.getElementById(id)
 
-    setTimeout(() => {
-        box.style.display = "none";
-    }, 3000);
+const statusText = $('statusText')
+const statusIcon = $('statusIcon')
+const progressBar = $('progressBar')
+const progressLabel = $('progressLabel')
+const currentVersion = $('currentVersion')
+const onlineVersion = $('onlineVersion')
+const logbox = $('logbox')
+
+function setBusy(on, msg){
+  statusIcon.style.display = on ? "inline-block" : "none"
+  statusText.textContent = "Status: " + (msg || "Siap")
 }
 
-
-// ========================
-//  UPDATE OTOMATIS
-// ========================
-function runUpdate() {
-    fetch("/tools/update/run")
-        .then(res => res.json())
-        .then(data => {
-
-            if (data.error) {
-                showNotify("❌ " + data.error);
-                return;
-            }
-
-            if (data.notify)
-                showNotify("✔ " + data.notify);
-
-            let text = "";
-
-            if (data.updated) {
-                text = 
-                    "=== UPDATE BERHASIL ===\n\n" +
-                    data.git_output + "\n\n" +
-                    data.pip_output;
-            } else {
-                text =
-                    "=== TIDAK ADA PEMBARUAN ===\n" +
-                    data.message;
-            }
-
-            document.getElementById("logBox").innerText = text;
-        });
+function setProgress(val, txt){
+  progressBar.style.width = val + "%"
+  progressLabel.textContent = txt || ""
 }
 
+async function checkUpdate(){
+  setBusy(true, "Memeriksa update...")
+  setProgress(30, "Menghubungi server...")
 
-// ========================
-//  UPDATE MANUAL
-// ========================
-function runManualUpdate() {
-    fetch("/tools/update/manual")
-        .then(res => res.json())
-        .then(data => {
+  try{
+    const res = await fetch("/update/check")
+    const j = await res.json()
 
-            if (data.notify)
-                showNotify("✔ " + data.notify);
+    currentVersion.textContent = j.current
+    onlineVersion.textContent = j.online
 
-            document.getElementById("logBox").innerText =
-                "=== UPDATE MANUAL ===\n\n" + data.pip_output;
-        });
+    setProgress(100, j.update_available ? "Update tersedia!" : "Sudah terbaru")
+    setBusy(false, j.update_available ? "Update tersedia" : "Sudah terbaru")
+  }
+  catch(err){
+    setBusy(false, "Gagal cek update")
+    log("[Error] " + err)
+  }
 }
 
+async function doUpdate(){
+  if(!confirm("Yakin menjalankan update? Backup otomatis dibuat.")) return
 
-// ========================
-//  RESTART SERVER
-// ========================
-function restartServer() {
-    fetch("/tools/restart")
-        .then(res => res.json())
-        .then(data => {
-            showNotify("🔁 Restart diproses...");
-            document.getElementById("logBox").innerText =
-                "=== RESTART ===\n" + data.message;
-        });
+  setBusy(true, "Menjalankan update...")
+  setProgress(10, "Membuat backup...")
+
+  try{
+    const res = await fetch("/update/do")
+    const j = await res.json()
+
+    log("[Sukses] " + j.msg)
+    setProgress(100, "Update selesai")
+    setBusy(false, "Update selesai")
+
+    fetchLogs()
+  }
+  catch(err){
+    log("[Error] "+err)
+    setBusy(false, "Gagal update")
+  }
 }
 
+async function fetchLogs(){
+  setBusy(true, "Memuat log...")
 
-// ========================
-//  BACA LOG
-// ========================
-function loadLog() {
-    fetch("/tools/log")
-        .then(res => res.json())
-        .then(data => {
-            document.getElementById("logBox").innerText = data.log;
-        });
+  try{
+    const res = await fetch("/update/logs")
+    const j = await res.json()
+
+    logbox.textContent = j.log || "(Log kosong)"
+    setBusy(false, "Log dimuat")
+  }
+  catch(err){
+    log("[Error] " + err)
+    setBusy(false, "Gagal memuat log")
+  }
 }
 
-
-// ========================
-//  CLEAR LOG
-// ========================
-function clearLog() {
-    fetch("/tools/log/clear")
-        .then(res => res.json())
-        .then(() => {
-            showNotify("🧹 Log dibersihkan");
-            document.getElementById("logBox").innerText = "Log dibersihkan!";
-        });
+function log(text){
+  const now = new Date().toLocaleString()
+  logbox.textContent = `${now} — ${text}\n` + logbox.textContent
 }
+
+// Events
+$('btnCheck').onclick = checkUpdate
+$('btnDo').onclick = doUpdate
+$('btnLogs').onclick = fetchLogs
+$('btnClearLog').onclick = () => logbox.textContent = ""
+
+// Auto load
+checkUpdate()
