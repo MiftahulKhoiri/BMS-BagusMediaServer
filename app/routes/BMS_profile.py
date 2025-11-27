@@ -2,45 +2,68 @@ import os
 import sqlite3
 from flask import Blueprint, render_template, request, redirect, session
 from werkzeug.utils import secure_filename
+
+# 🔗 Import config pusat (supaya path selalu sinkron)
+from app.BMS_config import DATABASE_PATH, PROFILE_FOLDER
+
+# 🔐 Import login check
 from app.routes.BMS_auth import BMS_auth_is_login
 
+
+# ======================================================
+#  🔧 Blueprint
+# ======================================================
 profile = Blueprint("profile", __name__, url_prefix="/profile")
 
-DB_PATH = "/storage/emulated/0/BMS/database/users.db"
-PROFILE_FOLDER = "/storage/emulated/0/BMS/profile/"
-os.makedirs(PROFILE_FOLDER, exist_ok=True)   # folder upload foto
 
 # ======================================================
-#  📌 Helper Database
+#  📌 Pastikan folder profile ada
+# ======================================================
+os.makedirs(PROFILE_FOLDER, exist_ok=True)
+
+
+# ======================================================
+#  📌 DB Helper
 # ======================================================
 def get_db():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DATABASE_PATH)
     conn.row_factory = sqlite3.Row
     return conn
 
 
 # ======================================================
-#  📌 Tambahkan kolom baru jika belum ada
+#  📌 Pastikan semua kolom profile ada (auto repair)
 # ======================================================
 def ensure_profile_columns():
     conn = get_db()
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            username TEXT UNIQUE,
-            password TEXT,
-            role TEXT,
-            nama TEXT,
-            umur TEXT,
-            gender TEXT,
-            email TEXT,
-            bio TEXT,
-            foto_profile TEXT,
-            foto_background TEXT
-        )
-    """)
+    cur = conn.cursor()
+
+    # Kolom wajib
+    required = {
+        "nama": "TEXT",
+        "umur": "TEXT",
+        "gender": "TEXT",
+        "email": "TEXT",
+        "bio": "TEXT",
+        "foto_profile": "TEXT",
+        "foto_background": "TEXT"
+    }
+
+    # Cek kolom yang ada
+    cur.execute("PRAGMA table_info(users)")
+    existing_cols = [col[1] for col in cur.fetchall()]
+
+    # Tambahkan kolom yang belum ada
+    for col, tipe in required.items():
+        if col not in existing_cols:
+            try:
+                cur.execute(f"ALTER TABLE users ADD COLUMN {col} {tipe}")
+            except:
+                pass
+
     conn.commit()
     conn.close()
+
 
 ensure_profile_columns()
 
@@ -55,7 +78,7 @@ def BMS_profile_required():
 
 
 # ======================================================
-#  👤 Halaman Profil User
+#  👤 Halaman Profil
 # ======================================================
 @profile.route("/")
 def BMS_profile_page():
@@ -71,7 +94,7 @@ def BMS_profile_page():
 
 
 # ======================================================
-#  ✏ Halaman Edit Profile
+#  ✏ Halaman Edit Profil
 # ======================================================
 @profile.route("/edit")
 def BMS_profile_edit_page():
@@ -87,7 +110,7 @@ def BMS_profile_edit_page():
 
 
 # ======================================================
-#  💾 SIMPAN PROFIL LENGKAP
+#  💾 SIMPAN PROFIL
 # ======================================================
 @profile.route("/save", methods=["POST"])
 def BMS_profile_save():
@@ -97,7 +120,7 @@ def BMS_profile_save():
 
     user_id = session.get("user_id")
 
-    # Data teks
+    # Data form
     nama = request.form.get("nama")
     umur = request.form.get("umur")
     gender = request.form.get("gender")
@@ -114,7 +137,6 @@ def BMS_profile_save():
         filename = f"profile_{user_id}_" + secure_filename(foto_profile.filename)
         foto_profile_path = os.path.join(PROFILE_FOLDER, filename)
         foto_profile.save(foto_profile_path)
-        foto_profile_path = foto_profile_path  # path final
 
     # =======================
     # Upload Foto Background
@@ -127,19 +149,17 @@ def BMS_profile_save():
         foto_background_path = os.path.join(PROFILE_FOLDER, filename)
         foto_background.save(foto_background_path)
 
-
     # =======================
-    # Update ke database
+    # Update Database
     # =======================
     conn = get_db()
 
-    # Build dynamic update query
     update_fields = {
         "nama": nama,
         "umur": umur,
         "gender": gender,
         "email": email,
-        "bio": bio,
+        "bio": bio
     }
 
     if foto_profile_path:
@@ -148,7 +168,6 @@ def BMS_profile_save():
     if foto_background_path:
         update_fields["foto_background"] = foto_background_path
 
-    # Generate query otomatis
     set_query = ", ".join([f"{k}=?" for k in update_fields.keys()])
     values = list(update_fields.values())
     values.append(user_id)
@@ -158,15 +177,18 @@ def BMS_profile_save():
     conn.close()
 
     # =======================
-    # Update session supaya real-time
+    # Update session real-time
     # =======================
-    session["nama"] = nama
-    session["foto_profile"] = foto_profile_path
-    session["foto_background"] = foto_background_path
+    if nama:
+        session["nama"] = nama
+    if foto_profile_path:
+        session["foto_profile"] = foto_profile_path
+    if foto_background_path:
+        session["foto_background"] = foto_background_path
 
-    # Redirect kembali sesuai role
+    # Redirect sesuai role
     role = session.get("role")
-    
+
     if role in ("admin", "root"):
-        return redirect("/admin/dashboard")
+        return redirect("/admin/home")
     return redirect("/user/home")
