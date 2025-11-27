@@ -1,4 +1,4 @@
-⁰<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
@@ -11,24 +11,112 @@
 <body>
 
 <h2>⚙️ BMS Server Update Panel</h2>
+
 <!-- Box Notifikasi -->
 <div id="notifyBox"></div>
 
-    <div class="section-title">🔄 Update dan Install Otomatis</div>
-    <button class="btn" onclick="runUpdate()">Jalankan Pembaruan</button>
 
-        <button class="btn warn" onclick="restartServer()">Restart Server</button>
-   <div class="container">
+<!-- ======================================================
+    🔄 UPDATE SYSTEM
+====================================================== -->
+<div class="section-title">🔄 Jalankan Update Otomatis</div>
+
+<button class="btn" onclick="runUpdate()">Jalankan Pembaruan</button>
+
+
+
+<!-- ======================================================
+    🔁 RESTART SERVER (MANUAL)
+====================================================== -->
+<button class="btn warn" onclick="restartServer()">Restart Server</button>
+
+
+
+<!-- ======================================================
+    📜 LOG SYSTEM
+====================================================== -->
+<div class="container">
     <div class="section-title">📜 Log Sistem</div>
+
     <button class="btn" onclick="loadLog()">Reload Log</button>
     <button class="btn" onclick="clearLog()">Clear Log</button>
 
     <div id="logBox" class="log-box">Log belum dimuat...</div>
-
 </div>
 
-<!-- JAVASCRIPT -->
-<script src="/static/js/BMS_update.js"></script>
+
+<!-- ======================================================
+    JAVASCRIPT
+====================================================== -->
+<script>
+/* -------------------------------
+    🔔 Notifikasi
+--------------------------------*/
+function notify(msg, type="info") {
+    const box = document.getElementById("notifyBox");
+    box.innerHTML = msg;
+    box.className = "notify " + type;
+    setTimeout(() => { box.innerHTML = ""; box.className = "" }, 3500);
+}
+
+
+
+/* -------------------------------
+    🔄 Jalankan Update
+--------------------------------*/
+function runUpdate() {
+    notify("Menjalankan update...", "info");
+
+    fetch("/update/do")
+        .then(res => res.json())
+        .then(data => {
+            if (data.status === "ok") {
+                notify("✔ Update berhasil!", "success");
+                loadLog();
+            } else {
+                notify("❌ Gagal update: " + (data.error || data.msg), "error");
+            }
+        })
+        .catch(err => notify("❌ Error: " + err, "error"));
+}
+
+
+
+/* -------------------------------
+    🔁 Restart Server
+--------------------------------*/
+function restartServer() {
+    alert("⚠ Restart server dilakukan secara manual di Termux:\n\n$ pkill -f flask\n$ python run.py");
+}
+
+
+
+/* -------------------------------
+    📜 Load Log
+--------------------------------*/
+function loadLog() {
+    fetch("/update/logs")
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById("logBox").innerText = data.log || "Log kosong.";
+        });
+}
+
+
+
+/* -------------------------------
+    🧹 Clear Log
+--------------------------------*/
+function clearLog() {
+    fetch("/logger/clear")
+        .then(res => res.json())
+        .then(data => {
+            notify("✔ Log berhasil dibersihkan!", "success");
+            document.getElementById("logBox").innerText = "Log kosong.";
+        })
+        .catch(err => notify("❌ Error: " + err, "error"));
+}
+</script>
 
 </body>
 </html>
