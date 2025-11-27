@@ -11,7 +11,7 @@ from app.routes.BMS_logger import BMS_write_log
 terminal = Blueprint("terminal", __name__, url_prefix="/terminal")
 
 # Batas kerja terminal
-SAFE_ROOT = "/storage/emulated/0/BMS/"
+SAFE_ROOT = "/storage/emulated/BMS/"
 
 
 # ======================================================
