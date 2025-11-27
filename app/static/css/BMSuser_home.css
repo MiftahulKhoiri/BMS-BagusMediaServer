@@ -1,25 +1,31 @@
-/* ==============================
-   BMS Home Style
-   ============================== */
+/* ===========================================
+   BMS Home - Modern Neon Glass Style
+   =========================================== */
 
 body {
     margin: 0;
     padding: 0;
-    font-family: Arial, sans-serif;
-    background: linear-gradient(180deg, #0b0f1a, #0d1323);
+    background: radial-gradient(circle at top, #0e1830, #050915 70%);
+    font-family: 'Inter', Arial, sans-serif;
     color: #eef3ff;
 }
 
-/* BOX UTAMA */
+/* CARD UTAMA */
 .home-box {
-    max-width: 420px;
-    margin: 80px auto;
-    background: rgba(255,255,255,0.05);
-    padding: 25px;
-    border-radius: 14px;
-    border: 1px solid rgba(255,255,255,0.08);
-    box-shadow: 0 0 25px rgba(0,255,200,0.08);
-    backdrop-filter: blur(4px);
+    max-width: 430px;
+    margin: 90px auto;
+    padding: 28px;
+
+    background: rgba(255,255,255,0.06);
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.1);
+    backdrop-filter: blur(12px);
+
+    box-shadow: 0 0 22px rgba(0,255,200,0.15),
+                inset 0 0 14px rgba(255,255,255,0.03),
+                0 18px 40px rgba(0,0,0,0.45);
+
+    animation: fadeIn 0.9s ease;
 }
 
 /* LOGO */
@@ -30,61 +36,82 @@ body {
 
 .logo-text {
     margin: 0;
-    font-size: 32px;
-    font-weight: bold;
-    color: #6ee7ff;
-    text-shadow: 0 0 10px rgba(0,255,255,0.4);
+    font-size: 34px;
+    font-weight: 900;
+    letter-spacing: 2px;
+    color: #7fffd4;
+    text-shadow: 0 0 12px #7fffd4, 
+                 0 0 24px rgba(127,255,212,0.7);
 }
 
 .logo-sub {
-    margin-top: -2px;
-    color: #93b1ff;
-    font-size: 14px;
+    margin-top: -4px;
+    font-size: 15px;
+    color: #9bbcff;
+    opacity: 0.85;
 }
 
-/* GARIS */
+/* GARIS PEMBATAS */
 .home-line {
     border: none;
-    border-top: 1px solid rgba(255,255,255,0.15);
-    margin: 18px 0;
+    border-top: 1px solid rgba(255,255,255,0.18);
+    margin: 22px 0;
 }
 
-/* MENU ITEM */
+/* MENU */
 .home-menu {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
 }
 
 .home-item {
     display: block;
-    padding: 14px;
-    border-radius: 10px;
-    background: rgba(255,255,255,0.06);
-    color: #e9f1ff;
+    padding: 16px 14px;
+
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.09);
+
     text-decoration: none;
-    font-size: 16px;
+    color: #dff7ff;
+    font-size: 17px;
     font-weight: 600;
-    transition: 0.2s;
-    border: 1px solid rgba(255,255,255,0.05);
+
+    border-radius: 12px;
+
+    transition: 0.25s ease;
+    position: relative;
 }
 
 /* HOVER */
 .home-item:hover {
-    background: rgba(110, 231, 183, 0.15);
-    border-color: rgba(110, 231, 183, 0.4);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(110,231,183,0.25);
+    background: rgba(127,255,212,0.15);
+    border-color: rgba(127,255,212,0.5);
+    box-shadow: 0 4px 16px rgba(127,255,212,0.4);
+    transform: translateY(-3px);
+}
+
+/* KLIK ANIMASI */
+.home-item:active {
+    transform: scale(0.96);
 }
 
 /* FOOTER */
 .home-footer {
     text-align: center;
-    color: #707a99;
-    font-size: 13px;
+    opacity: 0.7;
     margin-top: 10px;
+    font-size: 13px;
 }
 
-.home-footer p {
-    margin: 3px 0;
+/* ANIMASI MASUK CARD */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(25px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
