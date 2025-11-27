@@ -51,118 +51,87 @@ def BMS_update_ui():
 
     return render_template("BMS_update.html")
 
+# ============================================
+# API : CEK UPDATE
+# ============================================
+@update.route("/check-update")
+def check_update():
+    """
+    Cek apakah server tertinggal dari GitHub.
+    - git fetch → ambil update
+    - git status -uno → cek apakah "behind"
+    """
+    try:
+        base_dir = current_app.config["PROJECT_ROOT"]
 
-# ======================================================
-#   🔍 CHECK UPDATE (simulasi)
-# ======================================================
-@update.route("/check")
-def BMS_update_check():
-    check = BMS_update_required()
-    if check:
-        return check
+        # Ambil update terbaru dari remote
+        subprocess.run(["git", "fetch"], cwd=base_dir)
 
-    # Simulasi versi online
-    online_version = "1.0.1"
-    current_version = "1.0.0"
+        # Cek status branch
+        status = subprocess.run(
+            ["git", "status", "-uno"],
+            cwd=base_dir,
+            capture_output=True,
+            text=True
+        )
 
-    return jsonify({
-        "current": current_version,
-        "online": online_version,
-        "update_available": current_version != online_version
-    })
+        update_available = "behind" in status.stdout.lower()
 
+        return jsonify({
+            "update_available": update_available,
+            "output": status.stdout
+        })
 
-# ======================================================
-#   🔥 DOWNLOAD FILE ZIP DARI GITHUB
-# ======================================================
-def download_zip(url, dest):
-    r = requests.get(url, stream=True)
-    if r.status_code != 200:
-        return False
-
-    with open(dest, "wb") as f:
-        for chunk in r.iter_content(1024):
-            f.write(chunk)
-
-    return True
-
-
-# ======================================================
-#   🔥 BACKUP PROJECT SEBELUM UPDATE
-# ======================================================
-def backup_project():
-    backup_dir = os.path.join(BACKUP_PATH, "backup_latest")
-    if os.path.exists(backup_dir):
-        shutil.rmtree(backup_dir)
-
-    shutil.copytree(
-        "/data/data/com.termux/files/home/BMS-BagusMediaServer",
-        backup_dir
-    )
-    return backup_dir
+    except Exception as e:
+        return jsonify({
+            "update_available": False,
+            "error": str(e)
+        })
 
 
-# ======================================================
-#   🔥 APPLY UPDATE ZIP KE PROJECT
-# ======================================================
-def apply_update(zip_file):
-    with zipfile.ZipFile(zip_file, "r") as z:
-        z.extractall(UPDATE_PATH)
+# ============================================
+# WEBSOCKET UPDATE REALTIME
+# ============================================
+def register_ws(sock):
+    """
+    Websocket tidak bisa masuk blueprint default,
+    jadi kita daftar websocket manual di app.py.
 
-    # Nama folder hasil extract GitHub
-    extracted = os.path.join(
-        UPDATE_PATH,
-        "BMS-BagusMediaServer-main"
-    )
+    Cara pemanggilan di app.py:
+        register_ws(sock)
+    """
 
-    project_dir = "/data/data/com.termux/files/home/BMS-BagusMediaServer"
+    @sock.route("/ws/update")
+    def ws_update(ws):
+        base_dir = current_app.config["PROJECT_ROOT"]
 
-    # Timpa file ke project
-    for item in os.listdir(extracted):
-        src = os.path.join(extracted, item)
-        dst = os.path.join(project_dir, item)
+        # Fungsi aman untuk mengirim pesan
+        def safe_send(msg):
+            try:
+                ws.send(msg)
+            except:
+                pass  # WebSocket tertutup → biarkan tanpa error
 
-        if os.path.isdir(src):
-            if os.path.exists(dst):
-                shutil.rmtree(dst)
-            shutil.copytree(src, dst)
-        else:
-            shutil.copy2(src, dst)
+        safe_send("[INFO] Memulai update...\n")
 
-    return True
+        try:
+            # Jalankan git pull
+            process = subprocess.Popen(
+                ["git", "pull"],
+                cwd=base_dir,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.STDOUT,
+                text=True
+            )
 
+            # Kirim output baris demi baris
+            for line in process.stdout:
+                safe_send(line.strip())
 
-# ======================================================
-#   🚀 JALANKAN UPDATE OTOMATIS
-# ======================================================
-@update.route("/do")
-def BMS_update_do():
-    check = BMS_update_required()
-    if check:
-        return check
+        except Exception as e:
+            safe_send(f"[ERROR] {e}")
 
-    username = session.get("username")
-
-    # 1️⃣ Backup project lama
-    backup_path = backup_project()
-    BMS_write_log(f"Backup dibuat di {backup_path}", username)
-
-    # 2️⃣ Download update dari GitHub
-    zip_path = os.path.join(UPDATE_PATH, "update.zip")
-    ok = download_zip(GITHUB_REPO, zip_path)
-
-    if not ok:
-        return jsonify({"error": "Gagal download update GitHub!"}), 500
-
-    BMS_write_log("Update ZIP berhasil di-download", username)
-
-    # 3️⃣ Apply update
-    apply_update(zip_path)
-
-    BMS_write_log("Update berhasil diterapkan!", username)
-
-    return jsonify({"status": "ok", "msg": "Update berhasil!"})
-
+        safe_send("[DONE]")
 
 # ======================================================
 #   📄 LOG UPDATE
