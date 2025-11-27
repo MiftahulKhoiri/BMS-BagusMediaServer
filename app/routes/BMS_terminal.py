@@ -1,6 +1,10 @@
 import os
 import subprocess
 from flask import Blueprint, request, jsonify, session, render_template
+
+# 🔗 Import konfigurasi path
+from app.BMS_config import BASE
+
 from app.routes.BMS_auth import (
     BMS_auth_is_login,
     BMS_auth_is_admin,
@@ -10,8 +14,11 @@ from app.routes.BMS_logger import BMS_write_log
 
 terminal = Blueprint("terminal", __name__, url_prefix="/terminal")
 
-# Batas kerja terminal
-SAFE_ROOT = "/storage/emulated/BMS/"
+# ======================================================
+#   🔒 BATAS KERJA TERMINAL (sesuai Config)
+# ======================================================
+SAFE_ROOT = BASE               # FULL sinkron
+os.makedirs(SAFE_ROOT, exist_ok=True)
 
 
 # ======================================================
@@ -29,32 +36,29 @@ def BMS_terminal_required():
     return None
 
 
-
 # ======================================================
-#   🛡 Sanitasi CMD
+#   🛡 Sanitasi CMD (blokir perintah berbahaya)
 # ======================================================
 def sanitize_cmd(cmd: str):
-    """Blokir command berbahaya"""
-
     BLOCKED_KEYWORDS = [
-        "rm -rf", "rm -f", "rm -r", "reboot", "shutdown",
+        "rm -rf", "rm -f", "rm -r",
+        "reboot", "shutdown",
         "mv /", "chmod 777 /", "chown", "dd if", "mkfs",
-        "su", "sudo", "mount", "umount", "killall",
-        "/proc", "/system", "/vendor", "/dev", "/data",
+        "su", "sudo", "mount", "umount",
+        "killall", "/proc", "/system", "/vendor", "/dev", "/data",
         ">", "<", "|", "&&", "||", ";", "`", "$(", ")"
     ]
 
-    LOWER = cmd.lower()
-
+    c = cmd.lower()
     for word in BLOCKED_KEYWORDS:
-        if word in LOWER:
+        if word in c:
             return False
 
     return True
 
 
 # ======================================================
-#   🖥 Halaman Terminal (UI)
+#   🖥 Halaman Terminal UI
 # ======================================================
 @terminal.route("/ui")
 def BMS_terminal_ui():
@@ -63,10 +67,9 @@ def BMS_terminal_ui():
         return check
 
     username = session.get("username")
-    BMS_write_log("Akses halaman terminal", username)
+    BMS_write_log("Buka halaman terminal", username)
 
     return render_template("BMS_terminal.html")
-
 
 
 # ======================================================
@@ -79,23 +82,23 @@ def BMS_terminal_run():
         return check
 
     cmd = request.form.get("cmd", "").strip()
-    user = session.get("username")
+    username = session.get("username")
 
     if not cmd:
         return jsonify({"output": "Perintah kosong."})
 
-    # Log
-    BMS_write_log(f"Terminal CMD: {cmd}", user)
+    # Catat log
+    BMS_write_log(f"CMD: {cmd}", username)
 
-    # Blokir CMD berbahaya
+    # Blokir perintah berbahaya
     if not sanitize_cmd(cmd):
-        BMS_write_log(f"CMD DIBLOKIR: {cmd}", user)
+        BMS_write_log(f"CMD diblokir: {cmd}", username)
         return jsonify({"output": "❌ PERINTAH DIBLOKIR DEMI KEAMANAN!"})
 
-    # Paksa working directory tetap di SAFE_ROOT
+    # Eksekusi aman di direktori BASE
     try:
         result = subprocess.getoutput(f"cd {SAFE_ROOT} && {cmd}")
         return jsonify({"output": result})
     except Exception as e:
-        BMS_write_log(f"Error terminal: {e}", user)
+        BMS_write_log(f"Terminal error: {e}", username)
         return jsonify({"output": f"Error: {e}"})
