@@ -8,7 +8,7 @@ from app.routes.BMS_logger import BMS_write_log
 media_video = Blueprint("media_video", __name__, url_prefix="/video")
 
 # Folder video
-VIDEO_FOLDER = "/storage/emulated/0/BMS/VIDEO/"
+VIDEO_FOLDER = "/storage/emulated/BMS/VIDEO/"
 os.makedirs(VIDEO_FOLDER, exist_ok=True)
 
 
