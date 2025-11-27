@@ -33,36 +33,6 @@ def BMS_tools_run(command):
         BMS_tools_write_log("ERROR: " + error_msg)
         return error_msg
 
-
-# =====================================
-#  UPDATE SERVER  (git pull)
-# =====================================
-
-@tools.route("/update")
-def BMS_tools_update():
-    if not BMS_tools_is_root():
-        return "Akses ditolak!"
-
-    return BMS_tools_run("git pull")
-
-
-# =====================================
-#  INSTALL PACKAGE  (pip install)
-# =====================================
-
-@tools.route("/install", methods=["POST"])
-def BMS_tools_install():
-    if not BMS_tools_is_root():
-        return "Akses ditolak!"
-
-    package = request.form.get("package")
-
-    if not package:
-        return "Nama paket tidak ada!"
-
-    return BMS_tools_run(f"pip install {package}")
-
-
 # =====================================
 #  RESTART SERVER
 # =====================================
