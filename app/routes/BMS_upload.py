@@ -1,15 +1,13 @@
 import os
 from flask import Blueprint, render_template, request, redirect, jsonify
-from app.routes.BMS_auth import (
-    BMS_auth_is_login,
-)
+from app.routes.BMS_auth import BMS_auth_is_login
+
+# 🔗 Import folder sinkron dari BMS_config
+from app.BMS_config import UPLOAD_FOLDER
 
 upload = Blueprint("upload", __name__, url_prefix="/upload")
 
-# Folder tempat file diupload
-UPLOAD_FOLDER = "/storage/emulated/BMS/UPLOAD"
-
-# Pastikan folder ada
+# Pastikan folder upload ada (berdasarkan config)
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 
@@ -45,7 +43,7 @@ def BMS_upload_page():
 def BMS_upload_do():
     """
     Menerima file dari user,
-    menyimpannya di UPLOAD_FOLDER,
+    menyimpannya ke UPLOAD_FOLDER dari config,
     dan mengembalikan notif.
     """
     check = BMS_upload_required()
