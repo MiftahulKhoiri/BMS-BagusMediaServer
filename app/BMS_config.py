@@ -9,7 +9,7 @@ if os.path.exists("/storage/downloads/"):
     BASE = "/storage/downloads/BMS"
 
 # Jika Android versi lama (fallback)
-elif os.path.exists("/storage/emulated/0/"):
+#elif os.path.exists("/storage/emulated/0/"):
     BASE = "/storage/emulated/0/BMS"
 
 # Jika PC (Windows / Linux)
