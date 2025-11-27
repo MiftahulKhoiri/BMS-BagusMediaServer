@@ -13,10 +13,6 @@ def detect_bms_base():
     if os.path.exists(termux_download):
         return os.path.join(termux_download, "BMS")
 
-    # ANDROID biasa
-    if os.path.exists("/storage/emulated/0/Download"):
-        return "/storage/emulated/0/Download/BMS"
-
     if os.path.exists("/sdcard/Download"):
         return "/sdcard/Download/BMS"
 
