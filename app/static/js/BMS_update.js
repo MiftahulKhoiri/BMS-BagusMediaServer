@@ -1,91 +1,92 @@
-const $ = id => document.getElementById(id)
+// BMS_update_realtime.js
+(() => {
+  const btnConnect = document.getElementById("btnConnect");
+  const btnStop = document.getElementById("btnStop");
+  const btnCheck = document.getElementById("btnCheck");
+  const logbox = document.getElementById("logbox");
+  const statusText = document.getElementById("statusText");
+  const projRoot = document.getElementById("projRoot");
 
-const statusText = $('statusText')
-const statusIcon = $('statusIcon')
-const progressBar = $('progressBar')
-const progressLabel = $('progressLabel')
-const currentVersion = $('currentVersion')
-const onlineVersion = $('onlineVersion')
-const logbox = $('logbox')
+  // tampilkan PROJECT_ROOT jika tersedia via API (opsional)
+  fetch("/update/check-update")
+    .then(r => r.json())
+    .then(j => {
+      projRoot.textContent = j.output ? "(hasil git status tersedia)" : "(tidak diambil)";
+    }).catch(()=>{ projRoot.textContent = "(tidak tersedia)"; });
 
-function setBusy(on, msg){
-  statusIcon.style.display = on ? "inline-block" : "none"
-  statusText.textContent = "Status: " + (msg || "Siap")
-}
+  let ws = null;
 
-function setProgress(val, txt){
-  progressBar.style.width = val + "%"
-  progressLabel.textContent = txt || ""
-}
-
-async function checkUpdate(){
-  setBusy(true, "Memeriksa update...")
-  setProgress(30, "Menghubungi server...")
-
-  try{
-    const res = await fetch("/update/check")
-    const j = await res.json()
-
-    currentVersion.textContent = j.current
-    onlineVersion.textContent = j.online
-
-    setProgress(100, j.update_available ? "Update tersedia!" : "Sudah terbaru")
-    setBusy(false, j.update_available ? "Update tersedia" : "Sudah terbaru")
+  function appendLog(txt) {
+    const now = new Date().toLocaleString();
+    logbox.textContent += now + " — " + txt + "\n";
+    logbox.scrollTop = logbox.scrollHeight;
   }
-  catch(err){
-    setBusy(false, "Gagal cek update")
-    log("[Error] " + err)
+
+  function setStatus(s) {
+    statusText.textContent = "Status: " + s;
   }
-}
 
-async function doUpdate(){
-  if(!confirm("Yakin menjalankan update? Backup otomatis dibuat.")) return
+  btnConnect.addEventListener("click", () => {
+    if (ws) {
+      appendLog("WebSocket sudah aktif");
+      return;
+    }
 
-  setBusy(true, "Menjalankan update...")
-  setProgress(10, "Membuat backup...")
+    setStatus("Membuka koneksi WebSocket...");
+    const proto = (location.protocol === "https:") ? "wss" : "ws";
+    // path ws harus sama dengan yang didaftarkan: /ws/update
+    const url = `${proto}://${location.host}/ws/update`;
+    ws = new WebSocket(url);
 
-  try{
-    const res = await fetch("/update/do")
-    const j = await res.json()
+    ws.onopen = () => {
+      setStatus("Terhubung — Menjalankan git pull...");
+      appendLog("[WS] connected: " + url);
+      btnConnect.disabled = true;
+      btnStop.disabled = false;
+    };
 
-    log("[Sukses] " + j.msg)
-    setProgress(100, "Update selesai")
-    setBusy(false, "Update selesai")
+    ws.onmessage = (evt) => {
+      // pesan teks langsung
+      appendLog(evt.data);
+      // jika pesan penanda DONE atau END, ubah status
+      if (evt.data && (evt.data.startsWith("[DONE]") || evt.data.startsWith("[END]"))) {
+        setStatus("Selesai");
+        try { ws.close(); } catch(e){}
+      }
+    };
 
-    fetchLogs()
-  }
-  catch(err){
-    log("[Error] "+err)
-    setBusy(false, "Gagal update")
-  }
-}
+    ws.onerror = (err) => {
+      appendLog("[WS ERROR] " + (err && err.message ? err.message : JSON.stringify(err)));
+      setStatus("Error WS");
+    };
 
-async function fetchLogs(){
-  setBusy(true, "Memuat log...")
+    ws.onclose = (ev) => {
+      appendLog("[WS] koneksi ditutup");
+      ws = null;
+      btnConnect.disabled = false;
+      btnStop.disabled = true;
+      if (statusText.textContent.indexOf("Selesai") === -1) setStatus("Idle");
+    };
+  });
 
-  try{
-    const res = await fetch("/update/logs")
-    const j = await res.json()
+  btnStop.addEventListener("click", () => {
+    if (!ws) return;
+    appendLog("[WS] Meminta penutupan koneksi...");
+    try { ws.close(); } catch(e){}
+  });
 
-    logbox.textContent = j.log || "(Log kosong)"
-    setBusy(false, "Log dimuat")
-  }
-  catch(err){
-    log("[Error] " + err)
-    setBusy(false, "Gagal memuat log")
-  }
-}
+  btnCheck.addEventListener("click", async () => {
+    setStatus("Memeriksa update (HTTP)...");
+    appendLog("[HTTP] Memeriksa update...");
+    try {
+      const r = await fetch("/update/check-update");
+      const j = await r.json();
+      appendLog("[HTTP] Response: " + (j.update_available ? "Update tersedia" : "Sudah terbaru"));
+      setStatus(j.update_available ? "Update tersedia" : "Sudah terbaru");
+    } catch (e) {
+      appendLog("[HTTP ERROR] " + e);
+      setStatus("Gagal cek");
+    }
+  });
 
-function log(text){
-  const now = new Date().toLocaleString()
-  logbox.textContent = `${now} — ${text}\n` + logbox.textContent
-}
-
-// Events
-$('btnCheck').onclick = checkUpdate
-$('btnDo').onclick = doUpdate
-$('btnLogs').onclick = fetchLogs
-$('btnClearLog').onclick = () => logbox.textContent = ""
-
-// Auto load
-checkUpdate()
+})();
