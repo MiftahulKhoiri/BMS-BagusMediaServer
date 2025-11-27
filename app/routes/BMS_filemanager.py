@@ -13,7 +13,7 @@ from app.routes.BMS_logger import BMS_write_log
 
 filemanager = Blueprint("filemanager", __name__, url_prefix="/filemanager")
 
-ROOT_PATH = "/storage/emulated/0/BMS/"
+ROOT_PATH = "/storage/emulated/BMS/"
 os.makedirs(ROOT_PATH, exist_ok=True)
 
 # --- Tambahkan import di bagian atas file (jika belum ada) ---
