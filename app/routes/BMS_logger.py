@@ -2,12 +2,12 @@ import os
 from datetime import datetime
 from flask import Blueprint, jsonify, request, session
 
+# 🔗 Ambil path resmi dari Config
+from app.BMS_config import LOG_FOLDER, LOG_PATH
+
 logger = Blueprint("logger", __name__, url_prefix="/logger")
 
-LOG_FOLDER = "/storage/emulated/0/BMS/logs/"
-LOG_FILE = LOG_FOLDER + "system.log"
-
-# Pastikan folder log tersedia
+# Pastikan folder log benar-benar ada
 os.makedirs(LOG_FOLDER, exist_ok=True)
 
 
@@ -19,16 +19,17 @@ def BMS_write_log(text, username="SYSTEM"):
     formatted = f"[{time_now}] [{username}] {text}"
 
     try:
-        with open(LOG_FILE, "a") as f:
+        with open(LOG_PATH, "a") as f:
             f.write(formatted + "\n")
-    except:
-        pass
+    except Exception as e:
+        print(f"[WARN] Tidak bisa menulis log: {e}")
 
     return formatted
 
 
 # ======================================================
-#   🔐 Proteksi admin (tanpa import auth!)
+#   🔐 Proteksi admin
+#   tanpa import BMS_auth supaya tidak circular
 # ======================================================
 def BMS_log_required():
     if not session.get("user_id"):
@@ -36,7 +37,7 @@ def BMS_log_required():
 
     role = session.get("role", "user")
     if role not in ("admin", "root"):
-        return jsonify({"error": "Hanya admin/root!"}), 403
+        return jsonify({"error": "Hanya admin/root yang boleh!"}), 403
 
     return None
 
@@ -50,10 +51,10 @@ def BMS_logger_read():
     if check:
         return check
 
-    if not os.path.exists(LOG_FILE):
+    if not os.path.exists(LOG_PATH):
         return jsonify({"log": ""})
 
-    with open(LOG_FILE, "r") as f:
+    with open(LOG_PATH, "r") as f:
         content = f.read()
 
     return jsonify({"log": content})
@@ -68,12 +69,11 @@ def BMS_logger_clear():
     if check:
         return check
 
-    # Kosongkan file
     try:
-        open(LOG_FILE, "w").close()
+        open(LOG_PATH, "w").close()
         return jsonify({"status": "cleared"})
-    except:
-        return jsonify({"error": "Gagal clear log!"})
+    except Exception as e:
+        return jsonify({"error": f"Gagal clear log: {e}"})
 
 
 # ======================================================
