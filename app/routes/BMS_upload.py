@@ -7,7 +7,7 @@ from app.routes.BMS_auth import (
 upload = Blueprint("upload", __name__, url_prefix="/upload")
 
 # Folder tempat file diupload
-UPLOAD_FOLDER = "/storage/emulated/0/BMS/UPLOAD"
+UPLOAD_FOLDER = "/storage/emulated/BMS/UPLOAD"
 
 # Pastikan folder ada
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
