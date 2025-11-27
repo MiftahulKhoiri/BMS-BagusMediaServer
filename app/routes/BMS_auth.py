@@ -6,7 +6,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 auth = Blueprint("auth", __name__, url_prefix="/auth")
 
 # Lokasi database user (bisa diubah lewat env jika perlu)
-DB_PATH = os.environ.get("BMS_USERS_DB", "/storage/emulated/0/BMS/database/users.db")
+DB_PATH = os.environ.get("BMS_USERS_DB", "/storage/emulated/BMS/database/users.db")
 
 # Pastikan folder database ada
 os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
