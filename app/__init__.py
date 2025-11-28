@@ -1,6 +1,7 @@
 import os
 from flask import Flask, redirect, render_template, session
 from flask_cors import CORS
+from flask_sock import Sock    # <-- WAJIB ADA
 
 # Import config
 from app.BMS_config import BASE
@@ -10,6 +11,9 @@ from app.database.BMS_auto_repair import ensure_users_table, ensure_root_user
 
 # Import Blueprint register
 from app.routes import register_blueprints
+
+# Import WebSocket updater
+from app.routes.BMS_update import register_ws   # <-- WAJIB ADA
 
 
 def create_app():
@@ -25,34 +29,39 @@ def create_app():
         "BAGUS-MEDIA-SERVER-KEY-99999"
     )
 
-    # ===========================================
-    # 🔥 Jalankan Auto Repair DB sebelum blueprint
-    # ===========================================
-    app.config["PROJECT_ROOT"] ="/data/data/com.termux/files/home/BMS-BagusMediaServer"
+    # ==================================================================
+    # PROJECT ROOT
+    # ==================================================================
+    app.config["PROJECT_ROOT"] = "/data/data/com.termux/files/home/BMS-BagusMediaServer"
+
+    # ==================================================================
+    # AUTO REPAIR DB
+    # ==================================================================
     ensure_users_table()
     ensure_root_user()
 
-    # ===========================================
-    # 🔥 CORS
-    # ===========================================
-    CORS(app, resources={r"/*": {"origins": [
-        "http://localhost",
-        "http://127.0.0.1",
-        "http://0.0.0.0",
-        "http://localhost:5000"
-    ]}})
+    # ==================================================================
+    # CORS
+    # ==================================================================
+    CORS(app, resources={r"/*": {"origins": "*"}})
 
-    # ===========================================
-    # 🔥 Register semua blueprint
-    # ===========================================
+    # ==================================================================
+    # REGISTER BLUEPRINT
+    # ==================================================================
     register_blueprints(app)
+
+    # ==================================================================
+    # REGISTER WEBSOCKET (Hal terpenting agar tombol UPDATE jalan)
+    # ==================================================================
+    sock = Sock(app)
+    register_ws(sock)
 
     print(">> BMS Flask App berhasil dibuat!")
     print(f">> BASE Folder: {BASE}")
 
-    # ===========================================
-    # HOME ROUTE
-    # ===========================================
+    # ==================================================================
+    # HOME
+    # ==================================================================
     @app.route("/")
     def BMS_home():
 
@@ -70,7 +79,7 @@ def create_app():
 
 
 # ======================================================
-#   RUN SERVER
+# RUN SERVER
 # ======================================================
 if __name__ == "__main__":
     app = create_app()
