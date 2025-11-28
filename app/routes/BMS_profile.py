@@ -1,26 +1,17 @@
 import os
 import sqlite3
-from flask import Blueprint, render_template, request, redirect, session
+from flask import Blueprint, render_template, request, redirect, session, send_from_directory
 from werkzeug.utils import secure_filename
 
-# 🔗 Import config pusat (path sinkron)
+# 🔗 Import config pusat
 from app.BMS_config import DB_PATH, PROFILE_FOLDER
 
 # 🔐 Import login check
 from app.routes.BMS_auth import BMS_auth_is_login
 
-
-# ======================================================
-#  🔧 Blueprint
-# ======================================================
 profile = Blueprint("profile", __name__, url_prefix="/profile")
 
-
-# ======================================================
-#  📌 Pastikan folder profile ada
-# ======================================================
 os.makedirs(PROFILE_FOLDER, exist_ok=True)
-
 
 # ======================================================
 #  📌 DB Helper
@@ -30,7 +21,6 @@ def get_db():
     conn.row_factory = sqlite3.Row
     return conn
 
-
 # ======================================================
 #  🔐 Proteksi Halaman
 # ======================================================
@@ -39,6 +29,12 @@ def BMS_profile_required():
         return redirect("/auth/login")
     return None
 
+# ======================================================
+#  📷 ROUTE untuk menampilkan file foto
+# ======================================================
+@profile.route("/image/<filename>")
+def BMS_profile_image(filename):
+    return send_from_directory(PROFILE_FOLDER, filename)
 
 # ======================================================
 #  👤 Halaman Profil
@@ -57,7 +53,6 @@ def BMS_profile_page():
 
     return render_template("BMS_profile.html", user=user)
 
-
 # ======================================================
 #  ✏ Halaman Edit Profil
 # ======================================================
@@ -74,7 +69,6 @@ def BMS_profile_edit_page():
     conn.close()
 
     return render_template("BMS_edit_profile.html", user=user)
-
 
 # ======================================================
 #  💾 SIMPAN PROFIL
@@ -97,24 +91,22 @@ def BMS_profile_save():
     # =======================
     # Upload Foto Profil
     # =======================
-    foto_profile_path = None
     foto_profile = request.files.get("foto_profile")
+    foto_profile_name = None
 
     if foto_profile and foto_profile.filename != "":
-        filename = f"profile_{user_id}_" + secure_filename(foto_profile.filename)
-        foto_profile_path = os.path.join(PROFILE_FOLDER, filename)
-        foto_profile.save(foto_profile_path)
+        foto_profile_name = f"profile_{user_id}_" + secure_filename(foto_profile.filename)
+        foto_profile.save(os.path.join(PROFILE_FOLDER, foto_profile_name))
 
     # =======================
     # Upload Foto Background
     # =======================
-    foto_background_path = None
     foto_background = request.files.get("foto_background")
+    foto_background_name = None
 
     if foto_background and foto_background.filename != "":
-        filename = f"background_{user_id}_" + secure_filename(foto_background.filename)
-        foto_background_path = os.path.join(PROFILE_FOLDER, filename)
-        foto_background.save(foto_background_path)
+        foto_background_name = f"background_{user_id}_" + secure_filename(foto_background.filename)
+        foto_background.save(os.path.join(PROFILE_FOLDER, foto_background_name))
 
     # =======================
     # Update Database
@@ -129,11 +121,11 @@ def BMS_profile_save():
         "bio": bio
     }
 
-    if foto_profile_path:
-        update_fields["foto_profile"] = foto_profile_path
+    if foto_profile_name:
+        update_fields["foto_profile"] = foto_profile_name
 
-    if foto_background_path:
-        update_fields["foto_background"] = foto_background_path
+    if foto_background_name:
+        update_fields["foto_background"] = foto_background_name
 
     set_query = ", ".join([f"{k}=?" for k in update_fields.keys()])
     values = list(update_fields.values())
@@ -144,14 +136,12 @@ def BMS_profile_save():
     conn.close()
 
     # =======================
-    # Update session real-time
+    # Update session
     # =======================
-    if nama:
-        session["nama"] = nama
-    if foto_profile_path:
-        session["foto_profile"] = foto_profile_path
-    if foto_background_path:
-        session["foto_background"] = foto_background_path
+    if foto_profile_name:
+        session["foto_profile"] = foto_profile_name
+    if foto_background_name:
+        session["foto_background"] = foto_background_name
 
     # =======================
     # Redirect sesuai role
@@ -161,12 +151,3 @@ def BMS_profile_save():
     if role in ("admin", "root"):
         return redirect("/admin/home")
     return redirect("/user/home")
-
-# ======================================================
-#  📷 ROUTE UNTUK MENGAMBIL FOTO PROFIL & BACKGROUND
-# ======================================================
-from flask import send_from_directory
-
-@profile.route("/image/<filename>")
-def BMS_profile_image(filename):
-    return send_from_directory(PROFILE_FOLDER, filename)
