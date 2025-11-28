@@ -44,7 +44,8 @@ function loadCommits() {
 
 function startUpdate() {
     document.getElementById("log").innerHTML = "";
-    const ws = new WebSocket("ws://" + location.host + "/ws/update");
+    const protocol = location.protocol === "https:" ? "wss://" : "ws://";
+    const ws = new WebSocket(protocol +location.host + "/ws/update");
 
     ws.onopen = () => {
         addLog("▶ Memulai proses update...");
