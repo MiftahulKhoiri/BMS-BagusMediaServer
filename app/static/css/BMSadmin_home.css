@@ -162,3 +162,27 @@ body {
     font-weight: bold;
     margin-top: 5px;
 }
+
+/* Membariskan statistik user agar rapi */
+.user-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-right: 10px;
+    padding-left: 5px;
+}
+
+.user-stats {
+    display: flex;
+    gap: 12px;
+    font-size: 14px;
+    color: #00ffae;
+}
+
+.user-stats span {
+    background: rgba(0, 255, 120, 0.12);
+    padding: 4px 8px;
+    border-radius: 6px;
+    border: 1px solid #00ff80;
+    box-shadow: 0 0 8px #00ff80;
+}
