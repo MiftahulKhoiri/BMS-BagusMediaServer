@@ -13,3 +13,26 @@ h1{margin:0 0 8px}
 .status{margin-top:12px;padding:10px;border-radius:8px;background:rgba(255,255,255,0.01)}
 .hint{color:var(--muted);font-size:13px;margin-top:6px}
 .logbox{margin-top:12px;background:#021226;border:1px solid rgba(255,255,255,0.03);padding:12px;border-radius:8px;height:360px;overflow:auto;color:#cfeef0;font-family:monospace;font-size:13px;white-space:pre-wrap}
+
+.commit-box {
+    background: rgba(255,255,255,0.06);
+    padding: 14px;
+    border-radius: 10px;
+    margin-top: 10px;
+}
+.commit-box ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.commit-box li {
+    padding: 6px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+}
+.commit-box li:last-child {
+    border-bottom: none;
+}
+.commit-hash {
+    font-weight: bold;
+    color: #4da3ff;
+}
