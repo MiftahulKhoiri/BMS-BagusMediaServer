@@ -1,34 +1,31 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>BMS - Update Realtime</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/BMS_update.css') }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMS - Update Server</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/static/css/BMS_update.css">
 </head>
 <body>
-  <div class="wrap">
-    <div class="card">
-      <h1>⚙️ Update Realtime — BMS</h1>
-      <p class="lead">Menjalankan <strong>git pull</strong> realtime. Hanya untuk admin/root.</p>
 
-      <div class="controls">
-        <button class="btnCheck" onclick="location.href='/update/check-update'">Cek Pembaruan da install</button>
+<div class="box">
+    <h2>⚙️ BMS Server Update Panel</h2>
 
-      </div>
+    <button class="btn" onclick="checkUpdate()">Cek Update</button>
+    <button class="btn green" onclick="startUpdate()">Update Sekarang</button>
 
-      <div class="status">
-        <div id="statusText">Status: Idle</div>
-        <div class="hint">Project root: <code id="projRoot"></code></div>
-      </div>
+    <div id="update-status" class="status"></div>
 
-      <div class="commit-box">
-       <h3>📝 Commit Terbaru</h3>
-         <ul id="commitList"></ul>
-        </div>
-    </div>
-  </div>
+    <h3>📌 Commit Terbaru</h3>
+    <div id="commit-container" class="commit-list"></div>
 
-  <script src="{{ url_for('static', filename='js/BMS_update.js') }}"></script>
+    <h3>📡 Log Update</h3>
+    <div id="log" class="log-box"></div>
+</div>
+
+<!-- JS -->
+<script src="/static/js/BMS_update.js"></script>
 </body>
 </html>
