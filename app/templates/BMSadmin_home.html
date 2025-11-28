@@ -24,10 +24,34 @@
     </div>
 
 <!-- ===========================
+     USER STATISTICS (NEW)
+=========================== -->
+<div class="section-title">📊 STATISTIK PENGGUNA:</div>
+
+<div class="card stats-card">
+    <div class="stats-grid">
+        <div class="stat-box">
+            <div class="stat-label">Total User</div>
+            <div class="stat-value">{{ total_user }}</div>
+        </div>
+
+        <div class="stat-box">
+            <div class="stat-label">Total Admin</div>
+            <div class="stat-value">{{ total_admin }}</div>
+        </div>
+
+        <div class="stat-box">
+            <div class="stat-label">User Biasa</div>
+            <div class="stat-value">{{ total_user_biasa }}</div>
+        </div>
+    </div>
+</div>
+
+<!-- ===========================
      USER TABLE CARD
 =========================== -->
-  <div class="section-title">  📌 ID USER:</div>
- 
+  <div class="section-title">📌 ID USER:</div>
+
     <table class="user-table">
         <tr>
             <th>ID</th>
@@ -57,7 +81,7 @@
 <!-- ===========================
      TOOLS ADMIN CARD
 =========================== -->
-<div class="section-title">  🛠 TOOLS ADMIN:</div>
+<div class="section-title">🛠 TOOLS ADMIN:</div>
   <div class="card">
 
     <div class="tools-grid">
@@ -73,7 +97,7 @@
 <!-- ===========================
      POWER CONTROL CARD
 =========================== -->
-    <div class="section-title">  ⚡ POWER CONTROL:</div>
+<div class="section-title">⚡ POWER CONTROL:</div>
 
 <div class="card">
     <div class="tools-grid">
@@ -85,7 +109,7 @@
 <!-- FOOTER -->
 <footer class="footer">
     © {{ current_year }} — [BMS]<br>
-   di buat karena kegabutan melanda 😁😆😅🙏
+   dibuat karena kegabutan melanda 😁😆😅🙏
 </footer>
 
 <script src="/static/js/begron/BMSmatrik_begron.js"></script>
