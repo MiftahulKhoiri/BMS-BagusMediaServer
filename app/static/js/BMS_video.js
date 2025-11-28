@@ -1,88 +1,100 @@
-(function () {
+async function api(path){
+    let r = await fetch(path);
+    return await r.json();
+}
 
-    const player = document.getElementById("mainPlayer");
-    const playPauseBtn = document.getElementById("playPauseBtn");
-    const prevBtn = document.getElementById("prevBtn");
-    const nextBtn = document.getElementById("nextBtn");
-    const progress = document.getElementById("progress");
-    const timeLabel = document.querySelector(".time");
-    const volume = document.getElementById("volume");
-    const fsBtn = document.getElementById("fsBtn");
-    const search = document.getElementById("videoSearch");
-    const playlistItems = Array.from(document.querySelectorAll(".playlist-item"));
+/* ===========================
+   SCAN LIBRARY
+=========================== */
+async function scanDB(){
+    document.getElementById('status').innerHTML = "🔄 Scan berjalan...";
+    let res = await fetch("/video/scan-db", { method: "POST" });
+    let data = await res.json();
+    document.getElementById('status').innerHTML = data.message;
+    showFolders();
+}
 
-    let current = 0;
+/* ===========================
+   TAMPILKAN FOLDER
+=========================== */
+async function showFolders(){
+    document.getElementById('status').innerHTML = "Memuat folder...";
+    let data = await api("/video/folders");
 
-    function formatTime(sec) {
-        if (isNaN(sec)) return "0:00";
-        let m = Math.floor(sec / 60);
-        let s = Math.floor(sec % 60).toString().padStart(2, "0");
-        return `${m}:${s}`;
+    const lib = document.getElementById("library");
+    lib.innerHTML = "";
+
+    if(data.length === 0){
+        lib.innerHTML = "<div>Tidak ada folder berisi video.</div>";
+        return;
     }
 
-    function loadVideo(index) {
-        if (index < 0) index = playlistItems.length - 1;
-        if (index >= playlistItems.length) index = 0;
-        current = index;
+    data.forEach(f => {
+        let card = document.createElement("div");
+        card.className = "card";
+        card.onclick = ()=> loadVideos(f.id, f.folder_name);
 
-        const item = playlistItems[current];
-        playlistItems.forEach(i => i.classList.remove("active"));
-        item.classList.add("active");
+        card.innerHTML = `
+            <div class="thumb-folder">📁</div>
+            <div class="title">${f.folder_name}</div>
+            <div class="sub">${f.total_video} video</div>
+        `;
 
-        player.src = item.dataset.src;
-        player.setAttribute("poster", item.dataset.poster || "");
-        player.play().catch(()=>{});
-        updateButton();
+        lib.appendChild(card);
+    });
+
+    document.getElementById('status').innerHTML = "";
+}
+
+/* ===========================
+   TAMPILKAN VIDEO PER FOLDER
+=========================== */
+async function loadVideos(folder_id, folder_name){
+    document.getElementById('status').innerHTML = "Memuat video...";
+
+    let data = await api(`/video/folder/${folder_id}/videos`);
+    const lib = document.getElementById("library");
+    lib.innerHTML = "";
+
+    if(data.length === 0){
+        lib.innerHTML = "<div>Folder kosong.</div>";
+        return;
     }
 
-    playPauseBtn.addEventListener("click", () => {
-        if (player.paused) player.play();
-        else player.pause();
-        updateButton();
+    data.forEach(v => {
+        let card = document.createElement("div");
+        card.className = "card";
+
+        card.innerHTML = `
+            <img src="/video/thumbnail/${v.id}" class="thumb-video">
+            <div class="title">${v.filename}</div>
+            <div class="sub">${(v.size/1024/1024).toFixed(1)} MB</div>
+        `;
+
+        card.onclick = ()=> playVideo(v.id, v.filename);
+        lib.appendChild(card);
     });
 
-    prevBtn.addEventListener("click", () => loadVideo(current - 1));
-    nextBtn.addEventListener("click", () => loadVideo(current + 1));
+    document.getElementById("status").innerHTML = `📁 Folder: ${folder_name}`;
+}
 
-    playlistItems.forEach((item, index) => {
-        item.addEventListener("click", () => loadVideo(index));
-    });
+/* ===========================
+   PLAYER
+=========================== */
+function playVideo(id, title){
+    let modal = document.getElementById("playerModal");
+    let player = document.getElementById("playerVideo");
 
-    function updateButton() {
-        playPauseBtn.textContent = player.paused ? "▶️" : "⏸";
-    }
+    document.getElementById("playerTitle").innerHTML = title;
+    player.src = `/video/play/${id}`;
+    modal.style.display = "flex";
+}
 
-    player.addEventListener("timeupdate", () => {
-        if (!player.duration) return;
-        progress.value = (player.currentTime / player.duration) * 100;
-        timeLabel.textContent = `${formatTime(player.currentTime)} / ${formatTime(player.duration)}`;
-    });
+function closePlayer(){
+    let modal = document.getElementById("playerModal");
+    let player = document.getElementById("playerVideo");
 
-    progress.addEventListener("input", (e) => {
-        if (!player.duration) return;
-        player.currentTime = (e.target.value / 100) * player.duration;
-    });
-
-    player.addEventListener("ended", () => loadVideo(current + 1));
-
-    volume.addEventListener("input", () => {
-        player.volume = volume.value;
-    });
-
-    fsBtn.addEventListener("click", () => {
-        if (!document.fullscreenElement) player.requestFullscreen();
-        else document.exitFullscreen();
-    });
-
-    search.addEventListener("input", () => {
-        const q = search.value.toLowerCase();
-        playlistItems.forEach(item => {
-            const title = item.querySelector(".title").textContent.toLowerCase();
-            item.style.display = title.includes(q) ? "" : "none";
-        });
-    });
-
-    // Load video pertama saat halaman dibuka
-    if (playlistItems.length > 0) loadVideo(0);
-
-})();
+    player.pause();
+    player.src = "";
+    modal.style.display = "none";
+}
