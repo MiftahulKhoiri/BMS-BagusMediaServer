@@ -35,3 +35,16 @@ def BMS_admin_home():
         total_user_biasa=total_user_biasa,
         users=users
     )
+
+@admin.route("/delete/<int:user_id>")
+def delete_user(user_id):
+    cek = require_root()
+    if cek:
+        return cek
+
+    conn = get_db()
+    conn.execute("DELETE FROM users WHERE id=?", (user_id,))
+    conn.commit()
+    conn.close()
+
+    return redirect("/admin/home")
