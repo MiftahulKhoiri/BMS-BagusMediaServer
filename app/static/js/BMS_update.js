@@ -90,3 +90,30 @@
   });
 
 })();
+
+function loadCommits() {
+    fetch("/update/latest-commits")
+        .then(r => r.json())
+        .then(data => {
+            const box = document.getElementById("commitList");
+            box.innerHTML = "";
+
+            if (!data.commits) {
+                box.innerHTML = "<li>Gagal mengambil commit.</li>";
+                return;
+            }
+
+            data.commits.forEach(c => {
+                const li = document.createElement("li");
+                li.innerHTML = `
+                    <div class="commit-hash">${c.hash}</div>
+                    <div>${c.message}</div>
+                    <small>${c.author} — ${c.time}</small>
+                `;
+                box.appendChild(li);
+            });
+        });
+}
+
+// Jalankan saat halaman dimuat
+loadCommits();
