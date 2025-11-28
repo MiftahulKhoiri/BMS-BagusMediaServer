@@ -1,0 +1,47 @@
+/* Perbesar seluruh konten login */
+.login-box {
+    width: 90%;
+    max-width: 420px;
+    margin: 60px auto;
+    padding: 25px;
+    border-radius: 12px;
+    background: #000;
+    border: 1px solid #00ff66;
+}
+
+/* Judul lebih besar */
+.login-box h2 {
+    font-size: 26px;
+    margin-bottom: 15px;
+    text-align: center;
+}
+
+/* Label lebih besar */
+.login-box label {
+    font-size: 18px;
+}
+
+/* Input lebih besar */
+.login-box input {
+    width: 100%;
+    padding: 14px 12px;
+    font-size: 18px;
+    border-radius: 8px;
+    border: 1px solid #00ff66;
+    background: #000;
+    color: #fff;
+    margin-bottom: 15px;
+}
+
+/* Tombol besar */
+.login-box button {
+    width: 100%;
+    padding: 14px;
+    font-size: 18px;
+    background: #00ff66;
+    color: #000;
+    border: none;
+    font-weight: bold;
+    border-radius: 8px;
+    cursor: pointer;
+}
