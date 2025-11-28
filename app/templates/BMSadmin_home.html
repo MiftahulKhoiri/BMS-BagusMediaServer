@@ -26,10 +26,13 @@
 <!-- ===========================
      USER TABLE + STATISTICS
 =========================== -->
-<div class="section-title">
-    📌 ID USER:
-    <span class="user-count">
-        ( Total: {{ total_user }} • Admin: {{ total_admin }} • User Biasa: {{ total_user_biasa }} )
+<div class="section-title user-header">
+    <span class="title-left">📌 ID USER:</span>
+
+    <span class="user-stats">
+        <span>Total: <b>{{ total_user }}</b></span>
+        <span>Admin: <b>{{ total_admin }}</b></span>
+        <span>User Biasa: <b>{{ total_user_biasa }}</b></span>
     </span>
 </div>
 
