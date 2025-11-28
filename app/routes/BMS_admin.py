@@ -1,8 +1,14 @@
 from flask import Blueprint, render_template
 from .BMS_utils import require_root
+from app.BMS_config import DB_PATH
+import sqlite3
 
 admin = Blueprint("admin", __name__, url_prefix="/admin")
 
+def get_db():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 @admin.route("/home")
 def BMS_admin_home():
@@ -10,4 +16,17 @@ def BMS_admin_home():
     if cek:
         return cek
 
-    return render_template("BMSadmin_home.html")
+    conn = get_db()
+
+    total_user = conn.execute("SELECT COUNT(*) AS jml FROM users").fetchone()["jml"]
+    total_admin = conn.execute("SELECT COUNT(*) AS jml FROM users WHERE role='admin'").fetchone()["jml"]
+    total_user_biasa = conn.execute("SELECT COUNT(*) AS jml FROM users WHERE role='user'").fetchone()["jml"]
+
+    conn.close()
+
+    return render_template(
+        "BMSadmin_home.html",
+        total_user=total_user,
+        total_admin=total_admin,
+        total_user_biasa=total_user_biasa
+    )
