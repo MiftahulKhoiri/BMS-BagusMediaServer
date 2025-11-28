@@ -18,9 +18,13 @@ def BMS_admin_home():
 
     conn = get_db()
 
+    # Statistik pengguna
     total_user = conn.execute("SELECT COUNT(*) AS jml FROM users").fetchone()["jml"]
     total_admin = conn.execute("SELECT COUNT(*) AS jml FROM users WHERE role='admin'").fetchone()["jml"]
     total_user_biasa = conn.execute("SELECT COUNT(*) AS jml FROM users WHERE role='user'").fetchone()["jml"]
+
+    # LIST USER (WAJIB BIAR TABEL MUNCUL)
+    users = conn.execute("SELECT id, username, role FROM users").fetchall()
 
     conn.close()
 
@@ -28,5 +32,6 @@ def BMS_admin_home():
         "BMSadmin_home.html",
         total_user=total_user,
         total_admin=total_admin,
-        total_user_biasa=total_user_biasa
+        total_user_biasa=total_user_biasa,
+        users=users
     )
