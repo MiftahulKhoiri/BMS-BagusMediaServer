@@ -1,38 +1,60 @@
-:root{
-  --bg:#061226; --card:#0d1724; --accent:#6ee7b7; --muted:#9aa4b2; --danger:#ff7b7b;
-}
-body{margin:0;font-family:Inter,Arial;background:linear-gradient(180deg,#031022,#061428);color:#e6eef6}
-.wrap{max-width:920px;margin:48px auto;padding:20px}
-.card{background:rgba(255,255,255,0.02);padding:18px;border-radius:12px;border:1px solid rgba(255,255,255,0.03)}
-h1{margin:0 0 8px}
-.lead{color:var(--muted)}
-.controls{display:flex;gap:8px;margin-top:12px}
-.btn{padding:8px 12px;border-radius:8px;border:0;cursor:pointer;font-weight:600}
-.btn-ghost{background:transparent;color:var(--accent);border:1px solid rgba(110,231,183,0.12)}
-.btn-danger{background:var(--danger);color:#2b0505}
-.status{margin-top:12px;padding:10px;border-radius:8px;background:rgba(255,255,255,0.01)}
-.hint{color:var(--muted);font-size:13px;margin-top:6px}
-.logbox{margin-top:12px;background:#021226;border:1px solid rgba(255,255,255,0.03);padding:12px;border-radius:8px;height:360px;overflow:auto;color:#cfeef0;font-family:monospace;font-size:13px;white-space:pre-wrap}
-
-.commit-box {
-    background: rgba(255,255,255,0.06);
-    padding: 14px;
-    border-radius: 10px;
-    margin-top: 10px;
-}
-.commit-box ul {
-    list-style: none;
-    padding: 0;
+body {
+    background: #0f0f0f;
+    font-family: Arial, sans-serif;
+    color: white;
     margin: 0;
+    padding: 20px;
 }
-.commit-box li {
-    padding: 6px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+
+.box {
+    background: #1a1a1a;
+    padding: 20px;
+    border-radius: 10px;
+    width: 95%;
+    margin: auto;
+    box-shadow: 0 0 15px #000;
 }
-.commit-box li:last-child {
-    border-bottom: none;
-}
-.commit-hash {
+
+h2 { text-align: center; margin-bottom: 20px; }
+
+.btn {
+    padding: 10px 20px;
+    background: #008cff;
+    border: none;
+    color: white;
+    border-radius: 6px;
+    cursor: pointer;
+    margin: 5px;
     font-weight: bold;
-    color: #4da3ff;
+}
+
+.btn.green { background: #00c853; }
+.btn.red { background: #ff3b3b; }
+
+.status {
+    margin-top: 15px;
+    font-weight: bold;
+}
+
+.log-box {
+    background: #111;
+    padding: 10px;
+    height: 220px;
+    overflow-y: auto;
+    font-family: monospace;
+    border: 1px solid #333;
+    border-radius: 6px;
+    margin-top: 20px;
+}
+
+.commit-list {
+    margin-top: 15px;
+}
+
+.commit-item {
+    background: #222;
+    padding: 10px;
+    border-radius: 6px;
+    margin-bottom: 8px;
+    border-left: 4px solid #008cff;
 }
