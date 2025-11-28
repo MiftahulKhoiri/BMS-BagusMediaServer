@@ -130,3 +130,35 @@ body {
     border-radius: 12px;
     backdrop-filter: blur(4px);
 }
+
+.stats-card {
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.stats-grid {
+    display: flex;
+    gap: 20px;
+    justify-content: space-between;
+}
+
+.stat-box {
+    background: rgba(0, 255, 80, 0.1);
+    border: 1px solid #0f0;
+    padding: 15px;
+    width: 32%;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 0 10px #00ff75;
+}
+
+.stat-label {
+    font-size: 16px;
+    color: #0f0;
+}
+
+.stat-value {
+    font-size: 28px;
+    font-weight: bold;
+    margin-top: 5px;
+}
