@@ -63,3 +63,19 @@ def ensure_root_user():
 
     conn.commit()
     conn.close()
+
+def ensure_videos_table():
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS videos (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        filename TEXT NOT NULL,
+        filepath TEXT NOT NULL UNIQUE,
+        size INTEGER DEFAULT 0,
+        duration TEXT,
+        added_at TEXT
+    )
+    """)
+    conn.commit()
+    conn.close()
