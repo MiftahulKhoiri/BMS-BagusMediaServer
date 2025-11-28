@@ -1,125 +1,107 @@
-/* RESET */
-body {
+/* ============================= */
+/* BASIC GLOBAL STYLE */
+/* ============================= */
+
+* {
     margin: 0;
     padding: 0;
-    overflow: hidden;
-    font-family: Arial, sans-serif;
-    background: black;
+    box-sizing: border-box;
 }
 
-/* MATRIX */
+body {
+    font-family: Arial, sans-serif;
+    overflow: hidden;
+    color: white;
+}
+
+/* ============================= */
+/* FULLSCREEN MATRIX CANVAS */
+/* ============================= */
+
 #matrixCanvas {
     position: fixed;
-    inset: 0;
-    width: 100%;
-    height: 100%;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
     z-index: -1;
 }
 
-/* ============================
-   AUTO CENTER + BIG MOBILE FIX
-   ============================ */
+/* ============================= */
+/* WELCOME BOX */
+/* ============================= */
+
 .welcome-container {
-    position: relative;
-    width: 100%;
-    min-height: 100dvh;     /* Mobile friendly */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-
     text-align: center;
-    padding: 10px;
+    padding: 20px;
+    margin-top: 10vh;
 }
 
-/* H1 BESAR */
 .welcome-container h1 {
-    font-size: clamp(28px, 8vw, 55px);
+    font-size: clamp(28px, 5vw, 58px);
     font-weight: bold;
-    margin-bottom: 12px;
-    color: #00ff9d;
+    margin-bottom: 10px;
 }
 
-/* SUBTITLE */
 .subtitle {
-    font-size: clamp(14px, 4vw, 22px);
-    color: #9effdd;
+    font-size: clamp(14px, 2.5vw, 22px);
+    opacity: 0.8;
     margin-bottom: 30px;
 }
 
+/* ============================= */
 /* BUTTON GROUP */
+/* ============================= */
+
 .button-group {
     display: flex;
-    gap: 15px;
-    flex-wrap: wrap;
-    justify-content: center;
+    flex-direction: column;
+    gap: 12px;
+    width: 80%;
+    max-width: 320px;
+    margin: 0 auto;
 }
 
-/* BUTTON */
 .btn {
-    padding: 14px 26px;
-    min-width: 130px;
-
-    border-radius: 12px;
-    border: 2px solid #00ff99;
-    background: rgba(0, 255, 153, 0.2);
-
-    color: #00ffcc;
+    display: block;
+    padding: 14px;
+    background: rgba(0, 180, 255, 0.8);
+    color: white;
     text-decoration: none;
-
-    font-size: clamp(16px, 5vw, 24px);
+    font-size: clamp(14px, 2vw, 20px);
+    border-radius: 8px;
     font-weight: bold;
-
-    transition: 0.25s ease;
+    transition: 0.2s ease;
+    text-align: center;
 }
 
 .btn:hover {
-    background: rgba(0, 255, 153, 0.30);
+    background: rgba(0, 180, 255, 1);
+    transform: scale(1.03);
 }
 
+/* ============================= */
 /* FOOTER */
+/* ============================= */
+
 footer {
-    position: absolute;
-    bottom: 10px;
-    width: 100%;
-    text-align: center;
-    color: #66ffcc;
-    font-size: clamp(10px, 3vw, 14px);
+    margin-top: 40px;
+    opacity: 0.6;
+    font-size: clamp(12px, 2vw, 16px);
 }
 
-/* ===============================
-   --- HP MODE: SCREEN < 420PX ---
-   =============================== */
+/* ============================= */
+/* RESPONSIVE UNTUK PC */
+/* ============================= */
 
-@media (max-height: 420px) {
-    .welcome-container {
-        transform: scale(1.25);  /* PERBESAR HP KECIL */
-        margin-top: -40px;
+@media (min-width: 768px) {
+    .button-group {
+        flex-direction: row;
+        justify-content: center;
+        max-width: 700px;
     }
-}
 
-/* ===============================
-   --- TABLET MODE ---
-   =============================== */
-@media (min-width: 768px) and (max-width: 1024px) {
-    .welcome-container h1 {
-        font-size: 48px;
-    }
     .btn {
-        font-size: 22px;
-        padding: 16px 32px;
-        min-width: 150px;
-    }
-}
-
-/* ===============================
-   --- PC LARGE MONITOR ---
-   =============================== */
-@media (min-width: 1200px) {
-    .welcome-container {
-        transform: scale(1.1);
-    }
-    footer {
-        bottom: 30px;
+        width: 200px;
     }
 }
