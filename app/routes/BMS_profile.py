@@ -161,3 +161,12 @@ def BMS_profile_save():
     if role in ("admin", "root"):
         return redirect("/admin/home")
     return redirect("/user/home")
+
+# ======================================================
+#  📷 ROUTE UNTUK MENGAMBIL FOTO PROFIL & BACKGROUND
+# ======================================================
+from flask import send_from_directory
+
+@profile.route("/image/<filename>")
+def BMS_profile_image(filename):
+    return send_from_directory(PROFILE_FOLDER, filename)
