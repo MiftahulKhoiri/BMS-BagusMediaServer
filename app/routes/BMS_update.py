@@ -154,3 +154,42 @@ def register_ws(sock):
             BMS_write_log(f"Exception git pull: {e}", session.get("username"))
 
         ws.send("[END]")
+
+@update.route("/latest-commits")
+def latest_commits():
+    """
+    Ambil 10 commit terbaru dalam format JSON untuk ditampilkan di UI.
+    """
+    try:
+        base_dir = current_app.config.get("PROJECT_ROOT", None)
+        if not base_dir or not os.path.isdir(base_dir):
+            return jsonify({"error": "PROJECT_ROOT tidak valid"}), 500
+
+        # Ambil commit memakai pretty format biar mudah diparsing
+        log_cmd = [
+            "git", "log", "-10",
+            "--pretty=format:%h|%an|%ar|%s"
+        ]
+
+        result = subprocess.run(
+            log_cmd,
+            cwd=base_dir,
+            capture_output=True,
+            text=True
+        )
+
+        commits = []
+        for line in result.stdout.splitlines():
+            if "|" in line:
+                short, author, time, msg = line.split("|", 3)
+                commits.append({
+                    "hash": short,
+                    "author": author,
+                    "time": time,
+                    "message": msg
+                })
+
+        return jsonify({"commits": commits})
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
