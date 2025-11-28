@@ -33,3 +33,9 @@ function deleteUser(id) {
             location.reload();
         });
 }
+
+function deleteUser(id) {
+    if (confirm("Hapus user ini?")) {
+        window.location.href = "/admin/delete/" + id;
+    }
+}
