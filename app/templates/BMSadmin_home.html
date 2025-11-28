@@ -18,72 +18,53 @@
 <!-- ===========================
      LOGO CARD
 =========================== -->
-    <div class="logo">
-        <div class="logo-title">[BMS]</div>
-        <div class="logo-sub">Bagus Media Server</div>
-    </div>
-
-<!-- ===========================
-     USER STATISTICS (NEW)
-=========================== -->
-<div class="section-title">📊 STATISTIK PENGGUNA:</div>
-
-<div class="card stats-card">
-    <div class="stats-grid">
-        <div class="stat-box">
-            <div class="stat-label">Total User</div>
-            <div class="stat-value">{{ total_user }}</div>
-        </div>
-
-        <div class="stat-box">
-            <div class="stat-label">Total Admin</div>
-            <div class="stat-value">{{ total_admin }}</div>
-        </div>
-
-        <div class="stat-box">
-            <div class="stat-label">User Biasa</div>
-            <div class="stat-value">{{ total_user_biasa }}</div>
-        </div>
-    </div>
+<div class="logo">
+    <div class="logo-title">[BMS]</div>
+    <div class="logo-sub">Bagus Media Server</div>
 </div>
 
 <!-- ===========================
-     USER TABLE CARD
+     USER TABLE CARD + STATISTIK
 =========================== -->
-  <div class="section-title">📌 ID USER:</div>
+<div class="section-title">
+    📌 ID USER:
+    <span class="user-count">
+        ( Total: {{ total_user }} • Admin: {{ total_admin }} • User Biasa: {{ total_user_biasa }} )
+    </span>
+</div>
 
-    <table class="user-table">
-        <tr>
-            <th>ID</th>
-            <th>Username</th>
-            <th>Role</th>
-            <th>Aksi</th>
-        </tr>
+<table class="user-table">
+    <tr>
+        <th>ID</th>
+        <th>Username</th>
+        <th>Role</th>
+        <th>Aksi</th>
+    </tr>
 
-        {% for u in users %}
-        <tr>
-            <td>{{ u[0] }}</td>
-            <td>{{ u[1] }}</td>
-            <td>{{ u[2] }}</td>
-            <td>
-                {% if u[1] != "root" %}
-                    <button class="btn warn" onclick="changeRole({{ u[0] }}, 'root')">Root</button>
-                    <button class="btn" onclick="changeRole({{ u[0] }}, 'user')">User</button>
-                    <button class="btn danger" onclick="deleteUser({{ u[0] }})">Hapus</button>
-                {% else %}
-                    <span class="locked">Locked</span>
-                {% endif %}
-            </td>
-        </tr>
-        {% endfor %}
-    </table>
+    {% for u in users %}
+    <tr>
+        <td>{{ u[0] }}</td>
+        <td>{{ u[1] }}</td>
+        <td>{{ u[2] }}</td>
+        <td>
+            {% if u[1] != "root" %}
+                <button class="btn warn" onclick="changeRole({{ u[0] }}, 'root')">Root</button>
+                <button class="btn" onclick="changeRole({{ u[0] }}, 'user')">User</button>
+                <button class="btn danger" onclick="deleteUser({{ u[0] }})">Hapus</button>
+            {% else %}
+                <span class="locked">Locked</span>
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
 
 <!-- ===========================
      TOOLS ADMIN CARD
 =========================== -->
 <div class="section-title">🛠 TOOLS ADMIN:</div>
-  <div class="card">
 
+<div class="card">
     <div class="tools-grid">
         <button class="btn tool" onclick="location.href='/user/home'">Media</button>
         <button class="btn tool" onclick="location.href='/profile'">Profil</button>
@@ -109,7 +90,7 @@
 <!-- FOOTER -->
 <footer class="footer">
     © {{ current_year }} — [BMS]<br>
-   dibuat karena kegabutan melanda 😁😆😅🙏
+    dibuat karena kegabutan melanda 😁😆😅🙏
 </footer>
 
 <script src="/static/js/begron/BMSmatrik_begron.js"></script>
