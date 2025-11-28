@@ -1,5 +1,5 @@
 import os
-from flask import Blueprint, jsonify, request, send_from_directory, session
+from flask import Blueprint, jsonify, request, send_from_directory, session, render_template
 from app.routes.BMS_auth import BMS_auth_is_login
 from app.routes.BMS_logger import BMS_write_log
 
@@ -11,7 +11,6 @@ media_video = Blueprint("media_video", __name__, url_prefix="/video")
 # Pastikan folder video ada
 os.makedirs(VIDEO_FOLDER, exist_ok=True)
 
-
 # ======================================================
 #   🔐 Proteksi login
 # ======================================================
@@ -21,7 +20,6 @@ def BMS_video_required():
         return jsonify({"error": "Belum login!"}), 403
     return None
 
-
 # ======================================================
 #   🛡 Sanitasi nama file (anti hack traversal)
 # ======================================================
@@ -29,19 +27,30 @@ def sanitize_filename(filename):
     if not filename:
         return None
 
-    # karakter berbahaya / traversal
     bad_chars = ["..", "/", "\\", "|", "&", ";", "$", "`", ">", "<", "$("]
     for b in bad_chars:
         if b in filename:
             return None
 
-    # format video yang diizinkan
     valid_ext = (".mp4", ".mkv", ".webm", ".avi", ".mov")
     if not filename.lower().endswith(valid_ext):
         return None
 
     return filename
 
+# ======================================================
+#   📄 ROUTE UI — HALAMAN BMS_video.html
+# ======================================================
+@media_video.route("/")
+def BMS_video_page():
+    if not BMS_auth_is_login():
+        BMS_write_log("Akses halaman video ditolak (belum login)", "UNKNOWN")
+        return render_template("BMS_login.html", error="Silakan login terlebih dahulu!")
+
+    username = session.get("username")
+    BMS_write_log("Membuka halaman BMS_video.html", username)
+
+    return render_template("BMS_video.html")
 
 # ======================================================
 #   🎬 LIST VIDEO
@@ -68,7 +77,6 @@ def BMS_video_list():
 
     return jsonify({"files": files})
 
-
 # ======================================================
 #   ▶ PUTAR VIDEO
 # ======================================================
@@ -94,5 +102,4 @@ def BMS_video_play():
 
     BMS_write_log(f"Memutar video: {safe_name}", username)
 
-    # Kakak: gunakan send_from_directory agar aman
     return send_from_directory(VIDEO_FOLDER, safe_name)
