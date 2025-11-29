@@ -112,19 +112,33 @@ body {
     color: black;
 }
 
-/* FOOTER STICKY NEON */
+/* FOOTER STICKY NEON – FIXED FOR MOBILE */
 .footer-sticky {
     position: sticky;
     bottom: 0;
+    left: 0;
     width: 100%;
+    display: block;
+
     background: rgba(0, 0, 0, 0.85);
-    padding: 12px 0;
-    border-top: 2px solid #00ffea; /* Neon line */
+    padding: 14px 0 16px 0;
+
+    border-top: 2px solid #00ffea;
     backdrop-filter: blur(4px);
+
     text-align: center;
     color: #66fff7;
-    font-size: 14px;
-    letter-spacing: 1px;
-    box-shadow: 0 -2px 12px #00eaff75; /* Glow neon ke atas */
-    z-index: 999;
+
+    font-size: 15px;
+    font-weight: bold;
+    letter-spacing: 1.5px;
+
+    box-shadow: 0 -3px 12px #00eaffa5;
+    z-index: 99999;
+}
+
+/* Agar footer tidak nempel ke konten */
+.footer-space {
+    height: 60px; 
+    width: 100%;
 }
