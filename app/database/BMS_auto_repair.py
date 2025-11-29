@@ -130,3 +130,79 @@ def ensure_videos_table():
     conn.commit()
     conn.close()
     print("[DB FIX] Videos table repair complete.")
+
+
+# ==========================================================
+#   AUTO REPAIR DATABASE — MP3 SYSTEM
+# ==========================================================
+def ensure_mp3_tables():
+    conn = sqlite3.connect(DB_PATH)
+    cur = conn.cursor()
+
+    print("[DB FIX] Memeriksa tabel MP3...")
+
+    # ======================================================
+    # 1) TABLE: mp3_folders
+    # ======================================================
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS mp3_folders (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            folder_name TEXT,
+            folder_path TEXT UNIQUE
+        )
+    """)
+
+    # Pastikan semua kolom wajib ada
+    required_folders_columns = {
+        "folder_name": "TEXT",
+        "folder_path": "TEXT"
+    }
+
+    cur.execute("PRAGMA table_info(mp3_folders)")
+    existing_columns = [c[1] for c in cur.fetchall()]
+
+    for col, tipe in required_folders_columns.items():
+        if col not in existing_columns:
+            try:
+                cur.execute(f"ALTER TABLE mp3_folders ADD COLUMN {col} {tipe}")
+                print(f"[DB FIX] Kolom '{col}' ditambahkan pada mp3_folders.")
+            except Exception as e:
+                print(f"[DB FIX] Gagal tambah kolom {col}: {e}")
+
+
+    # ======================================================
+    # 2) TABLE: mp3_tracks
+    # ======================================================
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS mp3_tracks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            folder_id INTEGER,
+            filename TEXT,
+            filepath TEXT UNIQUE,
+            size INTEGER,
+            added_at TEXT
+        )
+    """)
+
+    required_tracks_columns = {
+        "folder_id": "INTEGER",
+        "filename": "TEXT",
+        "filepath": "TEXT",
+        "size": "INTEGER",
+        "added_at": "TEXT"
+    }
+
+    cur.execute("PRAGMA table_info(mp3_tracks)")
+    existing_tracks_columns = [c[1] for c in cur.fetchall()]
+
+    for col, tipe in required_tracks_columns.items():
+        if col not in existing_tracks_columns:
+            try:
+                cur.execute(f"ALTER TABLE mp3_tracks ADD COLUMN {col} {tipe}")
+                print(f"[DB FIX] Kolom '{col}' ditambahkan pada mp3_tracks.")
+            except Exception as e:
+                print(f"[DB FIX] Error tambah kolom {col}: {e}")
+
+    conn.commit()
+    conn.close()
+    print("[DB FIX] Tabel MP3 selesai dicek / diperbaiki.")
