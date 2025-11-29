@@ -12,45 +12,36 @@
 
 <div class="topbar">
     <h2>🎬 BMS Video Library</h2>
+
     <div>
-        <button class="btn" onclick="showFolders()">📁 Folder</button>
         <button class="btn" onclick="scanDB()">🔍 Scan</button>
     </div>
 </div>
 
-<div id="status" class="status"></div>
+<!-- Tombol Back -->
 <div id="backButton" style="display:none; margin-bottom:10px;">
     <button class="btn" onclick="goBack()">⬅ Kembali</button>
 </div>
-<!-- FOLDER / VIDEO GRID -->
+
+<div id="status" class="status"></div>
+
+<!-- GRID FOLDER / VIDEO -->
 <div id="library" class="grid"></div>
-
-<!-- PLAYER MODAL -->
-<!-- PLAYER MODAL -->
-<div id="playerModal" class="modal">
-    <div id="playerBox" class="modal-box">
-
-        <!-- HEADER PLAYER -->
-        <div class="modal-header">
-            <span id="playerTitle"></span>
-            <button class="btn" onclick="closePlayer()">Kembali</button>
-        </div>
-
-        <!-- VIDEO PLAYER -->
-        <video id="playerVideo" controls></video>
-
-        <!-- PLAYLIST -->
-        <h3 style="margin-top:15px;">Daftar Video (Folder yang sama)</h3>
-        <div id="playlist" class="playlist"></div>
-
-    </div>
-</div>
 
 <!-- JS -->
 <script src="/static/js/BMS_video.js"></script>
 
 <script>
-    showFolders(); // load otomatis
+    // Cek apakah ada parameter ?folder=
+    const params = new URLSearchParams(window.location.search);
+    const folderId = params.get("folder");
+    const folderName = params.get("name");
+
+    if (folderId) {
+        loadVideos(folderId, folderName || "Folder");
+    } else {
+        showFolders();
+    }
 </script>
 
 </body>
