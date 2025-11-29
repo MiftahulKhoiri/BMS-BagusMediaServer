@@ -114,3 +114,21 @@ video {
     border-radius: 8px;
     background: #000;
 }
+
+.playlist {
+    margin-top: 10px;
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(0,255,100,0.1);
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.playlist-item {
+    padding: 6px 8px;
+    cursor: pointer;
+    border-radius: 6px;
+    color: #caffda;
+}
+.playlist-item:hover {
+    background: rgba(0,255,100,0.15);
+}
