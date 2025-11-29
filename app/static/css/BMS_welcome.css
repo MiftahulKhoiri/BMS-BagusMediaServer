@@ -1,6 +1,7 @@
-/* ========================================================
-   BMS WELCOME PAGE — RESPONSIVE + JELLYFISH BACKGROUND FIX
-======================================================== */
+/* ==========================================================
+   BMS WELCOME PAGE — FIXED FOR JELLYFISH BACKGROUND
+   Fully Responsive + Clean UI
+========================================================== */
 
 /* RESET */
 * {
@@ -12,81 +13,93 @@
 body {
     font-family: Arial, sans-serif;
     color: white;
-    overflow-x: hidden;
-    min-height: 100vh;
-    position: relative;
     background: #020205;
+    height: 100vh;
+    overflow: hidden;  /* biar canvas fullscreen */
+    position: relative;
 }
 
+/* ==========================================================
+   CANVAS BACKGROUND (JELLYFISH)
+========================================================== */
 
+#jellyCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -10;            /* pastikan di belakang UI */
+    pointer-events: none;    /* jangan halangi tombol */
+    display: block;
+}
 
-/* ========================================================
+/* ==========================================================
    WELCOME CONTENT
-======================================================== */
+========================================================== */
 
 .welcome-container {
     position: relative;
-    z-index: 5;
+    z-index: 10;            /* pastikan di depan canvas */
     text-align: center;
     padding: 20px;
-    margin-top: 15vh;       /* Tidak terlalu tinggi */
+    margin-top: 18vh;
 }
 
 .welcome-container h1 {
-    font-size: clamp(32px, 6vw, 64px);
+    font-size: clamp(32px, 6vw, 60px);
     font-weight: bold;
-    letter-spacing: 2px;
-    margin-bottom: 5px;
     color: #b8ffe8;
 }
 
 .welcome-container h2 {
-    font-size: clamp(18px, 4vw, 34px);
-    margin-bottom: 10px;
+    font-size: clamp(18px, 4vw, 32px);
     opacity: 0.9;
+    margin-top: 5px;
 }
 
 .subtitle {
+    margin-top: 10px;
     font-size: clamp(14px, 3vw, 20px);
-    opacity: 0.8;
-    margin-bottom: 30px;
+    opacity: 0.85;
 }
 
-/* ========================================================
+/* ==========================================================
    BUTTON GROUP
-======================================================== */
+========================================================== */
 
 .button-group {
+    margin-top: 30px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    width: 85%;
-    max-width: 340px;
-    margin: 0 auto;
+    gap: 14px;
+    width: 80%;
+    max-width: 320px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .btn {
     display: block;
     padding: 14px;
-    background: rgba(0, 180, 255, 0.85);
+    font-size: clamp(14px, 2vw, 20px);
     color: white;
     text-decoration: none;
-    font-size: clamp(14px, 2vw, 20px);
-    border-radius: 10px;
     font-weight: bold;
-    transition: 0.25s ease;
-    text-align: center;
-    backdrop-filter: blur(6px);
+    background: rgba(0,180,255,0.75);
+    border-radius: 10px;
+    transition: 0.2s;
+    backdrop-filter: blur(4px);
 }
 
 .btn:hover {
-    background: rgba(0, 200, 255, 0.95);
+    background: rgba(0,200,255,0.95);
     transform: scale(1.05);
 }
 
-/* ========================================================
+/* ==========================================================
    FOOTER
-======================================================== */
+========================================================== */
 
 footer {
     margin-top: 50px;
@@ -94,17 +107,23 @@ footer {
     font-size: clamp(12px, 2vw, 16px);
 }
 
-/* ========================================================
-   PC MODE
-======================================================== */
+/* ==========================================================
+   DESKTOP MODE
+========================================================== */
 
 @media (min-width: 768px) {
+
     .button-group {
         flex-direction: row;
         justify-content: center;
         max-width: 700px;
     }
+
     .btn {
         width: 200px;
+    }
+
+    .welcome-container {
+        margin-top: 25vh;
     }
 }
