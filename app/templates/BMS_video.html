@@ -24,13 +24,23 @@
 <div id="library" class="grid"></div>
 
 <!-- PLAYER MODAL -->
+<!-- PLAYER MODAL -->
 <div id="playerModal" class="modal">
     <div id="playerBox" class="modal-box">
+
+        <!-- HEADER PLAYER -->
         <div class="modal-header">
             <span id="playerTitle"></span>
-            <button class="btn" onclick="closePlayer()">Tutup</button>
+            <button class="btn" onclick="closePlayer()">Kembali</button>
         </div>
+
+        <!-- VIDEO PLAYER -->
         <video id="playerVideo" controls></video>
+
+        <!-- PLAYLIST -->
+        <h3 style="margin-top:15px;">Daftar Video (Folder yang sama)</h3>
+        <div id="playlist" class="playlist"></div>
+
     </div>
 </div>
 
