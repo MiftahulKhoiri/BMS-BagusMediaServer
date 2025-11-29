@@ -72,6 +72,10 @@ async function initPlayer(mp3Id, folderId){
 
     // REGISTER EVENT "ended" ulang (agar playlistData sudah terisi)
     audio.onended = handleTrackEnd;
+
+    // UPDATE UI MODE (agar icon sesuai state terakhir)
+    updateRepeatButton();
+    updateShuffleButton();
 }
 
 
@@ -179,13 +183,33 @@ function prevTrack(){
 
 
 /* ==========================================================
-   MODE: SHUFFLE & REPEAT
+   MODE: SHUFFLE + ICON
 ========================================================== */
 function toggleShuffle(){
     shuffleMode = !shuffleMode;
+
+    updateShuffleButton();
+
     alert(shuffleMode ? "Shuffle ON" : "Shuffle OFF");
 }
 
+function updateShuffleButton(){
+    let btn = document.getElementById("shuffleBtn");
+    if(!btn) return;
+
+    if(shuffleMode){
+        btn.classList.add("active");
+        btn.innerHTML = "🔀✨ Shuffle ON";
+    } else {
+        btn.classList.remove("active");
+        btn.innerHTML = "🔀 Shuffle";
+    }
+}
+
+
+/* ==========================================================
+   MODE: REPEAT (OFF / ONE / ALL)
+========================================================== */
 function toggleRepeat(){
     repeatMode++;
 
@@ -193,13 +217,24 @@ function toggleRepeat(){
         repeatMode = 0;
     }
 
+    updateRepeatButton();
+}
+
+function updateRepeatButton(){
+    let btn = document.getElementById("repeatBtn");
+    if(!btn) return;
+
+    btn.classList.remove("active");
+
     if(repeatMode === 0){
-        alert("Repeat OFF");
+        btn.innerHTML = "🔁 Repeat OFF";
     }
     else if(repeatMode === 1){
-        alert("Repeat ONE");
+        btn.innerHTML = "🔂 Repeat ONE";
+        btn.classList.add("active");
     }
     else if(repeatMode === 2){
-        alert("Repeat ALL");
+        btn.innerHTML = "🔁∞ Repeat ALL";
+        btn.classList.add("active");
     }
 }
