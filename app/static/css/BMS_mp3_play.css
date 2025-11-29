@@ -200,3 +200,30 @@ audio {
 .playlist::-webkit-scrollbar-track {
     background: #003318;
 }
+
+/* Fade-in & Fade-out judul lagu */
+.fade-title {
+    opacity: 1;
+    transition: opacity 0.35s ease;
+}
+
+.fade-out {
+    opacity: 0;
+}
+
+/* Playlist aktif dengan neon pulse */
+.playlist-item.active {
+    background: rgba(0,255,120,0.18);
+    border-color: #00ff88;
+    font-weight: bold;
+    color: #caffec;
+    animation: pulse 1.6s infinite ease-in-out;
+}
+
+/* Animasi pulse lembut */
+@keyframes pulse {
+    0%   { box-shadow: 0 0 4px #00ff99; }
+    50%  { box-shadow: 0 0 12px #00ffcc; }
+    100% { box-shadow: 0 0 4px #00ff99; }
+}
+
