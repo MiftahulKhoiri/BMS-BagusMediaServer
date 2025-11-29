@@ -1,66 +1,111 @@
 /* ==========================================================
-   BMS VIDEO PLAYER JS (MODE A)
-   Playlist di bawah video, scrollable
+   BMS VIDEO PLAYER JS
+   Author: Bagus + AI Support
+   Fitur:
+   - Playlist informasi folder
+   - Highlight video yang sedang diputar
+   - Tombol kembali ke folder
+   - Next / Previous
 ========================================================== */
 
-let playlist = [];
-let currentVideoId = null;
-let currentFolderId = null;
+// ==========================================================
+//  GLOBAL STATE
+// ==========================================================
 
-/* ------------------------------
-   LOAD PLAYER DAN PLAYLIST
------------------------------- */
-async function initializePlayer(videoId, folderId){
-    currentVideoId = parseInt(videoId);
-    currentFolderId = parseInt(folderId);
+let currentFolderId = null;   // Folder ID yang sedang diputar
+let currentVideoId = null;    // Video ID yang sedang diputar
+let playlistData = [];        // List video dalam folder
 
-    // SET VIDEO SOURCE
-    document.getElementById("playerVideo").src =
-        `/video/play/${currentVideoId}`;
 
-    // Ambil playlist
-    let r = await fetch(`/video/folder/${folderId}/videos`);
-    playlist = await r.json();
+// ==========================================================
+// 1) LOAD PLAYLIST DARI BACKEND
+// ==========================================================
+async function loadPlaylist(folder_id, video_id){
+    currentFolderId = folder_id;
+    currentVideoId = video_id;
 
-    // Update judul
-    let current = playlist.find(v => v.id === currentVideoId);
-    document.getElementById("videoTitle").innerText =
-        current ? current.filename : "Memuat...";
+    try {
+        let r = await fetch(`/video/folder/${folder_id}/videos`);
+        playlistData = await r.json();
 
-    // Tampilkan playlist
-    renderPlaylist();
+        renderPlaylist();
+    } catch (e){
+        console.error("Gagal load playlist:", e);
+    }
 }
 
-/* ------------------------------
-   TAMPILKAN PLAYLIST
------------------------------- */
+
+// ==========================================================
+// 2) RENDER PLAYLIST KE HTML
+// ==========================================================
 function renderPlaylist(){
-    let box = document.getElementById("playlist");
-    box.innerHTML = "";
+    const list = document.getElementById("playlist");
+    list.innerHTML = "";
 
-    playlist.forEach(v => {
-        let div = document.createElement("div");
-        div.className = "playlist-item";
+    playlistData.forEach(v => {
+        let item = document.createElement("div");
+        item.className = "playlist-item";
 
+        // Jika ini video yang sedang diputar → highlight
         if(v.id === currentVideoId){
-            div.classList.add("playing");
-            div.innerHTML = `▶ ${v.filename}`;
+            item.classList.add("playing");
+            item.innerHTML = `▶ ${v.filename}`;
         } else {
-            div.innerHTML = v.filename;
+            item.innerHTML = v.filename;
         }
 
-        div.onclick = () => {
-            window.location.href =
-                `/video/watch/${v.id}?folder=${currentFolderId}`;
+        // Klik item → play video lain
+        item.onclick = () => {
+            goToVideo(v.id);
         };
 
-        box.appendChild(div);
+        list.appendChild(item);
     });
 }
 
-/* ------------------------------
-   TOMBOL KEMBALI
------------------------------- */
-function goBackToFolder(){
-    window.location.href = `/video/?folder=${currentFolderId}`;
+
+// ==========================================================
+// 3) PINDAH KE VIDEO LAIN (NEXT / PREV / KLIK PLAYLIST)
+// ==========================================================
+function goToVideo(video_id){
+    window.location.href = `/video/watch/${video_id}`;
+}
+
+
+// ==========================================================
+// 4) NEXT VIDEO
+// ==========================================================
+function nextVideo(){
+    let currentIndex = playlistData.findIndex(v => v.id === currentVideoId);
+
+    if(currentIndex < playlistData.length - 1){
+        let nextId = playlistData[currentIndex + 1].id;
+        goToVideo(nextId);
+    } else {
+        alert("Sudah di video terakhir.");
+    }
+}
+
+
+// ==========================================================
+// 5) PREVIOUS VIDEO
+// ==========================================================
+function prevVideo(){
+    let currentIndex = playlistData.findIndex(v => v.id === currentVideoId);
+
+    if(currentIndex > 0){
+        let prevId = playlistData[currentIndex - 1].id;
+        goToVideo(prevId);
+    } else {
+        alert("Ini video pertama dalam folder.");
+    }
+}
+
+
+// ==========================================================
+// 6) TOMBOL KEMBALI KE FOLDER
+// ==========================================================
+function goBackToFolder(folder_id){
+    // arahkan kembali ke halaman utama video dengan folder itu terbuka
+    window.location.href = `/video/?folder=${folder_id}`;
 }
