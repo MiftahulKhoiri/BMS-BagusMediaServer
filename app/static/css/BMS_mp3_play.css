@@ -185,3 +185,42 @@ audio {
     border-radius: 50%;
     cursor: pointer;
 }
+
+/* Baris Tombol Control */
+.control-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 14px;
+    margin-top: 12px;
+    margin-bottom: 10px;
+}
+
+/* Style tombol */
+.ctrl-btn {
+    background: rgba(0, 255, 120, 0.08);
+    border: 1px solid #00ff99;
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 20px;
+    color: #00ffb3;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.ctrl-btn:hover {
+    background: rgba(0, 255, 120, 0.2);
+    transform: scale(1.1);
+}
+
+/* Mode aktif tombol shuffle / repeat */
+.ctrl-btn.active {
+    background: rgba(0, 255, 120, 0.35);
+    border-color: #47ffa9;
+    color: #aaffee;
+}
+
+/* Volume tetap di bawah */
+.volume-box {
+    margin-top: 8px;
+}
