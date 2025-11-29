@@ -1,47 +1,54 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMS Player - {{ filename }}</title>
 
-    <title>BMS - Video Player</title>
-
+    <!-- CSS Player -->
     <link rel="stylesheet" href="/static/css/BMS_video_play.css">
 </head>
+
 <body>
 
 <div class="container">
 
-    <!-- HEADER -->
+    <!-- ===================== -->
+    <!-- BAGIAN ATAS PLAYER   -->
+    <!-- ===================== -->
     <div class="header">
-        <button class="btn back" onclick="goBackToFolder()">⬅ Kembali</button>
-        <div class="video-title" id="videoTitle">Memuat...</div>
+        <button class="btn back" onclick="goBackToFolder({{ folder_id }})">⬅ Kembali</button>
+        <h2 class="video-title">{{ filename }}</h2>
     </div>
 
-    <!-- VIDEO PLAYER -->
+    <!-- ===================== -->
+    <!-- VIDEO PLAYER BESAR    -->
+    <!-- ===================== -->
     <div class="player-box">
-        <video id="playerVideo" controls autoplay></video>
+        <video id="player" controls autoplay>
+            <source src="/video/play/{{ video_id }}">
+        </video>
     </div>
 
-    <!-- PLAYLIST -->
+    <!-- ===================== -->
+    <!-- PLAYLIST VIDEO FOLDER -->
+    <!-- ===================== -->
     <div class="playlist-container">
-        <div class="playlist-title">📄 Daftar Video Dalam Folder</div>
+        <h3 class="playlist-title">📁 Video Dalam Folder</h3>
 
-        <!-- scrollable box -->
-        <div id="playlist" class="playlist-box"></div>
+        <div id="playlist" class="playlist-box">
+            <!-- List video di-load oleh JS -->
+        </div>
     </div>
 
 </div>
 
+<!-- JS Player -->
 <script src="/static/js/BMS_video_play.js"></script>
 
 <script>
-    // AMBIL PARAMETER DARI URL
-    const videoId = new URLSearchParams(location.search).get("id");
-    const folderId = new URLSearchParams(location.search).get("folder");
-
-    // LOAD PLAYER DAN PLAYLIST
-    initializePlayer(videoId, folderId);
+    // Load playlist ketika halaman dibuka
+    loadPlaylist({{ folder_id }}, {{ video_id }});
 </script>
 
 </body>
