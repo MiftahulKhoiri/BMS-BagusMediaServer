@@ -7,7 +7,7 @@ canvas.height = window.innerHeight;
 const chars = "0101010011101010101010010101010101";
 const matrix = [];
 
-const fontSize = 16;
+const fontSize = 12;
 const columns = canvas.width / fontSize;
 
 for (let i = 0; i < columns; i++) {
