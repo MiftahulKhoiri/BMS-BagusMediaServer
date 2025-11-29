@@ -1,6 +1,5 @@
 /* ==========================================================
-   BMS MP3 PLAYER - FIXED VERSION
-   Mode A: Player di atas + Playlist scrollable
+   BMS MP3 PLAYER - CLEAN & FIXED VERSION
 ========================================================== */
 
 let currentFolderId = null;
@@ -17,27 +16,23 @@ async function api(path){
     return await r.json();
 }
 
-
-/* ==========================================================
-   HOME BUTTON
-========================================================== */
+/* ----------------------------------------------------------
+   HOME
+---------------------------------------------------------- */
 function goHome(){
     fetch("/auth/role")
-        .then(r => r.json())
-        .then(d => {
-            if (d.role === "admin" || d.role === "root") {
-                window.location.href = "/admin/home";
-            } else {
-                window.location.href = "/user/home";
-            }
-        })
-        .catch(() => window.location.href = "/user/home");
+    .then(r => r.json())
+    .then(d => {
+        window.location.href = (d.role === "admin" || d.role === "root")
+            ? "/admin/home"
+            : "/user/home";
+    })
+    .catch(() => window.location.href = "/user/home");
 }
 
-
-/* ==========================================================
-   BACK BUTTON
-========================================================== */
+/* ----------------------------------------------------------
+   KEMBALI
+---------------------------------------------------------- */
 function goBack(){
     if(currentFolderId){
         window.location.href = `/mp3/?folder=${currentFolderId}`;
@@ -46,47 +41,37 @@ function goBack(){
     }
 }
 
-
-/* ==========================================================
+/* ----------------------------------------------------------
    INIT PLAYER
-========================================================== */
+---------------------------------------------------------- */
 async function initPlayer(mp3Id, folderId){
     currentTrackId = parseInt(mp3Id);
     currentFolderId = folderId;
 
-    // INFO TRACK
     let trackInfo = await api(`/mp3/info/${mp3Id}`);
     document.getElementById("trackTitle").innerHTML = trackInfo.filename;
 
     let audio = document.getElementById("audioPlayer");
-
-    // SET SOURCE
     audio.src = `/mp3/play/${mp3Id}`;
     audio.play().catch(()=>{});
 
-    // LOAD PLAYLIST
+    // Load playlist folder
     playlistData = await api(`/mp3/folder/${folderId}/tracks`);
-
-    // TAMPILKAN PLAYLIST
     loadPlaylist();
 
-    // REGISTER EVENT "ended" ulang (agar playlistData sudah terisi)
+    // Auto next handler
     audio.onended = handleTrackEnd;
 
-    // UPDATE UI MODE (agar icon sesuai state terakhir)
+    // Update buttons state
     updateRepeatButton();
     updateShuffleButton();
 }
 
-
-/* ==========================================================
-   HANDLE TRACK END (Auto Next / Shuffle / Repeat)
-========================================================== */
+/* ----------------------------------------------------------
+   HANDLE AUTO NEXT / SHUFFLE / REPEAT
+---------------------------------------------------------- */
 function handleTrackEnd(){
 
-    // =============================
-    // 🔁 1) REPEAT ONE
-    // =============================
     if(repeatMode === 1){
         changeTrack(currentTrackId);
         return;
@@ -94,44 +79,29 @@ function handleTrackEnd(){
 
     let index = playlistData.findIndex(t => t.id === currentTrackId);
 
-    // =============================
-    // 🔀 SHUFFLE
-    // =============================
     if(shuffleMode){
-        let random = playlistData[Math.floor(Math.random() * playlistData.length)];
-        changeTrack(random.id);
+        let r = playlistData[Math.floor(Math.random() * playlistData.length)];
+        changeTrack(r.id);
         return;
     }
 
-    // =============================
-    // 🔁 2) REPEAT ALL
-    // =============================
     if(repeatMode === 2){
         if(index === playlistData.length - 1){
-            // Jika di akhir playlist → kembali ke awal
-            let first = playlistData[0];
-            changeTrack(first.id);
-            return;
+            changeTrack(playlistData[0].id);
         } else {
-            // lanjut ke lagu berikutnya
-            let next = playlistData[index + 1];
-            changeTrack(next.id);
-            return;
+            changeTrack(playlistData[index + 1].id);
         }
+        return;
     }
 
-    // =============================
-    // ▶ MODE NORMAL (TIDAK REPEAT)
-    // =============================
     if(index < playlistData.length - 1){
-        let next = playlistData[index + 1];
-        changeTrack(next.id);
+        changeTrack(playlistData[index + 1].id);
     }
 }
 
-/* ==========================================================
-   MUAT ULANG PLAYLIST
-========================================================== */
+/* ----------------------------------------------------------
+   LOAD PLAYLIST UI
+---------------------------------------------------------- */
 function loadPlaylist(){
     let box = document.getElementById("playlist");
     box.innerHTML = "";
@@ -148,49 +118,40 @@ function loadPlaylist(){
         }
 
         item.onclick = ()=> changeTrack(mp3.id);
-
         box.appendChild(item);
     });
 }
 
-
-/* ==========================================================
-   GANTI TRACK (memuat halaman /mp3/watch)
-========================================================== */
+/* ----------------------------------------------------------
+   GANTI TRACK
+---------------------------------------------------------- */
 function changeTrack(id){
     window.location.href = `/mp3/watch/${id}?folder=${currentFolderId}`;
 }
 
-
-/* ==========================================================
-   NEXT / PREV BUTTON
-========================================================== */
+/* ----------------------------------------------------------
+   NEXT / PREV
+---------------------------------------------------------- */
 function nextTrack(){
-    let index = playlistData.findIndex(t => t.id === currentTrackId);
-    if(index < playlistData.length - 1){
-        let next = playlistData[index + 1];
-        changeTrack(next.id);
+    let i = playlistData.findIndex(t => t.id === currentTrackId);
+    if(i < playlistData.length - 1){
+        changeTrack(playlistData[i + 1].id);
     }
 }
 
 function prevTrack(){
-    let index = playlistData.findIndex(t => t.id === currentTrackId);
-    if(index > 0){
-        let prev = playlistData[index - 1];
-        changeTrack(prev.id);
+    let i = playlistData.findIndex(t => t.id === currentTrackId);
+    if(i > 0){
+        changeTrack(playlistData[i - 1].id);
     }
 }
 
-
-/* ==========================================================
-   MODE: SHUFFLE + ICON
-========================================================== */
+/* ----------------------------------------------------------
+   SHUFFLE
+---------------------------------------------------------- */
 function toggleShuffle(){
     shuffleMode = !shuffleMode;
-
     updateShuffleButton();
-
-    alert(shuffleMode ? "Shuffle ON" : "Shuffle OFF");
 }
 
 function updateShuffleButton(){
@@ -199,24 +160,19 @@ function updateShuffleButton(){
 
     if(shuffleMode){
         btn.classList.add("active");
-        btn.innerHTML = "🔀✨ Shuffle ON";
+        btn.innerHTML = "🔀";
     } else {
         btn.classList.remove("active");
-        btn.innerHTML = "🔀 Shuffle";
+        btn.innerHTML = "🔀";
     }
 }
 
-
-/* ==========================================================
-   MODE: REPEAT (OFF / ONE / ALL)
-========================================================== */
+/* ----------------------------------------------------------
+   REPEAT (0 = OFF, 1 = ONE, 2 = ALL)
+---------------------------------------------------------- */
 function toggleRepeat(){
     repeatMode++;
-
-    if(repeatMode > 2){
-        repeatMode = 0;
-    }
-
+    if(repeatMode > 2) repeatMode = 0;
     updateRepeatButton();
 }
 
@@ -227,22 +183,28 @@ function updateRepeatButton(){
     btn.classList.remove("active");
 
     if(repeatMode === 0){
-        btn.innerHTML = "🔁 Repeat OFF";
+        btn.innerHTML = "🔁";
     }
     else if(repeatMode === 1){
-        btn.innerHTML = "🔂 Repeat ONE";
+        btn.innerHTML = "🔂";
         btn.classList.add("active");
     }
     else if(repeatMode === 2){
-        btn.innerHTML = "🔁∞ Repeat ALL";
+        btn.innerHTML = "🔁";
         btn.classList.add("active");
     }
 }
 
-/* ==========================================================
-   VOLUME CONTROL
-========================================================== */
+/* ----------------------------------------------------------
+   RELOAD (ulang lagu)
+---------------------------------------------------------- */
+function reloadTrack(){
+    changeTrack(currentTrackId);
+}
 
+/* ----------------------------------------------------------
+   VOLUME SYSTEM
+---------------------------------------------------------- */
 document.addEventListener("DOMContentLoaded", () => {
     const audio = document.getElementById("audioPlayer");
     const slider = document.getElementById("volumeSlider");
@@ -250,24 +212,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if(!audio || !slider) return;
 
-    // Volume default
-    audio.volume = 1.0;
-
     slider.addEventListener("input", () => {
         let v = slider.value / 100;
         audio.volume = v;
 
-        if(v === 0){
-            icon.innerHTML = "🔇";
-        }
-        else if(v < 0.4){
-            icon.innerHTML = "🔈";
-        }
-        else if(v < 0.7){
-            icon.innerHTML = "🔉";
-        }
-        else{
-            icon.innerHTML = "🔊";
-        }
+        icon.innerHTML =
+            v === 0 ? "🔇" :
+            v < 0.4 ? "🔈" :
+            v < 0.7 ? "🔉" :
+            "🔊";
     });
 });
