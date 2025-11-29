@@ -27,14 +27,15 @@
     <audio id="audioPlayer" controls>
         Browser kamu tidak mendukung audio.
     </audio>
-<div class="player-controls">
-    <button class="btn ctrl" onclick="prevTrack()">⏮</button>
-    <button class="btn ctrl" onclick="nextTrack()">⏭</button>
+    <div class="control-row">
+    <button class="ctrl-btn" onclick="prevTrack()">⏮</button>
+    <button class="ctrl-btn" onclick="nextTrack()">⏭</button>
+    <button class="ctrl-btn" id="shuffleBtn" onclick="toggleShuffle()">🔀</button>
+    <button class="ctrl-btn" id="repeatBtn" onclick="toggleRepeat()">🔁</button>
+    <button class="ctrl-btn" onclick="reloadTrack()">🔄</button>
 </div>
-<div class="player-mode">
-    <button class="btn ctrl" onclick="toggleShuffle()">🔀</button>
-    <button class="btn ctrl" onclick="toggleRepeat()">🔁</button>
-</div>
+
+<!-- VOLUME SLIDER -->
 <div class="volume-box">
     <span id="volumeIcon">🔊</span>
     <input type="range" id="volumeSlider" min="0" max="100" value="100">
