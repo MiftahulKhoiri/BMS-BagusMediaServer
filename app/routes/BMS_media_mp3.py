@@ -1,156 +1,225 @@
 import os
+import sqlite3
 from flask import Blueprint, jsonify, request, send_file, session, render_template
+from datetime import datetime
 
-# 🔗 Import config pusat (path sinkron)
-from app.BMS_config import MP3_FOLDER, BASE
+from app.BMS_config import DB_PATH, MP3_FOLDER
 from app.routes.BMS_auth import BMS_auth_is_login
 from app.routes.BMS_logger import BMS_write_log
 
 media_mp3 = Blueprint("media_mp3", __name__, url_prefix="/mp3")
 
-# -----------------------------------------------
-# 🔥 Folder resmi MP3 dari config
-# -----------------------------------------------
-BMS_MP3_FOLDER = MP3_FOLDER
-os.makedirs(BMS_MP3_FOLDER, exist_ok=True)
-
-# -----------------------------------------------
-# 🔍 PATH pemindaian MP3 (kamu bisa tambah)
-# -----------------------------------------------
-SCAN_PATHS = [
-    "/storage/emulated/0/Music",
-    "/storage/emulated/0/Download",
-    "/storage/emulated/0/WhatsApp/Media",
-    "/storage/emulated/0/",
-    BMS_MP3_FOLDER
-]
+os.makedirs(MP3_FOLDER, exist_ok=True)
 
 
 # ======================================================
-#   🔐 Proteksi login
+#  DB Helper
 # ======================================================
-def BMS_mp3_required():
+def get_db():
+    conn = sqlite3.connect(DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
+
+
+# ======================================================
+#  Proteksi Login
+# ======================================================
+def mp3_required():
     if not BMS_auth_is_login():
-        BMS_write_log("Akses MP3 ditolak (belum login)", "UNKNOWN")
-        return jsonify({"error": "Belum login!"}), 403
+        return jsonify({"error": "Belum login"}), 403
     return None
 
 
 # ======================================================
-#   🛡 Sanitasi path MP3
+#  Sanitasi File
 # ======================================================
-def sanitize_filename(path):
-    if not path:
-        return None
-
-    # Anti hack
-    bad = ["..", ";", "&", "|", "$", "`"]
-    for b in bad:
-        if b in path:
-            return None
-
-    # Wajib MP3
-    if not path.lower().endswith(".mp3"):
-        return None
-
-    return path
+def is_mp3(name):
+    return name.lower().endswith(".mp3")
 
 
 # ======================================================
-#   🔍 SCAN recursive MP3
+#  SCAN STORAGE → FOLDER GROUPING
 # ======================================================
-def scan_all_mp3():
-    mp3_list = []
+def scan_storage_for_mp3():
+    ROOT_SCAN = [
+        "/storage/emulated/0/Music",
+        "/storage/emulated/0/Download",
+        "/storage/emulated/0/WhatsApp/Media",
+        "/storage/emulated/0/",
+        MP3_FOLDER
+    ]
 
-    for root_path in SCAN_PATHS:
-        if not os.path.exists(root_path):
+    found = []
+
+    for base in ROOT_SCAN:
+        if not os.path.exists(base):
             continue
 
-        for root, dirs, files in os.walk(root_path):
-            for f in files:
-                if f.lower().endswith(".mp3"):
-                    full_path = os.path.join(root, f)
-                    mp3_list.append(full_path)
+        for root, dirs, files in os.walk(base):
+            mp3_files = [f for f in files if is_mp3(f)]
+            if len(mp3_files) == 0:
+                continue
 
-    return mp3_list
+            found.append({
+                "folder_path": root,
+                "folder_name": os.path.basename(root),
+                "files": mp3_files
+            })
+
+    return found
 
 
 # ======================================================
-#   🎵 API: SCAN semua MP3
+#  ROUTE: SCAN + SAVE ke DATABASE (FOLDER MODE)
 # ======================================================
-@media_mp3.route("/scan")
-def BMS_mp3_scan():
-    check = BMS_mp3_required()
-    if check:
-        return check
+@media_mp3.route("/scan-db", methods=["POST"])
+def scan_db():
+    cek = mp3_required()
+    if cek:
+        return cek
 
     username = session.get("username")
 
-    BMS_write_log("SCAN MP3 seluruh perangkat", username)
+    folders = scan_storage_for_mp3()
+    conn = get_db()
+    cur = conn.cursor()
 
-    mp3_files = scan_all_mp3()
+    imported = 0
 
-    # Simpan di session
-    session["mp3_list"] = mp3_files
+    for f in folders:
+        folder_path = f["folder_path"]
+        folder_name = f["folder_name"]
+
+        # Masukkan folder jika belum ada
+        cur.execute("SELECT id FROM mp3_folders WHERE folder_path=?", (folder_path,))
+        row = cur.fetchone()
+        if row:
+            folder_id = row["id"]
+        else:
+            cur.execute(
+                "INSERT INTO mp3_folders (folder_name, folder_path) VALUES (?,?)",
+                (folder_name, folder_path)
+            )
+            folder_id = cur.lastrowid
+
+        # Simpan file MP3
+        for file_name in f["files"]:
+            fp = os.path.join(folder_path, file_name)
+            size = os.path.getsize(fp)
+
+            cur.execute("SELECT id FROM mp3_tracks WHERE filepath=?", (fp,))
+            if cur.fetchone():
+                continue
+
+            cur.execute("""
+                INSERT INTO mp3_tracks (folder_id, filename, filepath, size, added_at)
+                VALUES (?,?,?,?,?)
+            """, (folder_id, file_name, fp, size, datetime.utcnow().isoformat()))
+
+            imported += 1
+            BMS_write_log(f"Import MP3 → {fp}", username)
+
+    conn.commit()
+    conn.close()
 
     return jsonify({
-        "total": len(mp3_files),
-        "files": mp3_files
+        "status": "ok",
+        "imported": imported,
+        "folders_total": len(folders)
     })
 
 
 # ======================================================
-#   🎶 API: LIST MP3 (hasil scan)
+#  LIST FOLDER MP3
 # ======================================================
-@media_mp3.route("/list")
-def BMS_mp3_list():
-    check = BMS_mp3_required()
-    if check:
-        return check
+@media_mp3.route("/folders")
+def list_folders():
+    cek = mp3_required()
+    if cek:
+        return cek
 
-    mp3_files = session.get("mp3_list", [])
+    conn = get_db()
+    rows = conn.execute("""
+        SELECT id, folder_name,
+               (SELECT COUNT(*) FROM mp3_tracks WHERE folder_id = mp3_folders.id) AS total_mp3
+        FROM mp3_folders
+        ORDER BY folder_name ASC
+    """).fetchall()
+    conn.close()
 
-    return jsonify({
-        "total": len(mp3_files),
-        "files": mp3_files
-    })
-
-
-# ======================================================
-#   ▶ PLAY FILE MP3
-# ======================================================
-@media_mp3.route("/play")
-def BMS_mp3_play():
-    check = BMS_mp3_required()
-    if check:
-        return check
-
-    file_path = request.args.get("file")
-    username = session.get("username")
-
-    if not file_path:
-        return "❌ Parameter file kosong!"
-
-    safe = sanitize_filename(file_path)
-    if not safe:
-        BMS_write_log("Nama file ilegal", username)
-        return "❌ File tidak valid!"
-
-    if not os.path.exists(file_path):
-        BMS_write_log(f"MP3 Hilang: {file_path}", username)
-        return "❌ File tidak ditemukan!"
-
-    BMS_write_log(f"Memutar MP3: {file_path}", username)
-    return send_file(file_path)
+    return jsonify([dict(r) for r in rows])
 
 
 # ======================================================
-#   🎧 GUI MP3 PLAYER
+#  LIST MP3 DALAM FOLDER
 # ======================================================
-@media_mp3.route("/player")
-def BMS_mp3_gui():
-    check = BMS_mp3_required()
-    if check:
-        return check
+@media_mp3.route("/folder/<int:folder_id>/tracks")
+def folder_tracks(folder_id):
+    cek = mp3_required()
+    if cek:
+        return cek
 
-    return render_template("BMS_mp3.html")
+    conn = get_db()
+    rows = conn.execute("""
+        SELECT id, filename, filepath, size
+        FROM mp3_tracks
+        WHERE folder_id=?
+        ORDER BY filename ASC
+    """, (folder_id,)).fetchall()
+    conn.close()
+
+    return jsonify([dict(r) for r in rows])
+
+
+# ======================================================
+#  INFORMASI TRACK
+# ======================================================
+@media_mp3.route("/info/<int:track_id>")
+def track_info(track_id):
+    cek = mp3_required()
+    if cek:
+        return cek
+
+    conn = get_db()
+    row = conn.execute("SELECT * FROM mp3_tracks WHERE id=?", (track_id,)).fetchone()
+    conn.close()
+
+    if not row:
+        return jsonify({"error": "Track tidak ditemukan"}), 404
+
+    return jsonify(dict(row))
+
+
+# ======================================================
+#  STREAM MP3
+# ======================================================
+@media_mp3.route("/play/<int:track_id>")
+def play_mp3(track_id):
+    cek = mp3_required()
+    if cek:
+        return cek
+
+    conn = get_db()
+    row = conn.execute("SELECT filepath FROM mp3_tracks WHERE id=?", (track_id,)).fetchone()
+    conn.close()
+
+    if not row:
+        return "Track tidak ditemukan", 404
+
+    fp = row["filepath"]
+    if not os.path.exists(fp):
+        return "File MP3 hilang", 404
+
+    return send_file(fp)
+
+
+# ======================================================
+#  HALAMAN PLAYER MP3
+# ======================================================
+@media_mp3.route("/watch/<int:track_id>")
+def mp3_player(track_id):
+    cek = mp3_required()
+    if cek:
+        return cek
+
+    return render_template("BMS_mp3_play.html")
