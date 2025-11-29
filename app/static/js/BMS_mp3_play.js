@@ -119,3 +119,19 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 });
+
+function nextTrack(){
+    let index = playlistData.findIndex(t => t.id === currentTrackId);
+    if(index < playlistData.length - 1){
+        let next = playlistData[index + 1];
+        changeTrack(next.id);
+    }
+}
+
+function prevTrack(){
+    let index = playlistData.findIndex(t => t.id === currentTrackId);
+    if(index > 0){
+        let prev = playlistData[index - 1];
+        changeTrack(prev.id);
+    }
+}
