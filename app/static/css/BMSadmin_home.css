@@ -6,18 +6,6 @@ body {
     color: #00ffea;
 }
 
-/* MAIN BOX */
-.terminal {
-    position: relative;
-    max-width: 900px;
-    margin: 40px auto;
-    background: rgba(0,0,0,0.65);
-    padding: 25px;
-    border: 2px solid #00ffea;
-    border-radius: 12px;
-    backdrop-filter: blur(4px);
-}
-
 /* LOGO */
 .logo {
     text-align: center;
@@ -35,6 +23,13 @@ body {
     font-size: 16px;
     color: #88fff7;
     margin-top: -8px;
+}
+
+.user-table th, .user-table td {
+    border-left: none;
+    border-right: none;
+    border-top: 1px solid #00ffea;
+    border-bottom: 1px solid #00ffea;
 }
 
 /* SECTION */
