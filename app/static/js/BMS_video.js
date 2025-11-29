@@ -129,3 +129,38 @@ function goBack(){
         showFolders();
     }
 }
+
+/* ======================================================
+   AUTO LOAD FOLDER ATAU ROOT
+====================================================== */
+
+document.addEventListener("DOMContentLoaded", () => {
+    const params = new URLSearchParams(window.location.search);
+    const folderId = params.get("folder");
+    const folderName = params.get("name");
+
+    if (folderId) {
+        loadVideos(folderId, folderName || "Folder");
+    } else {
+        showFolders();
+    }
+});
+
+
+/* ======================================================
+   HOME BUTTON
+   - admin/root -> /admin/home
+   - user biasa  -> /user/home
+====================================================== */
+function goHome(){
+    fetch("/auth/role")
+        .then(r => r.json())
+        .then(d => {
+            if (d.role === "admin" || d.role === "root") {
+                window.location.href = "/admin/home";
+            } else {
+                window.location.href = "/user/home";
+            }
+        })
+        .catch(() => window.location.href = "/user/home"); // fallback
+}
