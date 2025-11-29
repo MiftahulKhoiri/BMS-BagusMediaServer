@@ -23,44 +23,6 @@
     <div class="logo-sub">Bagus Media Server</div>
 </div>
 
-<!-- ===========================
-     USER TABLE + STATISTICS
-=========================== -->
-<div class="section-title user-header">
-    <span class="title-left">📌 ID USER:</span>
-
-    <span class="user-stats">
-        <span>Total: <b>{{ total_user }}</b></span>
-        <span>Admin: <b>{{ total_admin }}</b></span>
-        <span>User Biasa: <b>{{ total_user_biasa }}</b></span>
-    </span>
-</div>
-
-<table class="user-table">
-    <tr>
-        <th>ID</th>
-        <th>Username</th>
-        <th>Role</th>
-        <th>Aksi</th>
-    </tr>
-
-    {% for u in users %}
-    <tr>
-        <td>{{ u['id'] }}</td>
-        <td>{{ u['username'] }}</td>
-        <td>{{ u['role'] }}</td>
-        <td>
-            {% if u['username'] != "root" %}
-                <button class="btn warn" onclick="changeRole({{ u['id'] }}, 'root')">Root</button>
-                <button class="btn" onclick="changeRole({{ u['id'] }}, 'user')">User</button>
-                <button class="btn danger" onclick="deleteUser({{ u['id'] }})">Hapus</button>
-            {% else %}
-                <span class="locked">Locked</span>
-            {% endif %}
-        </td>
-    </tr>
-    {% endfor %}
-</table>
 
 <!-- ===========================
      TOOLS ADMIN CARD
