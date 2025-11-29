@@ -80,28 +80,50 @@ async function initPlayer(mp3Id, folderId){
 ========================================================== */
 function handleTrackEnd(){
 
-    // Repeat mode
-    if(repeatMode){
+    // =============================
+    // 🔁 1) REPEAT ONE
+    // =============================
+    if(repeatMode === 1){
         changeTrack(currentTrackId);
         return;
     }
 
-    // Shuffle mode
+    let index = playlistData.findIndex(t => t.id === currentTrackId);
+
+    // =============================
+    // 🔀 SHUFFLE
+    // =============================
     if(shuffleMode){
         let random = playlistData[Math.floor(Math.random() * playlistData.length)];
         changeTrack(random.id);
         return;
     }
 
-    // Mode normal → next track
-    let index = playlistData.findIndex(t => t.id === currentTrackId);
-    if(index >= 0 && index < playlistData.length - 1){
+    // =============================
+    // 🔁 2) REPEAT ALL
+    // =============================
+    if(repeatMode === 2){
+        if(index === playlistData.length - 1){
+            // Jika di akhir playlist → kembali ke awal
+            let first = playlistData[0];
+            changeTrack(first.id);
+            return;
+        } else {
+            // lanjut ke lagu berikutnya
+            let next = playlistData[index + 1];
+            changeTrack(next.id);
+            return;
+        }
+    }
+
+    // =============================
+    // ▶ MODE NORMAL (TIDAK REPEAT)
+    // =============================
+    if(index < playlistData.length - 1){
         let next = playlistData[index + 1];
         changeTrack(next.id);
-        return;
     }
 }
-
 
 /* ==========================================================
    MUAT ULANG PLAYLIST
