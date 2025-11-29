@@ -7,7 +7,7 @@ let currentFolderId = null;
 let currentTrackId = null;
 let playlistData = [];   
 let shuffleMode = false;
-let repeatMode = false;
+let repeatMode = 0;
 
 /* ----------------------------------------------------------
    Helper GET JSON
@@ -165,6 +165,19 @@ function toggleShuffle(){
 }
 
 function toggleRepeat(){
-    repeatMode = !repeatMode;
-    alert(repeatMode ? "Repeat ON" : "Repeat OFF");
+    repeatMode++;
+
+    if(repeatMode > 2){
+        repeatMode = 0;
+    }
+
+    if(repeatMode === 0){
+        alert("Repeat OFF");
+    }
+    else if(repeatMode === 1){
+        alert("Repeat ONE");
+    }
+    else if(repeatMode === 2){
+        alert("Repeat ALL");
+    }
 }
