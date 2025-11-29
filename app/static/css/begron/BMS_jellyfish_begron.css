@@ -1,17 +1,28 @@
-/* jellyfish_neon.css */
-:root {
-  --bg-color: #000014;
-}
+/* ==========================================================
+   BMS JELLYFISH BEGRON (NEON AQUA)
+   - Ubur-ubur bergerak lembut
+   - Glow warna cyan/pink/purple
+   - Fullscreen, responsive
+========================================================== */
 
-html, body {
-  margin: 0;
-  height: 100%;
-  background: var(--bg-color);
-  overflow: hidden;
+body, html {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: #020205;
 }
 
 #jellyCanvas {
-  width: 100vw;
-  height: 100vh;
-  display: block;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -1;
+}
+
+/* Glow lembut */
+.jelly-glow {
+    filter: blur(25px);
+    opacity: 0.85;
 }
