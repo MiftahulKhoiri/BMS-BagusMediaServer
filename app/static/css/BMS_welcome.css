@@ -18,30 +18,7 @@ body {
     background: #020205;
 }
 
-/* ========================================================
-   CANVAS BACKGROUND
-======================================================== */
 
-/* Jellyfish canvas */
-#jellyCanvas {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw !important;
-    height: 100vh !important;
-    z-index: -2;
-}
-
-/* Matrix canvas */
-#matrixCanvas {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw !important;
-    height: 100vh !important;
-    z-index: -1;
-    pointer-events: none;
-}
 
 /* ========================================================
    WELCOME CONTENT
