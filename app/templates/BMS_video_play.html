@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMS Player - {{ filename }}</title>
+
+    <!-- CSS Player -->
+    <link rel="stylesheet" href="/static/css/BMS_video_play.css">
+</head>
+
+<body>
+
+<div class="container">
+
+    <!-- ===================== -->
+    <!-- BAGIAN ATAS PLAYER   -->
+    <!-- ===================== -->
+    <div class="header">
+        <button class="btn back" onclick="goBackToFolder({{ folder_id }})">⬅ Kembali</button>
+        <h2 class="video-title">{{ filename }}</h2>
+    </div>
+
+    <!-- ===================== -->
+    <!-- VIDEO PLAYER BESAR    -->
+    <!-- ===================== -->
+    <div class="player-box">
+        <video id="player" controls autoplay>
+            <source src="/video/play/{{ video_id }}">
+        </video>
+    </div>
+
+    <!-- ===================== -->
+    <!-- PLAYLIST VIDEO FOLDER -->
+    <!-- ===================== -->
+    <div class="playlist-container">
+        <h3 class="playlist-title">📁 Video Dalam Folder</h3>
+
+        <div id="playlist" class="playlist-box">
+            <!-- List video di-load oleh JS -->
+        </div>
+    </div>
+
+</div>
+
+<!-- JS Player -->
+<script src="/static/js/BMS_video_play.js"></script>
+
+<script>
+    // Load playlist ketika halaman dibuka
+    loadPlaylist({{ folder_id }}, {{ video_id }});
+</script>
+
+</body>
+</html>
