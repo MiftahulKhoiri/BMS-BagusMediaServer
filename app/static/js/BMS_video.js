@@ -5,36 +5,32 @@
    - Menampilkan daftar folder
    - Menampilkan daftar video dalam folder
    - Memutar video + playlist
-   - Navigasi kembali (tidak kembali ke dashboard)
+   - Navigasi kembali (Back)
    ========================================================== */
 
 
 /* ----------------------------------------------------------
    STATE GLOBAL
-   ---------------------------------------------------------- */
-
-// Folder yang sedang dibuka
-let currentFolderId = null;
+---------------------------------------------------------- */
+let currentFolderId = null;      // Folder yang sedang dibuka
 let currentFolderName = null;
+let currentVideoList = [];       // List video dari folder aktif
 
-// List video dalam folder yang sedang dibuka
-let currentVideoList = [];
 
 
 /* ----------------------------------------------------------
    HELPER: Ambil JSON dari API
-   ---------------------------------------------------------- */
+---------------------------------------------------------- */
 async function api(path){
     let r = await fetch(path);
     return await r.json();
 }
 
 
+
 /* ==========================================================
    1) SCAN LIBRARY
-   - Meminta backend melakukan scan storage
-   - Setelah scan selesai → tampilkan folder ulang
-   ========================================================== */
+========================================================== */
 async function scanDB(){
     document.getElementById('status').innerHTML = "🔄 Scan berjalan...";
 
@@ -43,23 +39,26 @@ async function scanDB(){
 
     document.getElementById('status').innerHTML = data.message;
 
-    // Setelah scan selesai → tampilkan daftar folder
     showFolders();
 }
 
 
+
 /* ==========================================================
    2) TAMPILKAN DAFTAR FOLDER
-   - Mengambil data folder dari backend
-   - Menampilkan folder dalam bentuk grid
-   ---------------------------------------------------------- */
+========================================================== */
 async function showFolders(){
     document.getElementById('status').innerHTML = "Memuat folder...";
 
     let data = await api("/video/folders");
 
+    // RESET STATE
     currentFolderId = null;
     currentFolderName = null;
+    currentVideoList = [];
+
+    // Sembunyikan tombol back
+    document.getElementById("backButton").style.display = "none";
 
     const lib = document.getElementById("library");
     lib.innerHTML = "";
@@ -87,21 +86,23 @@ async function showFolders(){
 }
 
 
+
 /* ==========================================================
    3) TAMPILKAN VIDEO DI DALAM FOLDER
-   - Menampilkan semua video dalam folder
-   - Menyimpan state folder + videoList
-   ---------------------------------------------------------- */
+========================================================== */
 async function loadVideos(folder_id, folder_name){
-    // SIMPAN STATE FOLDER
+
+    // Simpan state folder
     currentFolderId = folder_id;
     currentFolderName = folder_name;
 
+    // Tampilkan tombol back
+    document.getElementById("backButton").style.display = "block";
+
     document.getElementById('status').innerHTML = "Memuat video...";
 
-    // AMBIL VIDEO DARI BACKEND
     let data = await api(`/video/folder/${folder_id}/videos`);
-    currentVideoList = data;   // SIMPAN UNTUK PLAYLIST
+    currentVideoList = data;
 
     const lib = document.getElementById("library");
     lib.innerHTML = "";
@@ -111,7 +112,6 @@ async function loadVideos(folder_id, folder_name){
         return;
     }
 
-    // TAMPILKAN LIST VIDEO
     data.forEach(v => {
         let card = document.createElement("div");
         card.className = "card";
@@ -122,7 +122,6 @@ async function loadVideos(folder_id, folder_name){
             <div class="sub">${(v.size/1024/1024).toFixed(1)} MB</div>
         `;
 
-        // Klik video → buka player
         card.onclick = ()=> playVideo(v.id, v.filename);
 
         lib.appendChild(card);
@@ -132,30 +131,27 @@ async function loadVideos(folder_id, folder_name){
 }
 
 
+
 /* ==========================================================
-   4) PUTAR VIDEO + TAMPILKAN PLAYLIST
-   ---------------------------------------------------------- */
+   4) PLAYER VIDEO + PLAYLIST
+========================================================== */
 function playVideo(id, title){
     let modal = document.getElementById("playerModal");
     let player = document.getElementById("playerVideo");
 
-    // SET JUDUL
     document.getElementById("playerTitle").innerHTML = title;
 
-    // SET SOURCE VIDEO
     player.src = `/video/play/${id}`;
-
-    // TAMPILKAN MODAL
     modal.style.display = "flex";
 
-    // TAMPILKAN PLAYLIST
     loadPlaylist(id);
 }
 
 
+
 /* ==========================================================
-   5) LOAD PLAYLIST (DAFTAR VIDEO DALAM FOLDER)
-   ---------------------------------------------------------- */
+   5) PLAYLIST DALAM FOLDER YANG SAMA
+========================================================== */
 function loadPlaylist(currentId){
     let box = document.getElementById("playlist");
     box.innerHTML = "";
@@ -164,7 +160,7 @@ function loadPlaylist(currentId){
         let item = document.createElement("div");
         item.className = "playlist-item";
 
-        // Tandai video yang sedang diputar
+        // Tandai yang sedang diputar
         item.innerHTML = (v.id === currentId)
             ? `▶ <b>${v.filename}</b>`
             : v.filename;
@@ -176,25 +172,41 @@ function loadPlaylist(currentId){
 }
 
 
+
 /* ==========================================================
-   6) KEMBALI DARI PLAYER
-   - Menutup modal player
-   - Kembali ke list video folder yang tadi dibuka
-   ========================================================== */
+   6) TUTUP PLAYER → KEMBALI KE LIST VIDEO
+========================================================== */
 function closePlayer(){
     let modal = document.getElementById("playerModal");
     let player = document.getElementById("playerVideo");
 
-    // STOP VIDEO
     player.pause();
     player.src = "";
-
-    // TUTUP MODAL
     modal.style.display = "none";
 
-    // KEMBALI KE LIST VIDEO FOLDER
+    // Kembali ke folder saat player ditutup
     if(currentFolderId){
         loadVideos(currentFolderId, currentFolderName);
+    } else {
+        showFolders();
+    }
+}
+
+
+
+/* ==========================================================
+   7) TOMBOL BACK (KEMBALI)
+   - Jika dalam folder → kembali ke daftar folder
+   - Jika tidak dalam folder → fallback showFolders()
+========================================================== */
+function goBack(){
+    if(currentFolderId){
+        // sedang melihat list video → kembali ke folder list
+        currentFolderId = null;
+        currentFolderName = null;
+        currentVideoList = [];
+
+        showFolders();
     } else {
         showFolders();
     }
