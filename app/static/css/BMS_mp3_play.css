@@ -159,3 +159,29 @@ audio {
     color: #22ff99;
     font-weight: bold;
 }
+
+.volume-box {
+    margin-top: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+}
+
+#volumeSlider {
+    width: 140px;
+    height: 6px;
+    border-radius: 4px;
+    background: #003d22;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+#volumeSlider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    background: #22ff99;
+    border-radius: 50%;
+    cursor: pointer;
+}
