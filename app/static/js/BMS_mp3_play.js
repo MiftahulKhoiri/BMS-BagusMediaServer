@@ -1,17 +1,17 @@
 /* ==========================================================
-   BMS MP3 PLAYER - PRO VERSION (STABIL, RESPONSIF)
-   - Player smooth
-   - Control bar stabil
-   - Repeat / Shuffle ikon update real-time
-   - Prevent error saat auto next
+   BMS MP3 PLAYER - PRO VERSION (FINAL FIXED)
+   - Fade judul
+   - Prevent double next
+   - Shuffle / repeat stabil
+   - Playlist highlight + animasi klik
 ========================================================== */
 
 let currentFolderId = null;
 let currentTrackId = null;
 let playlistData = [];
 let shuffleMode = false;
-let repeatMode = 0;   // 0=off, 1=one, 2=all
-let isChanging = false;   // 🔥 prevent double next
+let repeatMode = 0; // 0=off, 1=one, 2=all
+let isChanging = false;
 
 
 /* ----------------------------------------------------------
@@ -35,7 +35,8 @@ function goHome(){
     fetch("/auth/role")
         .then(r => r.json())
         .then(d => {
-            window.location.href = (d.role === "admin" || d.role === "root")
+            window.location.href =
+                (d.role === "admin" || d.role === "root")
                 ? "/admin/home"
                 : "/user/home";
         })
@@ -68,21 +69,17 @@ async function initPlayer(mp3Id, folderId){
         return;
     }
 
-fadeTitle(trackInfo.filename);
+    fadeTitle(trackInfo.filename);
 
     let audio = document.getElementById("audioPlayer");
     audio.src = `/mp3/play/${mp3Id}`;
-
-    // Mainkan lagu
     audio.play().catch(()=>{});
 
-    // Ambil playlist
     playlistData = await api(`/mp3/folder/${folderId}/tracks`);
     if(!playlistData) playlistData = [];
 
     loadPlaylist();
 
-    // Auto next handler (dipasang ulang)
     audio.onended = handleTrackEnd;
 
     updateRepeatButton();
@@ -91,15 +88,14 @@ fadeTitle(trackInfo.filename);
 
 
 /* ----------------------------------------------------------
-   HANDLE AUTO NEXT / REPEAT / SHUFFLE
+   HANDLE AUTO NEXT / SHIFT / REPEAT
 ---------------------------------------------------------- */
 function handleTrackEnd(){
 
-    if(isChanging) return;       // 🔥 cegah double next
+    if(isChanging) return;
     isChanging = true;
-    setTimeout(()=> isChanging = false, 400);
+    setTimeout(()=> isChanging = false, 300);
 
-    // REPEAT ONE
     if(repeatMode === 1){
         changeTrack(currentTrackId);
         return;
@@ -107,14 +103,12 @@ function handleTrackEnd(){
 
     let index = playlistData.findIndex(t => t.id === currentTrackId);
 
-    // SHUFFLE
     if(shuffleMode){
         let r = playlistData[Math.floor(Math.random() * playlistData.length)];
         changeTrack(r.id);
         return;
     }
 
-    // REPEAT ALL
     if(repeatMode === 2){
         if(index === playlistData.length - 1){
             changeTrack(playlistData[0].id);
@@ -124,7 +118,6 @@ function handleTrackEnd(){
         return;
     }
 
-    // NORMAL MODE
     if(index < playlistData.length - 1){
         changeTrack(playlistData[index + 1].id);
     }
@@ -132,29 +125,31 @@ function handleTrackEnd(){
 
 
 /* ----------------------------------------------------------
-   LOAD PLAYLIST UI
+   LOAD PLAYLIST (DIPERBAIKI)
 ---------------------------------------------------------- */
 function loadPlaylist(){
     let box = document.getElementById("playlist");
     box.innerHTML = "";
 
     playlistData.forEach(mp3 => {
+
         let item = document.createElement("div");
         item.className = "playlist-item";
 
         if(mp3.id === currentTrackId){
             item.classList.add("active");
-            item.style.transition = "0.3s";
             item.innerHTML = `▶ ${mp3.filename}`;
-        }
-        else {
+        } else {
             item.innerHTML = mp3.filename;
         }
 
+        // Animasi klik
         item.onclick = () => {
-    item.style.transform = "scale(0.95)";
-    setTimeout(() => changeTrack(mp3.id), 120);
-};
+            item.style.transform = "scale(0.95)";
+            setTimeout(() => changeTrack(mp3.id), 120);
+        };
+
+        box.appendChild(item); // ⭐ PENTING: item dimasukkan ke playlist
     });
 }
 
@@ -163,8 +158,6 @@ function loadPlaylist(){
    GANTI TRACK
 ---------------------------------------------------------- */
 function changeTrack(id){
-
-    // Tambah smooth resetting
     let audio = document.getElementById("audioPlayer");
     audio.pause();
     audio.currentTime = 0;
@@ -205,11 +198,11 @@ function updateShuffleButton(){
 
     if(shuffleMode){
         btn.classList.add("active");
-        btn.innerHTML = "🔀";     // Ikon tetap, style berubah
     } else {
         btn.classList.remove("active");
-        btn.innerHTML = "🔀";
     }
+
+    btn.innerHTML = "🔀"; // ikon tetap
 }
 
 
@@ -229,15 +222,15 @@ function updateRepeatButton(){
     btn.classList.remove("active");
 
     if(repeatMode === 0){
-        btn.innerHTML = "🔁";   // repeat off
+        btn.innerHTML = "🔁";
     }
     else if(repeatMode === 1){
         btn.classList.add("active");
-        btn.innerHTML = "🔂";   // repeat one
+        btn.innerHTML = "🔂";
     }
     else if(repeatMode === 2){
         btn.classList.add("active");
-        btn.innerHTML = "🔁";   // repeat all (ikon sama)
+        btn.innerHTML = "🔁";
     }
 }
 
@@ -266,29 +259,25 @@ document.addEventListener("DOMContentLoaded", () => {
         let v = slider.value / 100;
         audio.volume = v;
 
-        if(v === 0){
-            icon.innerHTML = "🔇";
-        }
-        else if(v < 0.4){
-            icon.innerHTML = "🔈";
-        }
-        else if(v < 0.7){
-            icon.innerHTML = "🔉";
-        }
-        else{
-            icon.innerHTML = "🔊";
-        }
+        icon.innerHTML =
+            v === 0 ? "🔇" :
+            v < 0.4 ? "🔈" :
+            v < 0.7 ? "🔉" :
+                       "🔊";
     });
 });
 
+
+/* ----------------------------------------------------------
+   FADE TITLE
+---------------------------------------------------------- */
 function fadeTitle(text){
     const title = document.getElementById("trackTitle");
 
-    // Mulai fade-out
     title.classList.add("fade-out");
 
     setTimeout(() => {
         title.innerHTML = text;
         title.classList.remove("fade-out");
-    }, 300); // waktu fade-out
+    }, 300);
 }
