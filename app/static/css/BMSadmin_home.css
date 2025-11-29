@@ -51,7 +51,7 @@ body {
 
 /* TABLE */
 .user-table {
-    width: 100%;
+    width: 90%;
     border-collapse: collapse;
     background: rgba(0,0,0,0.6);
     border: 1px solid #00ffea;
