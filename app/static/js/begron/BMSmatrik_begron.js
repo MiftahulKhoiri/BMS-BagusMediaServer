@@ -1,13 +1,13 @@
 const canvas = document.getElementById("matrixCanvas");
-const ctx = canvas.getContext("2d");
+const ctx = canvas.getContext("3d");
 
 canvas.width = window.innerWidth;
 canvas.height = window.innerHeight;
 
-const chars = "0101010011101010101010010101010101BAGUSCHOIRI";
+const chars = "0101010011101010101010010101010101";
 const matrix = [];
 
-const fontSize = 14;
+const fontSize = 16;
 const columns = canvas.width / fontSize;
 
 for (let i = 0; i < columns; i++) {
