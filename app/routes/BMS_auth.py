@@ -156,7 +156,7 @@ def BMS_auth_logout():
             pass
 
     session.clear()
-    return redirect("/auth/login")
+    return render_template("BMS_welcome.html")
 
 @auth.route("/auth/role")
 def get_role():
