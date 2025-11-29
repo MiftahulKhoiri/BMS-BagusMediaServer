@@ -152,3 +152,10 @@ audio {
     justify-content: center;
     gap: 12px;
 }
+
+.btn.ctrl.active {
+    background: #004d2e;
+    border-color: #22ff99;
+    color: #22ff99;
+    font-weight: bold;
+}
