@@ -11,7 +11,9 @@
 <body>
 
 <div class="topbar">
-    <h2>🎬 BMS Video Library</h2>
+
+    <!-- BUTTON HOME -->
+    <h2 class="home-btn" onclick="goHome()">🎬 BMS Video Library</h2>
 
     <div>
         <button class="btn" onclick="scanDB()">🔍 Scan</button>
@@ -25,24 +27,10 @@
 
 <div id="status" class="status"></div>
 
-<!-- GRID FOLDER / VIDEO -->
 <div id="library" class="grid"></div>
 
-<!-- JS -->
+<!-- LOAD JS -->
 <script src="/static/js/BMS_video.js"></script>
-
-<script>
-    // Cek apakah ada parameter ?folder=
-    const params = new URLSearchParams(window.location.search);
-    const folderId = params.get("folder");
-    const folderName = params.get("name");
-
-    if (folderId) {
-        loadVideos(folderId, folderName || "Folder");
-    } else {
-        showFolders();
-    }
-</script>
 
 </body>
 </html>
