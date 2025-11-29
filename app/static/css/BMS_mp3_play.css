@@ -1,0 +1,129 @@
+/* ==========================================================
+   BMS MP3 PLAYER — MODE A
+   Player atas, playlist bawah (scroll)
+   Tema: Dark Neon Green Premium
+========================================================== */
+
+body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: #060606;
+    color: #d6ffe8;
+    margin: 0;
+    padding: 15px;
+}
+
+
+/* ============================
+   TOPBAR
+============================ */
+.topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.home-btn {
+    cursor: pointer;
+    transition: 0.15s;
+}
+.home-btn:hover {
+    color: #00ff99;
+}
+
+.btn {
+    padding: 7px 12px;
+    background: #000;
+    border: 1px solid #00ff7f;
+    color: #00ff7f;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.btn:hover {
+    background-color: #003319;
+}
+
+
+/* ============================
+   PLAYER BOX
+============================ */
+.player-box {
+    margin-top: 20px;
+    padding: 20px;
+    background: rgba(0,0,0,0.55);
+    border-radius: 12px;
+    border: 1px solid rgba(0,255,120,0.15);
+    text-align: center;
+}
+
+.track-title {
+    margin-bottom: 10px;
+    font-size: 18px;
+    font-weight: bold;
+    color: #c6ffe0;
+}
+
+audio {
+    width: 100%;
+    margin-top: 10px;
+    outline: none;
+    border-radius: 10px;
+}
+
+
+/* ============================
+   PLAYLIST
+============================ */
+.playlist-container {
+    margin-top: 25px;
+}
+
+.playlist-title {
+    font-size: 16px;
+    color: #b8ffd8;
+    margin-bottom: 10px;
+}
+
+/* LIST SCROLL */
+.playlist {
+    max-height: 380px;       /* Scroll batas */
+    overflow-y: auto;
+    padding-right: 5px;
+}
+
+/* ITEM */
+.playlist-item {
+    padding: 10px;
+    background: rgba(0,0,0,0.45);
+    border: 1px solid rgba(0,255,120,0.1);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: 0.15s;
+}
+
+.playlist-item:hover {
+    border-color: #00ff88;
+}
+
+/* TRACK YANG SEDANG DIPUTAR */
+.playlist-item.active {
+    background: rgba(0,255,120,0.12);
+    border-color: #00ff88;
+    font-weight: bold;
+    color: #caffec;
+}
+
+
+/* ============================
+   SCROLLBAR CUSTOM
+============================ */
+.playlist::-webkit-scrollbar {
+    width: 6px;
+}
+.playlist::-webkit-scrollbar-thumb {
+    background: #00ff88;
+    border-radius: 10px;
+}
+.playlist::-webkit-scrollbar-track {
+    background: #003318;
+}
