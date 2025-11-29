@@ -60,6 +60,7 @@ body {
     font-size: 18px;
     font-weight: bold;
     color: #c6ffe0;
+    transition: opacity 0.25s ease; /* Fade saat ganti lagu */
 }
 
 audio {
@@ -67,6 +68,78 @@ audio {
     margin-top: 10px;
     outline: none;
     border-radius: 10px;
+}
+
+
+/* ============================
+   BARIS TOMBOL CONTROL
+   (Prev - Next - Shuffle - Repeat - Reload)
+============================ */
+
+.control-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 14px;
+    margin-top: 12px;
+    margin-bottom: 10px;
+}
+
+/* Style tombol utama */
+.ctrl-btn {
+    background: rgba(0, 255, 120, 0.08);
+    border: 1px solid #00ff99;
+    padding: 8px 12px;
+    border-radius: 10px;
+    font-size: 20px;
+    color: #00ffb3;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.ctrl-btn:hover {
+    background: rgba(0, 255, 120, 0.2);
+    transform: scale(1.1);
+}
+
+/* Mode aktif tombol shuffle / repeat */
+.ctrl-btn.active {
+    background: rgba(0, 255, 120, 0.35);
+    border-color: #47ffa9;
+    color: #aaffee;
+}
+
+
+/* ============================
+   VOLUME CONTROL
+============================ */
+
+.volume-box {
+    margin-top: 8px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    justify-content: center;
+}
+
+/* Slider */
+#volumeSlider {
+    width: 140px;
+    height: 6px;
+    border-radius: 4px;
+    background: #003d22;
+    outline: none;
+    -webkit-appearance: none;
+}
+
+/* Titik slider */
+#volumeSlider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px;
+    height: 14px;
+    background: #22ff99;
+    border-radius: 50%;
+    cursor: pointer;
 }
 
 
@@ -115,7 +188,7 @@ audio {
 
 
 /* ============================
-   SCROLLBAR CUSTOM
+   CUSTOM SCROLL
 ============================ */
 .playlist::-webkit-scrollbar {
     width: 6px;
@@ -126,101 +199,4 @@ audio {
 }
 .playlist::-webkit-scrollbar-track {
     background: #003318;
-}
-
-.player-controls {
-    margin-top: 12px;
-    display: flex;
-    justify-content: center;
-    gap: 12px;
-}
-
-.btn.ctrl {
-    background: #001f12;
-    border: 1px solid #22ff99;
-    color: #22ff99;
-    padding: 8px 14px;
-}
-
-.btn.ctrl:hover {
-    background: #004d2e;
-}
-
-.player-mode {
-    margin-top: 10px;
-    display: flex;
-    justify-content: center;
-    gap: 12px;
-}
-
-.btn.ctrl.active {
-    background: #004d2e;
-    border-color: #22ff99;
-    color: #22ff99;
-    font-weight: bold;
-}
-
-.volume-box {
-    margin-top: 12px;
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    justify-content: center;
-}
-
-#volumeSlider {
-    width: 140px;
-    height: 6px;
-    border-radius: 4px;
-    background: #003d22;
-    outline: none;
-    -webkit-appearance: none;
-}
-
-#volumeSlider::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 14px;
-    height: 14px;
-    background: #22ff99;
-    border-radius: 50%;
-    cursor: pointer;
-}
-
-/* Baris Tombol Control */
-.control-row {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 14px;
-    margin-top: 12px;
-    margin-bottom: 10px;
-}
-
-/* Style tombol */
-.ctrl-btn {
-    background: rgba(0, 255, 120, 0.08);
-    border: 1px solid #00ff99;
-    padding: 8px 12px;
-    border-radius: 10px;
-    font-size: 20px;
-    color: #00ffb3;
-    cursor: pointer;
-    transition: 0.2s;
-}
-
-.ctrl-btn:hover {
-    background: rgba(0, 255, 120, 0.2);
-    transform: scale(1.1);
-}
-
-/* Mode aktif tombol shuffle / repeat */
-.ctrl-btn.active {
-    background: rgba(0, 255, 120, 0.35);
-    border-color: #47ffa9;
-    color: #aaffee;
-}
-
-/* Volume tetap di bawah */
-.volume-box {
-    margin-top: 8px;
 }
