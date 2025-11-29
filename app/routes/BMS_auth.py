@@ -157,3 +157,7 @@ def BMS_auth_logout():
 
     session.clear()
     return redirect("/auth/login")
+
+@auth.route("/auth/role")
+def get_role():
+    return jsonify({"role": session.get("role")})
