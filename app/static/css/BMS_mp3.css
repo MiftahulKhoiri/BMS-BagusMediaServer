@@ -1,80 +1,105 @@
+/* ==========================================================
+   BMS MP3 LIBRARY UI (Folder & File List)
+   Tema: Dark Neon Green
+========================================================== */
+
 body {
+    font-family: Arial, Helvetica, sans-serif;
+    background: #060606;
+    color: #d8ffe6;
     margin: 0;
-    padding: 0;
-    font-family: 'Poppins', sans-serif;
-    color: #0ff;
-    overflow: hidden;
+    padding: 15px;
 }
 
-.player-container {
-    position: absolute;
-    top: 10%;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 90%;
-    max-width: 400px;
-    background: rgba(0, 0, 0, 0.4);
-    padding: 20px;
-    border: 2px solid #0ff;
-    border-radius: 15px;
-    backdrop-filter: blur(8px);
-    box-shadow: 0 0 20px #0ff;
-}
-
-.now-playing h2 {
-    margin: 0;
-    text-align: center;
-    font-size: 18px;
-    color: #0ff;
-}
-
-.now-playing p {
-    text-align: center;
-    margin: 5px 0 15px;
-    opacity: 0.7;
-}
-
-.controls {
+/* TOPBAR */
+.topbar {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 15px;
+    align-items: center;
 }
 
-.controls button {
-    width: 50px;
-    height: 50px;
-    border-radius: 10px;
-    border: 2px solid #0ff;
-    background: rgba(0, 0, 0, 0.4);
-    color: #0ff;
-    font-size: 18px;
+.home-btn {
     cursor: pointer;
-    transition: 0.2s;
+    transition: 0.15s;
+}
+.home-btn:hover {
+    color: #00ff99;
 }
 
-.controls button:hover {
-    background: #0ff;
-    color: #000;
+/* BUTTON */
+.btn {
+    padding: 8px 12px;
+    background: #000;
+    border: 1px solid #00ff7f;
+    color: #00ff7f;
+    border-radius: 6px;
+    cursor: pointer;
+}
+.btn:hover {
+    background-color: #003319;
 }
 
-.playlist {
-    max-height: 260px;
-    overflow-y: auto;
+/* STATUS */
+.status {
+    margin: 10px 0;
+    color: #aaffc2;
 }
 
-.playlist ul {
-    list-style: none;
-    padding: 0;
-    margin: 0;
+/* GRID LIST */
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
 }
 
-.playlist li {
+/* CARD STYLE (folder & file) */
+.card {
+    background: rgba(0, 0, 0, 0.5);
+    border: 1px solid rgba(0,255,110,0.1);
     padding: 10px;
-    border-bottom: 1px solid #0ff;
+    border-radius: 10px;
     cursor: pointer;
-    transition: 0.2s;
+    transition: 0.15s;
+}
+.card:hover {
+    border-color: #00ff7f;
 }
 
-.playlist li:hover {
-    background: rgba(0, 255, 255, 0.2);
+/* FOLDER ICON */
+.thumb-folder {
+    width: 100%;
+    height: 100px;
+    background: #111;
+    border-radius: 6px;
+    display:flex;
+    align-items:center;
+    justify-content: center;
+    font-size: 32px;
+}
+
+/* MP3 icon */
+.thumb-mp3 {
+    width: 100%;
+    height: 100px;
+    background: #111;
+    border-radius: 6px;
+    display:flex;
+    align-items:center;
+    justify-content: center;
+    font-size: 40px;
+    color: #00ff88;
+}
+
+/* TEXT INFO */
+.title {
+    margin-top: 6px;
+    font-weight: bold;
+    font-size: 14px;
+    color: #c6ffe0;
+}
+
+.sub {
+    font-size: 12px;
+    color: #99ffbb;
 }
