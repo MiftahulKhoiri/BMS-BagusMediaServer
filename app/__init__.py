@@ -7,7 +7,7 @@ from flask_sock import Sock    # <-- WAJIB ADA
 from app.BMS_config import BASE
 
 # Auto repair DB
-from app.database.BMS_auto_repair import ensure_users_table, ensure_root_user, ensure_videos_table, ensure_folders_table
+from app.database.BMS_auto_repair import ensure_users_table, ensure_root_user, ensure_videos_table, ensure_folders_table, ensure_mp3_tables
 
 # Import Blueprint register
 from app.routes import register_blueprints
@@ -41,6 +41,7 @@ def create_app():
     ensure_root_user()
     ensure_folders_table()
     ensure_videos_table()
+    ensure_mp3_tables()
 
     # ==================================================================
     # CORS
