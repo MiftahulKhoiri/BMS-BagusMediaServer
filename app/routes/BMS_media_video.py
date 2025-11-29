@@ -200,3 +200,21 @@ def delete_video(video_id):
     conn.close()
 
     return jsonify({"status": "ok", "message": "Video dihapus dari library"})
+
+@media_video.route("/watch/<int:video_id>")
+def BMS_video_watch(video_id):
+    check = BMS_video_required()
+    if check:
+        return check
+
+    conn = get_db_conn()
+    row = conn.execute("SELECT id, filename, folder_id FROM videos WHERE id=?", (video_id,)).fetchone()
+    conn.close()
+
+    if not row:
+        return "Video tidak ditemukan", 404
+
+    return render_template("BMS_video_play.html",
+                           video_id=row["id"],
+                           filename=row["filename"],
+                           folder_id=row["folder_id"])
