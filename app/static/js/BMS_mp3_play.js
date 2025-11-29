@@ -6,6 +6,8 @@
 let currentFolderId = null;
 let currentTrackId = null;
 let playlistData = [];   // Semua MP3 dalam folder
+let shuffleMode = false;
+let repeatMode = false;
 
 /* ----------------------------------------------------------
    Helper GET JSON
