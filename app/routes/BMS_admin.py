@@ -105,18 +105,3 @@ def admin_delete_user():
     conn.close()
 
     return jsonify({"status": "success", "message": "User & semua data berhasil dihapus."})
-
-
-# ROUTE LAMA (tetap ada jika ada link lama)
-@admin.route("/delete/<int:user_id>")
-def delete_user_old(user_id):
-    cek = require_root()
-    if cek:
-        return cek
-
-    conn = get_db()
-    conn.execute("DELETE FROM users WHERE id=?", (user_id,))
-    conn.commit()
-    conn.close()
-
-    return redirect("/admin/home")
