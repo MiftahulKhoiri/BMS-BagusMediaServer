@@ -127,3 +127,21 @@ audio {
 .playlist::-webkit-scrollbar-track {
     background: #003318;
 }
+
+.player-controls {
+    margin-top: 12px;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
+
+.btn.ctrl {
+    background: #001f12;
+    border: 1px solid #22ff99;
+    color: #22ff99;
+    padding: 8px 14px;
+}
+
+.btn.ctrl:hover {
+    background: #004d2e;
+}
