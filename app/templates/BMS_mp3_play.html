@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>BMS - MP3 Player</title>
+
+    <link rel="stylesheet" href="/static/css/BMS_mp3_play.css">
+</head>
+<body>
+
+<!-- ============================
+     TOP BAR
+============================ -->
+<div class="topbar">
+    <h2 class="home-btn" onclick="goHome()">🎵 MP3 Player</h2>
+    <button class="btn" onclick="goBack()">⬅ Kembali</button>
+</div>
+
+<!-- ============================
+     AUDIO PLAYER
+============================ -->
+<div class="player-box">
+
+    <h3 id="trackTitle" class="track-title">Memuat...</h3>
+
+    <audio id="audioPlayer" controls>
+        Browser kamu tidak mendukung audio.
+    </audio>
+
+</div>
+
+<!-- ============================
+     PLAYLIST (SCROLL)
+============================ -->
+<div class="playlist-container">
+    <h3 class="playlist-title">Playlist Folder</h3>
+    <div id="playlist" class="playlist"></div>
+</div>
+
+<!-- JS -->
+<script src="/static/js/BMS_mp3_play.js"></script>
+
+<script>
+    // Ambil ID MP3 & Folder dari URL
+    const params = new URLSearchParams(window.location.search);
+    const mp3Id = params.get("id") || window.location.pathname.split("/").pop();
+    const folderId = params.get("folder");
+
+    // Mulai player
+    initPlayer(mp3Id, folderId);
+</script>
+
+</body>
+</html>
