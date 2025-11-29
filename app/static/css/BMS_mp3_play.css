@@ -202,13 +202,14 @@ audio {
 }
 
 /* Fade-in & Fade-out judul lagu */
-.fade-title {
-    opacity: 1;
-    transition: opacity 0.35s ease;
-}
-
 .fade-out {
     opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.fade-title {
+    opacity: 1;
+    transition: opacity 0.3s ease;
 }
 
 /* Playlist aktif dengan neon pulse */
