@@ -1,59 +1,35 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BMS MP3 Player</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>BMS - MP3 Library</title>
 
-    <!-- Background Neon -->
-    <link rel="stylesheet" href="/static/css/begron/BMS_jellyfish_begron.css">
-
-    <!-- MP3 Player Style -->
     <link rel="stylesheet" href="/static/css/BMS_mp3.css">
 </head>
 <body>
 
-<canvas id="jellycanvash"></canvas>
+<div class="topbar">
 
-<div class="player-container">
+    <!-- LOGO / HOME BUTTON -->
+    <h2 class="home-btn" onclick="goHome()">🎵 BMS MP3 Library</h2>
 
-    <!-- =============================== -->
-    <!--           NOW PLAYING           -->
-    <!-- =============================== -->
-    <div class="now-playing">
-        <h2 id="songTitle">Tidak ada lagu</h2>
-        <p id="songIndex">0 / 0</p>
-    </div>
-
-    <!-- =============================== -->
-    <!--         AUDIO CONTROLLER        -->
-    <!-- =============================== -->
-    <audio id="audioPlayer"></audio>
-
-    <div class="controls">
-
-        <button id="btnPrev">⏮</button>
-        <button id="btnPlay">▶</button>
-        <button id="btnPause" style="display:none;">⏸</button>
-        <button id="btnNext">⏭</button>
-
-        <button id="btnRepeatOne">🔂 1</button>
-        <button id="btnRepeatAll">🔁</button>
-        <button id="btnShuffle">🔀</button>
-
-    </div>
-
-    <!-- =============================== -->
-    <!--            PLAYLIST             -->
-    <!-- =============================== -->
-    <div class="playlist">
-        <h3>Playlist</h3>
-        <ul id="playlistContainer"></ul>
+    <div>
+        <button class="btn" onclick="scanMP3()">🔍 Scan</button>
     </div>
 
 </div>
 
-<script src="/static/js/begron/BMS_jellyfish_begron.js"></script>
+<!-- Tombol Back -->
+<div id="backButton" style="display:none; margin-bottom:10px;">
+    <button class="btn" onclick="goBack()">⬅ Kembali</button>
+</div>
+
+<div id="status" class="status"></div>
+
+<!-- GRID UNTUK FOLDER & FILE -->
+<div id="library" class="grid"></div>
+
 <script src="/static/js/BMS_mp3.js"></script>
 
 </body>
