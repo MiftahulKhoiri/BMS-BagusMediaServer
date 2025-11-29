@@ -145,3 +145,10 @@ audio {
 .btn.ctrl:hover {
     background: #004d2e;
 }
+
+.player-mode {
+    margin-top: 10px;
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+}
