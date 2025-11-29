@@ -223,3 +223,14 @@ def mp3_player(track_id):
         return cek
 
     return render_template("BMS_mp3_play.html")
+
+# ======================================================
+#  HALAMAN UI MP3 LIST (BMS_mp3.html)
+# ======================================================
+@media_mp3.route("/")
+def mp3_home():
+    cek = mp3_required()
+    if cek:
+        return cek
+
+    return render_template("BMS_mp3.html")
