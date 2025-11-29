@@ -1,127 +1,79 @@
-/* ==========================================================
-   BMS VIDEO PLAYER - STYLE PREMIUM
-   Fit theme: Neon Green | Dark | Clean
-   Author: Bagus & AI Support
-========================================================== */
-
-/* RESET */
+/* BMS_video_play.css - Style (Mode A) */
 body {
-    margin: 0;
-    padding: 0;
-    font-family: "Arial", sans-serif;
-    background: #050505;
-    color: #ccffe0;
+  margin: 0;
+  padding: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  background: #050505;
+  color: #ccffe0;
 }
 
 .container {
-    max-width: 900px;
-    margin: auto;
-    padding: 15px;
+  max-width: 980px;
+  margin: 14px auto;
+  padding: 12px;
 }
 
-/* ==============================
-   HEADER
-============================== */
+/* header */
 .header {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 12px;
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  margin-bottom: 12px;
 }
-
 .btn {
-    padding: 7px 14px;
-    border: 1px solid #00ff7f;
-    background: #000;
-    color: #00ff7f;
-    border-radius: 6px;
-    font-size: 14px;
-    cursor: pointer;
+  padding: 7px 12px;
+  border-radius: 6px;
+  background: #000;
+  border: 1px solid #00ff7f;
+  color: #00ff7f;
+  cursor: pointer;
 }
-.btn:hover {
-    background: #003319;
-}
-.btn.back {
-    font-size: 13px;
-}
+.video-title { font-size: 16px; font-weight: 600; color: #bfffd0; }
 
-.video-title {
-    font-size: 18px;
-    font-weight: bold;
-    color: #b5ffce;
-}
-
-/* ==============================
-   PLAYER
-============================== */
+/* player box */
 .player-box {
-    width: 100%;
-    background: #000;
-    border-radius: 10px;
-    margin-bottom: 18px;
-    overflow: hidden;
-    box-shadow: 0px 0px 12px rgba(0, 255, 120, 0.2);
+  width: 100%;
+  background: #000;
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 14px;
+  box-shadow: 0 6px 18px rgba(0,255,120,0.06);
 }
-
 .player-box video {
-    width: 100%;
-    height: auto;
-    display: block;
-    outline: none;
-    border-radius: 10px;
+  width: 100%;
+  height: auto;
+  display: block;
+  background: #000;
 }
 
-/* ==============================
-   PLAYLIST
-============================== */
+/* playlist */
 .playlist-container {
-    padding: 10px;
-    background: rgba(0, 255, 100, 0.05);
-    border: 1px solid rgba(0, 255, 100, 0.1);
-    border-radius: 10px;
-    margin-top: 18px;
+  padding: 10px;
+  background: rgba(0,255,110,0.04);
+  border: 1px solid rgba(0,255,110,0.09);
+  border-radius: 8px;
+  height: 260px;
+  overflow-y: auto; /* scrollable */
 }
-
-.playlist-title {
-    margin: 0 0 10px 0;
-    color: #b2ffc9;
-    font-size: 16px;
-}
-
-/* LIST ITEM */
-.playlist-box {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-}
-
+.playlist-title { color: #b2ffc9; margin-bottom: 8px; font-weight:600; }
+.playlist-box { display:flex; flex-direction: column; gap:8px; }
 .playlist-item {
-    padding: 8px 12px;
-    background: rgba(0, 255, 120, 0.08);
-    border-radius: 6px;
-    font-size: 14px;
-    cursor: pointer;
-    border-left: 3px solid transparent;
-    transition: 0.2s;
+  padding: 10px;
+  background: rgba(0,255,120,0.06);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background .12s;
+  font-size: 14px;
+  color: #eafff0;
 }
-.playlist-item:hover {
-    background: rgba(0, 255, 120, 0.15);
-}
-
-.playing {
-    background: rgba(0, 255, 120, 0.25);
-    border-left: 4px solid #00ff7f;
-    font-weight: bold;
-    color: #e6ffe6;
+.playlist-item:hover { background: rgba(0,255,120,0.14); }
+.playlist-item.playing {
+  background: rgba(0,255,120,0.24);
+  border-left: 4px solid #00ff7f;
+  font-weight: 700;
 }
 
-/* RESPONSIVE */
-@media (max-width: 600px) {
-    .video-title {
-        font-size: 15px;
-    }
-    .playlist-item {
-        font-size: 13px;
-        padding: 7px 10px;
-    }
+@media (max-width: 600px){
+  .playlist-container { height: 220px; }
+  .video-title { font-size: 14px; }
 }
