@@ -112,53 +112,19 @@ body {
     color: black;
 }
 
-/* FOOTER */
-.footer {
-    margin-top: 30px;
-    text-align: center;
-    font-size: 14px;
-    color: #66fff7;
-}
-
-.card {
-    position: relative;
-    max-width: 900px;
-    margin: 20px auto;
-    background: rgba(0,0,0,0.65);
-    padding: 25px;
-    border: 2px solid #00ffea;
-    border-radius: 12px;
+/* FOOTER STICKY NEON */
+.footer-sticky {
+    position: sticky;
+    bottom: 0;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.85);
+    padding: 12px 0;
+    border-top: 2px solid #00ffea; /* Neon line */
     backdrop-filter: blur(4px);
-}
-
-.stats-card {
-    padding: 20px;
-    margin-bottom: 20px;
-}
-
-.stats-grid {
-    display: flex;
-    gap: 20px;
-    justify-content: space-between;
-}
-
-.stat-box {
-    background: rgba(0, 255, 80, 0.1);
-    border: 1px solid #0f0;
-    padding: 15px;
-    width: 32%;
-    border-radius: 10px;
     text-align: center;
-    box-shadow: 0 0 10px #00ff75;
-}
-
-.stat-label {
-    font-size: 16px;
-    color: #0f0;
-}
-
-.stat-value {
-    font-size: 28px;
-    font-weight: bold;
-    margin-top: 5px;
+    color: #66fff7;
+    font-size: 14px;
+    letter-spacing: 1px;
+    box-shadow: 0 -2px 12px #00eaff75; /* Glow neon ke atas */
+    z-index: 999;
 }
