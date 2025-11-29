@@ -1,153 +1,166 @@
-let playlist = [];
-let currentIndex = 0;
-let repeatMode = "none";  // none, one, all
-let shuffleMode = false;
+/* ==========================================================
+   BMS MP3 LIBRARY (FOLDER & FILE LIST)
+   Mode: Clean, Elegant, Neon Green
+========================================================== */
 
-const audio = document.getElementById("audioPlayer");
-const playlistHTML = document.getElementById("playlistContainer");
-const songTitle = document.getElementById("songTitle");
-const songIndex = document.getElementById("songIndex");
+let currentFolderId = null;
+let currentFolderName = null;
 
-
-// =============================================
-// 🔥 1. LOAD PLAYLIST DARI SERVER
-// =============================================
-async function loadPlaylist() {
-    const res = await fetch("/mp3/scan");
-    const data = await res.json();
-
-    playlist = data.files;
-    renderPlaylist();
-    updateInfo();
+/* ----------------------------------------------------------
+   Helper GET JSON
+---------------------------------------------------------- */
+async function api(path){
+    let r = await fetch(path);
+    return await r.json();
 }
 
+/* ==========================================================
+   HOME BUTTON
+   - Admin/Root  → /admin/home
+   - User biasa  → /user/home
+========================================================== */
+function goHome(){
+    fetch("/auth/role")
+        .then(r => r.json())
+        .then(d => {
+            if (d.role === "admin" || d.role === "root") {
+                window.location.href = "/admin/home";
+            } else {
+                window.location.href = "/user/home";
+            }
+        })
+        .catch(() => window.location.href = "/user/home");
+}
 
-// =============================================
-// 🔥 2. RENDER PLAYLIST DI HTML
-// =============================================
-function renderPlaylist() {
-    playlistHTML.innerHTML = "";
+/* ==========================================================
+   SCAN MP3 KE LIBRARY
+========================================================== */
+async function scanMP3(){
+    document.getElementById("status").innerHTML = "🔍 Scan berjalan...";
 
-    playlist.forEach((path, index) => {
-        let name = path.split("/").pop();
+    let res = await fetch("/mp3/scan-db", { method: "POST" });
+    let data = await res.json();
 
-        let li = document.createElement("li");
-        li.textContent = name;
-        li.onclick = () => playSong(index);
+    document.getElementById("status").innerHTML = data.message;
 
-        playlistHTML.appendChild(li);
+    // setelah scan, tampilkan ulang folder
+    showFolders();
+}
+
+/* ==========================================================
+   TAMPILKAN LIST SEMUA FOLDER MP3
+========================================================== */
+async function showFolders(){
+    document.getElementById("status").innerHTML = "📁 Memuat folder...";
+
+    currentFolderId = null;
+    currentFolderName = null;
+
+    // sembunyikan tombol back
+    document.getElementById("backButton").style.display = "none";
+
+    let data = await api("/mp3/folders");
+
+    const lib = document.getElementById("library");
+    lib.innerHTML = "";
+
+    if (!data || data.length === 0) {
+        lib.innerHTML = "<div>Tidak ada folder MP3.</div>";
+        return;
+    }
+
+    // tampilkan card folder
+    data.forEach(f => {
+        let card = document.createElement("div");
+        card.className = "card";
+
+        card.onclick = ()=> loadMp3Files(f.id, f.folder_name);
+
+        card.innerHTML = `
+            <div class="thumb-folder">📁</div>
+            <div class="title">${f.folder_name}</div>
+            <div class="sub">${f.total_mp3} file</div>
+        `;
+
+        lib.appendChild(card);
     });
+
+    document.getElementById("status").innerHTML = "";
 }
 
+/* ==========================================================
+   TAMPILKAN LIST FILE MP3 DALAM FOLDER
+========================================================== */
+async function loadMp3Files(folder_id, folder_name){
+    currentFolderId = folder_id;
+    currentFolderName = folder_name;
 
-// =============================================
-// 🔥 3. MEMUTAR LAGU
-// =============================================
-function playSong(index) {
-    currentIndex = index;
+    document.getElementById("status").innerHTML = "🎵 Memuat file MP3...";
 
-    const file = playlist[currentIndex];
-    const name = file.split("/").pop();
+    // tampilkan tombol back
+    document.getElementById("backButton").style.display = "block";
 
-    audio.src = "/mp3/play?file=" + encodeURIComponent(file);
-    audio.play();
+    let data = await api(`/mp3/folder/${folder_id}/tracks`);
 
-    document.getElementById("btnPlay").style.display = "none";
-    document.getElementById("btnPause").style.display = "inline-block";
+    const lib = document.getElementById("library");
+    lib.innerHTML = "";
 
-    songTitle.textContent = name;
-    updateInfo();
+    if (!data || data.length === 0){
+        lib.innerHTML = "<div>Folder kosong.</div>";
+        return;
+    }
+
+    // tampilkan MP3 files
+    data.forEach(mp3 => {
+        let card = document.createElement("div");
+        card.className = "card";
+
+        // klik file → masuk player
+        card.onclick = ()=> openMp3Player(mp3.id);
+
+        card.innerHTML = `
+            <div class="thumb-mp3">🎵</div>
+            <div class="title">${mp3.filename}</div>
+            <div class="sub">${(mp3.size/1024/1024).toFixed(1)} MB</div>
+        `;
+
+        lib.appendChild(card);
+    });
+
+    document.getElementById("status").innerHTML =
+        `📁 Folder: ${folder_name}`;
 }
 
+/* ==========================================================
+   BUKA MP3 PLAYER (halaman terpisah)
+========================================================== */
+function openMp3Player(mp3_id){
+    window.location.href =
+        `/mp3/watch/${mp3_id}?folder=${currentFolderId}`;
+}
 
-// =============================================
-// 🔥 4. NEXT, PREV
-// =============================================
-function nextSong() {
-    if (shuffleMode) {
-        currentIndex = Math.floor(Math.random() * playlist.length);
+/* ==========================================================
+   TOMBOL KEMBALI KE LIST FOLDER ATAU FILE
+========================================================== */
+function goBack(){
+    if(currentFolderId){
+        showFolders();
     } else {
-        currentIndex++;
-        if (currentIndex >= playlist.length) currentIndex = 0;
+        showFolders();
     }
-    playSong(currentIndex);
 }
 
-function prevSong() {
-    currentIndex--;
-    if (currentIndex < 0) currentIndex = playlist.length - 1;
-    playSong(currentIndex);
-}
+/* ==========================================================
+   AUTO DETECT SAAT PAGE LOAD
+========================================================== */
+document.addEventListener("DOMContentLoaded", () => {
+    const params = new URLSearchParams(window.location.search);
+    const folderId = params.get("folder");
+    const folderName = params.get("name");
 
-
-// =============================================
-// 🔥 5. AUTO NEXT
-// =============================================
-audio.onended = () => {
-    if (repeatMode === "one") {
-        playSong(currentIndex);
-    } else if (repeatMode === "all") {
-        nextSong();
+    if (folderId) {
+        loadMp3Files(folderId, folderName || "Folder");
+    } else {
+        showFolders();
     }
-};
-
-
-// =============================================
-// 🔥 6. TOMBOL PLAY/PAUSE
-// =============================================
-document.getElementById("btnPlay").onclick = () => {
-    audio.play();
-    document.getElementById("btnPlay").style.display = "none";
-    document.getElementById("btnPause").style.display = "inline-block";
-};
-
-document.getElementById("btnPause").onclick = () => {
-    audio.pause();
-    document.getElementById("btnPause").style.display = "none";
-    document.getElementById("btnPlay").style.display = "inline-block";
-};
-
-
-// =============================================
-// 🔥 7. MODE REPEAT
-// =============================================
-document.getElementById("btnRepeatOne").onclick = () => {
-    repeatMode = "one";
-    alert("Repeat One aktif");
-};
-
-document.getElementById("btnRepeatAll").onclick = () => {
-    repeatMode = "all";
-    alert("Repeat All aktif");
-};
-
-
-// =============================================
-// 🔥 8. SHUFFLE
-// =============================================
-document.getElementById("btnShuffle").onclick = () => {
-    shuffleMode = !shuffleMode;
-    alert(shuffleMode ? "Shuffle ON" : "Shuffle OFF");
-};
-
-
-// =============================================
-// 🔥 9. NEXT / PREV BUTTONS
-// =============================================
-document.getElementById("btnNext").onclick = nextSong;
-document.getElementById("btnPrev").onclick = prevSong;
-
-
-// =============================================
-// 🔥 10. INFO PLAYLIST
-// =============================================
-function updateInfo() {
-    songIndex.textContent =
-        (currentIndex + 1) + " / " + playlist.length;
-}
-
-
-// =============================================
-// 🔥 11. LOAD AWAL
-// =============================================
-loadPlaylist();
+});
