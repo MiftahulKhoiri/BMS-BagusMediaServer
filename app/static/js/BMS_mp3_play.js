@@ -68,7 +68,7 @@ async function initPlayer(mp3Id, folderId){
         return;
     }
 
-    document.getElementById("trackTitle").innerHTML = trackInfo.filename;
+fadeTitle(trackInfo.filename);
 
     let audio = document.getElementById("audioPlayer");
     audio.src = `/mp3/play/${mp3Id}`;
@@ -144,14 +144,17 @@ function loadPlaylist(){
 
         if(mp3.id === currentTrackId){
             item.classList.add("active");
+            item.style.transition = "0.3s";
             item.innerHTML = `▶ ${mp3.filename}`;
         }
         else {
             item.innerHTML = mp3.filename;
         }
 
-        item.onclick = ()=> changeTrack(mp3.id);
-        box.appendChild(item);
+        item.onclick = () => {
+    item.style.transform = "scale(0.95)";
+    setTimeout(() => changeTrack(mp3.id), 120);
+};
     });
 }
 
@@ -277,3 +280,15 @@ document.addEventListener("DOMContentLoaded", () => {
         }
     });
 });
+
+function fadeTitle(text){
+    const title = document.getElementById("trackTitle");
+
+    // Mulai fade-out
+    title.classList.add("fade-out");
+
+    setTimeout(() => {
+        title.innerHTML = text;
+        title.classList.remove("fade-out");
+    }, 300); // waktu fade-out
+}
