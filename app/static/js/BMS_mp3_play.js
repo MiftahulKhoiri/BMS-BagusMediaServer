@@ -238,3 +238,36 @@ function updateRepeatButton(){
         btn.classList.add("active");
     }
 }
+
+/* ==========================================================
+   VOLUME CONTROL
+========================================================== */
+
+document.addEventListener("DOMContentLoaded", () => {
+    const audio = document.getElementById("audioPlayer");
+    const slider = document.getElementById("volumeSlider");
+    const icon = document.getElementById("volumeIcon");
+
+    if(!audio || !slider) return;
+
+    // Volume default
+    audio.volume = 1.0;
+
+    slider.addEventListener("input", () => {
+        let v = slider.value / 100;
+        audio.volume = v;
+
+        if(v === 0){
+            icon.innerHTML = "🔇";
+        }
+        else if(v < 0.4){
+            icon.innerHTML = "🔈";
+        }
+        else if(v < 0.7){
+            icon.innerHTML = "🔉";
+        }
+        else{
+            icon.innerHTML = "🔊";
+        }
+    });
+});
