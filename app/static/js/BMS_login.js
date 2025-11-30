@@ -152,8 +152,8 @@ document.addEventListener('DOMContentLoaded', function() {
     passwordInput.addEventListener('blur', function() {
         if (!this.value.trim()) {
             showError(this, 'passwordError', 'Password harus diisi');
-        } else if (this.value.length < 6) {
-            showError(this, 'passwordError', 'Password minimal 6 karakter');
+        } else if (this.value.length < 1) {
+            showError(this, 'passwordError', 'Password minimal 1 karakter');
         } else {
             resetError(this, 'passwordError');
         }
