@@ -1,9 +1,7 @@
 /* ==========================================================
-   BMS WELCOME PAGE — FIXED FOR JELLYFISH BACKGROUND
-   Fully Responsive + Clean UI
+   BMS WELCOME UI — CLEAN & PREMIUM STYLE
 ========================================================== */
 
-/* RESET */
 * {
     margin: 0;
     padding: 0;
@@ -11,93 +9,93 @@
 }
 
 body {
-    font-family: Arial, sans-serif;
-    color: white;
-    background: #020205;
-    height: 100vh;
-    overflow: hidden;  /* biar canvas fullscreen */
+    font-family: "Segoe UI", Arial, sans-serif;
+    min-height: 100vh;
+    color: #eafff5;
+    overflow-x: hidden;
+    text-align: center;
     position: relative;
 }
 
-/* ==========================================================
-   WELCOME CONTENT
-========================================================== */
-
+/* ==========================================
+   CONTAINER PUSAT
+========================================== */
 .welcome-container {
     position: relative;
-    z-index: 10;            /* pastikan di depan canvas */
-    text-align: center;
-    padding: 20px;
+    z-index: 10;
     margin-top: 18vh;
+    padding: 20px;
 }
 
+/* Judul utama */
 .welcome-container h1 {
-    font-size: clamp(32px, 6vw, 60px);
-    font-weight: bold;
-    color: #b8ffe8;
+    font-size: clamp(38px, 6vw, 70px);
+    font-weight: 900;
+    letter-spacing: 4px;
+    color: #8affd6;
+    text-shadow: 0 0 12px #35ffc7;
+    margin-bottom: 5px;
 }
 
 .welcome-container h2 {
-    font-size: clamp(18px, 4vw, 32px);
-    opacity: 0.9;
-    margin-top: 5px;
-}
-
-.subtitle {
-    margin-top: 10px;
-    font-size: clamp(14px, 3vw, 20px);
+    font-size: clamp(18px, 4vw, 30px);
+    font-weight: 600;
+    color: #d0fff0;
     opacity: 0.85;
+    margin-bottom: 10px;
 }
 
-/* ==========================================================
-   BUTTON GROUP
-========================================================== */
+/* Subjudul */
+.subtitle {
+    font-size: clamp(14px, 3vw, 20px);
+    opacity: 0.8;
+    margin-bottom: 28px;
+}
 
+/* ==========================================
+   BUTTON GROUP
+========================================== */
 .button-group {
-    margin-top: 30px;
     display: flex;
     flex-direction: column;
-    gap: 14px;
-    width: 80%;
+    gap: 12px;
+    width: 85%;
     max-width: 320px;
-    margin-left: auto;
-    margin-right: auto;
+    margin: 0 auto;
 }
 
 .btn {
-    display: block;
     padding: 14px;
-    font-size: clamp(14px, 2vw, 20px);
-    color: white;
+    border-radius: 10px;
+    background: rgba(0,180,255,0.9);
+    color: #fff;
+    font-size: clamp(14px, 2vw, 18px);
     text-decoration: none;
     font-weight: bold;
-    background: rgba(0,180,255,0.75);
-    border-radius: 10px;
-    transition: 0.2s;
-    backdrop-filter: blur(4px);
+    transition: 0.25s ease;
+    box-shadow: 0 0 12px rgba(0,200,255,0.4);
 }
 
 .btn:hover {
-    background: rgba(0,200,255,0.95);
+    background: #00c6ff;
     transform: scale(1.05);
+    box-shadow: 0 0 16px rgba(0,255,255,0.7);
 }
 
-/* ==========================================================
+/* ==========================================
    FOOTER
-========================================================== */
-
+========================================== */
 footer {
-    margin-top: 50px;
+    margin-top: 45px;
     opacity: 0.7;
     font-size: clamp(12px, 2vw, 16px);
+    color: #ccffee;
 }
 
-/* ==========================================================
-   DESKTOP MODE
-========================================================== */
-
+/* ==========================================
+   RESPONSIVE — MODE DESKTOP
+========================================== */
 @media (min-width: 768px) {
-
     .button-group {
         flex-direction: row;
         justify-content: center;
@@ -106,9 +104,5 @@ footer {
 
     .btn {
         width: 200px;
-    }
-
-    .welcome-container {
-        margin-top: 25vh;
     }
 }
