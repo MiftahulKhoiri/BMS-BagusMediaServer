@@ -115,15 +115,36 @@ def BMS_auth_register():
 # ======================================================
 @auth.route("/login", methods=["GET", "POST"])
 def BMS_auth_login():
+    # Jika GET → tampilkan halaman HTML
     if request.method == "GET":
         return render_template("BMS_login.html")
 
+    # --- FORM INPUT ---
     username = request.form.get("username", "").strip()
     password = request.form.get("password", "").strip()
 
-    if not username or not password:
-        return "❌ Tidak boleh kosong!", 400
+    # Cek apakah AJAX (fetch)
+    is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
 
+    # Validasi basic
+    errors = {}
+
+    if not username:
+        errors["username"] = "Username tidak boleh kosong!"
+
+    if not password:
+        errors["password"] = "Password tidak boleh kosong!"
+
+    if errors:
+        if is_ajax:
+            return {
+                "success": False,
+                "message": "Input tidak lengkap.",
+                "errors": errors
+            }, 400
+        return "❌ Input tidak lengkap!", 400
+
+    # --- CEK DATABASE ---
     conn = get_db()
     user = conn.execute(
         "SELECT * FROM users WHERE username=?",
@@ -131,30 +152,43 @@ def BMS_auth_login():
     ).fetchone()
     conn.close()
 
-    if not user:
+    if not user or not check_password_hash(user["password"], password):
+        if is_ajax:
+            return {
+                "success": False,
+                "message": "Username atau password salah!",
+                "errors": {"password": "Password salah"}
+            }, 401
         return "❌ Username atau password salah!", 401
 
-    # Cek hash password
-    if not check_password_hash(user["password"], password):
-        return "❌ Username atau password salah!", 401
-
-    # Simpan sesi login
+    # --- LOGIN SUKSES ---
     session["user_id"] = user["id"]
     session["username"] = user["username"]
     session["role"] = user["role"]
 
-    # Log aktivitas
+    # Log
     try:
         from app.routes.BMS_logger import BMS_write_log
         BMS_write_log("Login berhasil", user["username"])
     except:
         pass
 
+    # Tentukan redirect berdasarkan role
     if user["role"] in ("root", "admin"):
-        return redirect("/admin/home")
+        redirect_url = "/admin/home"
+    else:
+        redirect_url = "/user/home"
 
-    return redirect("/user/home")
+    # Jika AJAX → BALIKAN JSON
+    if is_ajax:
+        return {
+            "success": True,
+            "message": "Login berhasil!",
+            "redirect": redirect_url
+        }
 
+    # Jika form biasa → redirect langsung
+    return redirect(redirect_url)
 
 # ======================================================
 #   🚪 LOGOUT
