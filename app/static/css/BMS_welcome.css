@@ -90,7 +90,7 @@ body {
 /* Styling dasar untuk semua tombol */
 .btn {
     display: block;
-    padding: 25px; /* Ukuran tombol besar */
+    padding: 35px; /* Ukuran tombol besar */
     font-size: clamp(16px, 3.8vw, 22px); /* Teks responsif */
     border-radius: 14px; /* Sudut membulat */
     font-weight: 700; /* Teks tebal */
