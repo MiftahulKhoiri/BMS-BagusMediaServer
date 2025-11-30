@@ -14,41 +14,39 @@
     <div class="welcome-card">
         <div class="card-header">
             <h2>[ 🔐 LOGIN ]</h2>
-        </div>
-        
-        <!-- Debug Info - Hapus di production -->
-        <div id="debugInfo" style="display: none; background: #f8f9fa; padding: 10px; margin: 10px 0; border-radius: 5px; font-size: 12px; color: #666;">
-            <strong>Debug Info:</strong>
-            <div id="debugStatus">Status: Ready</div>
-            <div id="debugData">Data: -</div>
+            <p class="card-subtitle">Masuk ke sistem BMS</p>
         </div>
         
         <div id="alertContainer"></div>
         
-        <!-- Method POST dipertahankan, action sesuai endpoint server -->
         <form id="loginForm" action="/auth/login" method="POST">
-            <!-- CSRF Token - sesuaikan dengan framework yang digunakan -->
-            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <!-- CSRF Token -->
+            <input type="hidden" name="csrf_token" id="csrf_token">
             
             <div class="form-group">
                 <label for="username">Username:</label>
                 <input type="text" id="username" name="username" class="input-text" required 
-                       placeholder="Masukkan username">
+                       placeholder="Masukkan username Anda">
                 <div class="error-message" id="usernameError"></div>
             </div>
             
             <div class="form-group">
                 <label for="password">Password:</label>
                 <input type="password" id="password" name="password" class="input-text" required 
-                       placeholder="Masukkan password">
+                       placeholder="Masukkan password Anda">
                 <div class="error-message" id="passwordError"></div>
             </div>
             
-            <button type="submit" id="submitBtn">
-                <span id="btnText">Masuk</span>
-            </button>
-            
-            <a href="/auth/register" class="back-link">Belum punya akun? Daftar</a>
+            <div class="form-actions">
+                <button type="submit" id="submitBtn" class="submit-btn">
+                    <span id="btnText">Masuk</span>
+                </button>
+                
+                <div class="form-links">
+                    <a href="/auth/register" class="back-link">Belum punya akun? Daftar</a>
+                    <a href="/auth/forgot-password" class="back-link">Lupa password?</a>
+                </div>
+            </div>
         </form>
     </div>
 
