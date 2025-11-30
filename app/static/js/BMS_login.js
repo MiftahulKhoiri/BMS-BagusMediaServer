@@ -25,8 +25,8 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!passwordInput.value.trim()) {
             showError(passwordInput, 'passwordError', 'Password harus diisi');
             isValid = false;
-        } else if (passwordInput.value.length < 6) {
-            showError(passwordInput, 'passwordError', 'Password minimal 6 karakter');
+        } else if (passwordInput.value.length < 1) {
+            showError(passwordInput, 'passwordError', 'Password minimal 1 karakter');
             isValid = false;
         }
         
