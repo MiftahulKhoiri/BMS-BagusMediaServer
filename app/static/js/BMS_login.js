@@ -1,4 +1,3 @@
-// JavaScript untuk validasi dan interaksi form login
 document.addEventListener('DOMContentLoaded', function() {
     const loginForm = document.getElementById('loginForm');
     const usernameInput = document.getElementById('username');
@@ -6,17 +5,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const submitBtn = document.getElementById('submitBtn');
     const btnText = document.getElementById('btnText');
     const alertContainer = document.getElementById('alertContainer');
-    
-    // Validasi form
+
+    // VALIDASI SAAT SUBMIT
     loginForm.addEventListener('submit', function(e) {
         e.preventDefault();
-        
-        // Reset error state
+
         resetErrors();
-        
-        // Validasi input
+
         let isValid = true;
-        
+
         if (!usernameInput.value.trim()) {
             showError(usernameInput, 'usernameError', 'Username harus diisi');
             isValid = false;
@@ -24,7 +21,7 @@ document.addEventListener('DOMContentLoaded', function() {
             showError(usernameInput, 'usernameError', 'Username minimal 3 karakter');
             isValid = false;
         }
-        
+
         if (!passwordInput.value.trim()) {
             showError(passwordInput, 'passwordError', 'Password harus diisi');
             isValid = false;
@@ -32,54 +29,37 @@ document.addEventListener('DOMContentLoaded', function() {
             showError(passwordInput, 'passwordError', 'Password minimal 6 karakter');
             isValid = false;
         }
-        
+
         if (isValid) {
-            // Tampilkan loading state
             submitBtn.disabled = true;
             btnText.innerHTML = '<span class="loading"></span> Memproses...';
-            
-            // Kirim data ke server
             submitFormData();
         }
     });
-    
-    // Fungsi untuk mengirim data form
+
+    // KIRIM DATA KE SERVER VIA FETCH
     function submitFormData() {
-        // Buat objek FormData
         const formData = new FormData(loginForm);
-        
-        // Kirim data menggunakan fetch API
+
         fetch(loginForm.action, {
             method: 'POST',
             body: formData,
-            headers: {
-                'X-Requested-With': 'XMLHttpRequest'
-            }
+            headers: { 'X-Requested-With': 'XMLHttpRequest' }
         })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.json();
-        })
+        .then(response => response.json())
         .then(data => {
-            // Reset button state
             submitBtn.disabled = false;
             btnText.textContent = 'Masuk';
-            
+
             if (data.success) {
-                // Login berhasil
                 showAlert('Login berhasil! Mengalihkan...', 'success');
-                
-                // Redirect ke halaman dashboard setelah 2 detik
+
                 setTimeout(() => {
-                    window.location.href = data.redirect || '/dashboard';
-                }, 2000);
+                    window.location.href = data.redirect;
+                }, 1500);
             } else {
-                // Login gagal
-                showAlert(data.message || 'Login gagal. Periksa username dan password Anda.', 'error');
-                
-                // Tampilkan error spesifik jika ada
+                showAlert(data.message || 'Login gagal.', 'error');
+
                 if (data.errors) {
                     if (data.errors.username) {
                         showError(usernameInput, 'usernameError', data.errors.username);
@@ -91,53 +71,43 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         })
         .catch(error => {
-            // Reset button state
             submitBtn.disabled = false;
             btnText.textContent = 'Masuk';
-            
-            // Tampilkan pesan error
+
             showAlert('Terjadi kesalahan. Silakan coba lagi.', 'error');
             console.error('Error:', error);
         });
     }
-    
-    // Fungsi untuk menampilkan error
+
+    // ERROR HANDLER
     function showError(input, errorId, message) {
         input.classList.add('error');
         const errorElement = document.getElementById(errorId);
         errorElement.textContent = message;
         errorElement.style.display = 'block';
     }
-    
-    // Fungsi untuk mereset error
+
     function resetErrors() {
-        const errorInputs = document.querySelectorAll('.input-text.error');
-        errorInputs.forEach(input => {
-            input.classList.remove('error');
-        });
-        
-        const errorMessages = document.querySelectorAll('.error-message');
-        errorMessages.forEach(message => {
-            message.style.display = 'none';
-        });
+        document.querySelectorAll('.input-text.error').forEach(i => i.classList.remove('error'));
+        document.querySelectorAll('.error-message').forEach(m => m.style.display = 'none');
     }
-    
-    // Fungsi untuk menampilkan alert
+
+    function resetError(input, errorId) {
+        input.classList.remove('error');
+        document.getElementById(errorId).style.display = 'none';
+    }
+
     function showAlert(message, type) {
         const alert = document.createElement('div');
         alert.className = `alert alert-${type}`;
         alert.textContent = message;
         alertContainer.innerHTML = '';
         alertContainer.appendChild(alert);
-        alert.style.display = 'block';
-        
-        // Hapus alert setelah 5 detik
-        setTimeout(() => {
-            alert.style.display = 'none';
-        }, 5000);
+
+        setTimeout(() => alert.style.display = 'none', 4000);
     }
-    
-    // Validasi real-time untuk username
+
+    // REAL-TIME VALIDATION
     usernameInput.addEventListener('blur', function() {
         if (!this.value.trim()) {
             showError(this, 'usernameError', 'Username harus diisi');
@@ -147,35 +117,22 @@ document.addEventListener('DOMContentLoaded', function() {
             resetError(this, 'usernameError');
         }
     });
-    
-    // Validasi real-time untuk password
+
     passwordInput.addEventListener('blur', function() {
         if (!this.value.trim()) {
             showError(this, 'passwordError', 'Password harus diisi');
-        } else if (this.value.length < 1) {
-            showError(this, 'passwordError', 'Password minimal 1 karakter');
+        } else if (this.value.length < 6) {
+            showError(this, 'passwordError', 'Password minimal 6 karakter');
         } else {
             resetError(this, 'passwordError');
         }
     });
-    
-    // Fungsi untuk mereset error spesifik
-    function resetError(input, errorId) {
-        input.classList.remove('error');
-        const errorElement = document.getElementById(errorId);
-        errorElement.style.display = 'none';
-    }
-    
-    // Tambahkan event listener untuk menghilangkan error saat user mulai mengetik
+
     usernameInput.addEventListener('input', function() {
-        if (this.classList.contains('error')) {
-            resetError(this, 'usernameError');
-        }
+        if (this.classList.contains('error')) resetError(this, 'usernameError');
     });
-    
+
     passwordInput.addEventListener('input', function() {
-        if (this.classList.contains('error')) {
-            resetError(this, 'passwordError');
-        }
+        if (this.classList.contains('error')) resetError(this, 'passwordError');
     });
 });
