@@ -59,6 +59,7 @@ def BMS_auth_is_root():
 # ======================================================
 @auth.route("/register", methods=["GET", "POST"])
 def BMS_auth_register():
+    # GET → tampilkan halaman HTML
     if request.method == "GET":
         return render_template("BMS_register.html")
 
@@ -66,13 +67,18 @@ def BMS_auth_register():
     password = request.form.get("password", "").strip()
     role = request.form.get("role", "user").strip()
 
+    # Cek jika AJAX (fetch)
+    is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
+
+    # Validasi basic
     if not username or not password:
+        if is_ajax:
+            return {"success": False, "message": "Username & password tidak boleh kosong!"}, 400
         return "❌ Username & password tidak boleh kosong!", 400
 
-    # Hash password
     pw_hash = generate_password_hash(password)
-
     conn = get_db()
+
     try:
         conn.execute(
             "INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
@@ -80,6 +86,7 @@ def BMS_auth_register():
         )
         conn.commit()
 
+        # Simpan log
         try:
             from app.routes.BMS_logger import BMS_write_log
             BMS_write_log(f"Registrasi akun baru (role: {role})", username)
@@ -88,11 +95,18 @@ def BMS_auth_register():
 
     except sqlite3.IntegrityError:
         conn.close()
+        if is_ajax:
+            return {"success": False, "message": "Username sudah digunakan!"}, 409
         return "❌ Username sudah digunakan!", 409
 
     finally:
         conn.close()
 
+    # Kalau AJAX → balas JSON sukses
+    if is_ajax:
+        return {"success": True, "message": "Registrasi berhasil!"}
+
+    # Kalau form biasa → redirect
     return redirect("/auth/login")
 
 
