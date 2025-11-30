@@ -1,5 +1,5 @@
 /* ==========================================================
-   BMS WELCOME UI — CLEAN & PREMIUM STYLE
+   BMS WELCOME UI — FIX UNTUK JELLYFISH BACKGROUND
 ========================================================== */
 
 * {
@@ -10,31 +10,43 @@
 
 body {
     font-family: "Segoe UI", Arial, sans-serif;
-    min-height: 100vh;
     color: #eafff5;
-    overflow-x: hidden;
-    text-align: center;
-    position: relative;
+    overflow: hidden;
+    min-height: 100vh;
+    background: transparent !important;     /* 👈 WAJIB */
 }
 
 /* ==========================================
-   CONTAINER PUSAT
+   CANVAS BACKGROUND
+========================================== */
+#jellyCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -10;    /* 👈 PASTIKAN PALING BELAKANG */
+    pointer-events: none;
+}
+
+/* ==========================================
+   WELCOME CONTAINER
 ========================================== */
 .welcome-container {
     position: relative;
-    z-index: 10;
-    margin-top: 18vh;
+    z-index: 10;  /* 👈 PALING DEPAN */
+    text-align: center;
     padding: 20px;
+    margin-top: 15vh;
+    backdrop-filter: blur(2px);  /* 👈 Latar bening, jellyfish tetap terlihat */
 }
 
-/* Judul utama */
 .welcome-container h1 {
     font-size: clamp(38px, 6vw, 70px);
     font-weight: 900;
     letter-spacing: 4px;
     color: #8affd6;
-    text-shadow: 0 0 12px #35ffc7;
-    margin-bottom: 5px;
+    text-shadow: 0 0 10px #32ffd1;
 }
 
 .welcome-container h2 {
@@ -42,66 +54,54 @@ body {
     font-weight: 600;
     color: #d0fff0;
     opacity: 0.85;
-    margin-bottom: 10px;
 }
 
-/* Subjudul */
 .subtitle {
     font-size: clamp(14px, 3vw, 20px);
-    opacity: 0.8;
+    opacity: 0.75;
     margin-bottom: 28px;
 }
 
-/* ==========================================
-   BUTTON GROUP
-========================================== */
+/* BUTTONS */
 .button-group {
     display: flex;
     flex-direction: column;
     gap: 12px;
     width: 85%;
-    max-width: 320px;
+    max-width: 300px;
     margin: 0 auto;
 }
 
 .btn {
     padding: 14px;
-    border-radius: 10px;
-    background: rgba(0,180,255,0.9);
-    color: #fff;
-    font-size: clamp(14px, 2vw, 18px);
     text-decoration: none;
+    color: #fff;
+    border-radius: 10px;
+    background: rgba(0, 180, 255, 0.8);
     font-weight: bold;
-    transition: 0.25s ease;
-    box-shadow: 0 0 12px rgba(0,200,255,0.4);
+    transition: 0.2s ease;
+    box-shadow: 0 0 14px rgba(0,255,255,0.35);
 }
 
 .btn:hover {
-    background: #00c6ff;
+    background: rgba(0, 200, 255, 1);
     transform: scale(1.05);
-    box-shadow: 0 0 16px rgba(0,255,255,0.7);
 }
 
-/* ==========================================
-   FOOTER
-========================================== */
+/* FOOTER */
 footer {
-    margin-top: 45px;
+    margin-top: 40px;
     opacity: 0.7;
     font-size: clamp(12px, 2vw, 16px);
-    color: #ccffee;
 }
 
-/* ==========================================
-   RESPONSIVE — MODE DESKTOP
-========================================== */
+/* PC Layout */
 @media (min-width: 768px) {
     .button-group {
         flex-direction: row;
         justify-content: center;
-        max-width: 700px;
+        max-width: 600px;
     }
-
     .btn {
         width: 200px;
     }
