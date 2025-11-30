@@ -124,4 +124,117 @@ function createRippleEffect(event, button) {
     
     ripple.style.width = ripple.style.height = size + 'px';
     ripple.style.left = x + 'px';
-    ripple
+    ripple.style.top = y + 'px';
+    ripple.classList.add('ripple-effect');
+    
+    // Remove existing ripples
+    const existingRipples = button.querySelectorAll('.ripple-effect');
+    existingRipples.forEach(ripple => ripple.remove());
+    
+    button.appendChild(ripple);
+    
+    // Remove ripple after animation
+    setTimeout(() => {
+        ripple.remove();
+    }, 600);
+}
+
+/**
+ * Handle preloading of resources
+ */
+function preloadResources() {
+    // Preload hover images or fonts if needed
+    const preloadLinks = [
+        // Add any resources that need preloading
+    ];
+    
+    preloadLinks.forEach(href => {
+        const link = document.createElement('link');
+        link.rel = 'preload';
+        link.href = href;
+        link.as = 'image';
+        document.head.appendChild(link);
+    });
+}
+
+/**
+ * Manage loading states
+ */
+function handleLoadingStates() {
+    // Remove any initial loading class from body
+    document.body.classList.remove('loading');
+    
+    // Add loaded class for any post-load animations
+    setTimeout(() => {
+        document.body.classList.add('loaded');
+    }, 100);
+}
+
+/**
+ * Add CSS for ripple effect dynamically
+ */
+function injectRippleStyles() {
+    const style = document.createElement('style');
+    style.textContent = `
+        .ripple-effect {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.6);
+            transform: scale(0);
+            animation: ripple-animation 0.6s linear;
+            pointer-events: none;
+        }
+        
+        @keyframes ripple-animation {
+            to {
+                transform: scale(4);
+                opacity: 0;
+            }
+        }
+        
+        .btn {
+            position: relative;
+            overflow: hidden;
+        }
+        
+        /* Loading state styles */
+        body.loading .welcome-card {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        
+        body.loaded .welcome-card {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    `;
+    document.head.appendChild(style);
+}
+
+// Inject ripple styles when script loads
+injectRippleStyles();
+
+/**
+ * Utility function for page transitions
+ */
+function smoothPageTransition(url) {
+    const welcomeCard = document.querySelector('.welcome-card');
+    if (welcomeCard) {
+        welcomeCard.style.transform = 'scale(0.9)';
+        welcomeCard.style.opacity = '0';
+        welcomeCard.style.transition = 'all 0.3s ease';
+    }
+    
+    setTimeout(() => {
+        window.location.href = url;
+    }, 300);
+}
+
+// Export functions for potential use in other scripts
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        initWelcomeUI,
+        setupCardInteractions,
+        setupButtonEffects
+    };
+}
