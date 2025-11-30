@@ -1,6 +1,6 @@
 /**
  * BMS JELLYFISH BACKGROUND ANIMATION
- * Enhanced version - Warna lebih terang, jumlah dikurangi
+ * Enhanced version - Pergerakan lebih halus dan natural
  */
 
 class Jellyfish {
@@ -9,18 +9,29 @@ class Jellyfish {
         this.ctx = ctx;
         
         // UKURAN: Diperkecil dari versi sebelumnya
-        this.size = 25 + Math.random() * 35; // 25-60 pixels (sebelumnya 30-70)
+        this.size = 25 + Math.random() * 35; // 25-60 pixels
         
         // POSISI: Random di dalam canvas
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
         
-        // KECEPATAN: Gerakan lebih lambat dan natural
-        this.speedX = (Math.random() - 0.5) * 0.8;
-        this.speedY = (Math.random() - 0.5) * 0.6;
+        // KECEPATAN: Diperlambat secara signifikan untuk pergerakan lebih halus
+        this.speedX = (Math.random() - 0.5) * 0.3; // Dari 0.8 menjadi 0.3
+        this.speedY = (Math.random() - 0.5) * 0.2; // Dari 0.6 menjadi 0.2
+        
+        // VARIABEL UNTUK PERGERAKAN YANG LEBIH HALUS
+        this.waveOffset = Math.random() * Math.PI * 2; // Offset untuk gelombang
+        this.waveSpeed = 0.002 + Math.random() * 0.002; // Kecepatan gelombang sangat lambat
+        this.waveAmplitude = 0.5 + Math.random() * 1; // Amplitudo gelombang kecil
+        
+        // ACCELERATION: Untuk perubahan kecepatan yang gradual
+        this.accelerationX = 0;
+        this.accelerationY = 0;
+        this.maxAcceleration = 0.02; // Batas percepatan
+        this.friction = 0.98; // Gesekan untuk memperlambat secara gradual
         
         // OPACITY: Ditingkatkan untuk visibilitas lebih baik
-        this.opacity = 0.8 + Math.random() * 0.2; // 0.8-1.0 (sebelumnya 0.7-1.0)
+        this.opacity = 0.8 + Math.random() * 0.2;
         
         // WARNA: Lebih terang dan jelas
         this.colors = [
@@ -32,30 +43,85 @@ class Jellyfish {
         ];
         this.color = this.colors[Math.floor(Math.random() * this.colors.length)];
         
-        // PULSE ANIMATION: Efek berdenyut
-        this.pulseSpeed = 0.01 + Math.random() * 0.02;
+        // PULSE ANIMATION: Efek berdenyut yang lebih halus
+        this.pulseSpeed = 0.005 + Math.random() * 0.005; // Diperlambat
         this.pulseOffset = Math.random() * Math.PI * 2;
-        this.pulseSize = 0.2; // 20% variation in size
+        this.pulseSize = 0.15; // Variation size lebih kecil (15%)
+        
+        // TARGET MOVEMENT: Untuk pergerakan yang lebih terarah dan halus
+        this.targetX = this.x;
+        this.targetY = this.y;
+        this.changeTargetTimer = 0;
+        this.targetChangeInterval = 2000 + Math.random() * 3000; // Ganti target setiap 2-5 detik
     }
 
     update() {
-        // Update position dengan gerakan natural
+        // UPDATE TARGET POSITION secara berkala
+        this.changeTargetTimer += 16; // ~60fps
+        if (this.changeTargetTimer > this.targetChangeInterval) {
+            this.changeTargetTimer = 0;
+            this.setNewTarget();
+        }
+        
+        // GERAKAN MENUJU TARGET dengan easing yang halus
+        const dx = this.targetX - this.x;
+        const dy = this.targetY - this.y;
+        const distance = Math.sqrt(dx * dx + dy * dy);
+        
+        if (distance > 5) {
+            // Easing function untuk pergerakan halus
+            const easeFactor = 0.005 + (0.01 * (this.size / 60)); // Ubur-ubur besar bergerak lebih lambat
+            this.speedX += dx * easeFactor;
+            this.speedY += dy * easeFactor;
+        }
+        
+        // TERAPKAN GELOMBANG HALUS pada pergerakan
+        this.waveOffset += this.waveSpeed;
+        const waveInfluence = 0.3; // Pengaruh gelombang terhadap pergerakan
+        this.speedX += Math.sin(this.waveOffset) * waveInfluence * 0.02;
+        this.speedY += Math.cos(this.waveOffset * 0.7) * waveInfluence * 0.02;
+        
+        // LIMIT KECEPATAN MAKSIMUM (sangat lambat)
+        const maxSpeed = 0.8;
+        const currentSpeed = Math.sqrt(this.speedX * this.speedX + this.speedY * this.speedY);
+        if (currentSpeed > maxSpeed) {
+            this.speedX = (this.speedX / currentSpeed) * maxSpeed;
+            this.speedY = (this.speedY / currentSpeed) * maxSpeed;
+        }
+        
+        // APLIKASIKAN GESEKAN untuk pergerakan yang lebih natural
+        this.speedX *= this.friction;
+        this.speedY *= this.friction;
+        
+        // UPDATE POSISI dengan kecepatan yang sudah disesuaikan
         this.x += this.speedX;
         this.y += this.speedY;
         
-        // Boundary check - muncul di sisi lain jika keluar canvas
-        if (this.x < -this.size) this.x = this.canvas.width + this.size;
-        if (this.x > this.canvas.width + this.size) this.x = -this.size;
-        if (this.y < -this.size) this.y = this.canvas.height + this.size;
-        if (this.y > this.canvas.height + this.size) this.y = -this.size;
-        
-        // Subtle floating movement
-        this.speedX += (Math.random() - 0.5) * 0.05;
-        this.speedY += (Math.random() - 0.5) * 0.03;
-        
-        // Limit speed
-        this.speedX = Math.max(Math.min(this.speedX, 1), -1);
-        this.speedY = Math.max(Math.min(this.speedY, 1), -1);
+        // BOUNDARY CHECK dengan rebound yang halus
+        const margin = this.size * 2;
+        if (this.x < -margin) {
+            this.x = this.canvas.width + margin;
+            this.setNewTarget(); // Set target baru saat muncul di sisi lain
+        }
+        if (this.x > this.canvas.width + margin) {
+            this.x = -margin;
+            this.setNewTarget();
+        }
+        if (this.y < -margin) {
+            this.y = this.canvas.height + margin;
+            this.setNewTarget();
+        }
+        if (this.y > this.canvas.height + margin) {
+            this.y = -margin;
+            this.setNewTarget();
+        }
+    }
+    
+    setNewTarget() {
+        // Set target baru di area random dalam canvas
+        const padding = 100;
+        this.targetX = padding + Math.random() * (this.canvas.width - padding * 2);
+        this.targetY = padding + Math.random() * (this.canvas.height - padding * 2);
     }
 
     draw() {
@@ -80,24 +146,51 @@ class Jellyfish {
         ctx.globalAlpha = this.opacity;
         ctx.fillStyle = `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, 0.9)`;
         
-        // Draw main body
+        // Draw main body dengan bentuk yang lebih organik
         ctx.beginPath();
-        ctx.arc(this.x, this.y, currentSize, 0, Math.PI * 2);
+        
+        // Buat bentuk oval/organik bukan lingkaran sempurna
+        const horizontalStretch = 1 + Math.sin(this.waveOffset * 1.3) * 0.1;
+        const verticalStretch = 1 + Math.cos(this.waveOffset * 0.9) * 0.1;
+        
+        ctx.ellipse(
+            this.x, 
+            this.y, 
+            currentSize * horizontalStretch, 
+            currentSize * verticalStretch, 
+            0, 0, Math.PI * 2
+        );
         ctx.fill();
         
-        // TENTACLES - Simple representation
+        // TENTACLES - Lebih halus dan mengalir
         ctx.strokeStyle = `rgba(${this.color.r}, ${this.color.g}, ${this.color.b}, 0.7)`;
-        ctx.lineWidth = 2;
+        ctx.lineWidth = 1.5;
+        ctx.lineCap = 'round';
         
-        for (let i = 0; i < 8; i++) {
-            const angle = (i / 8) * Math.PI * 2;
-            const tentacleLength = currentSize * (1.2 + Math.random() * 0.5);
-            const endX = this.x + Math.cos(angle) * tentacleLength;
-            const endY = this.y + Math.sin(angle) * tentacleLength;
+        const tentacleCount = 6;
+        for (let i = 0; i < tentacleCount; i++) {
+            const angle = (i / tentacleCount) * Math.PI * 2;
+            const baseLength = currentSize * 0.8;
+            const waveLength = currentSize * (0.8 + Math.random() * 0.4);
             
+            // Buat tentakel bergelombang
             ctx.beginPath();
             ctx.moveTo(this.x, this.y);
-            ctx.lineTo(endX, endY);
+            
+            const segments = 3;
+            for (let seg = 1; seg <= segments; seg++) {
+                const segmentProgress = seg / segments;
+                const segX = this.x + Math.cos(angle) * baseLength * segmentProgress;
+                const segY = this.y + Math.sin(angle) * baseLength * segmentProgress;
+                
+                // Gelombang pada tentakel
+                const wave = Math.sin(this.waveOffset * 2 + angle * 2 + seg) * 5 * segmentProgress;
+                const waveX = segX + Math.cos(angle + Math.PI/2) * wave;
+                const waveY = segY + Math.sin(angle + Math.PI/2) * wave;
+                
+                ctx.lineTo(waveX, waveY);
+            }
+            
             ctx.stroke();
         }
         
@@ -111,8 +204,12 @@ class JellyfishBackground {
         this.ctx = this.canvas.getContext('2d');
         this.jellyfishes = [];
         
-        // JUMLAH JELLYFISH: Dikurangi dari versi asli
-        this.jellyfishCount = 6; // Hanya 6 jellyfish (biasanya 8-12)
+        // JUMLAH JELLYFISH: Tetap dikurangi
+        this.jellyfishCount = 6;
+        
+        // TIME MANAGEMENT untuk frame rate yang konsisten
+        this.lastTime = 0;
+        this.deltaTime = 0;
         
         this.init();
     }
@@ -121,12 +218,11 @@ class JellyfishBackground {
         this.resize();
         window.addEventListener('resize', () => this.resize());
         
-        // Create jellyfishes
+        // Create jellyfishes dengan delay yang lebih besar
         for (let i = 0; i < this.jellyfishCount; i++) {
-            // Stagger creation for performance
             setTimeout(() => {
                 this.jellyfishes.push(new Jellyfish(this.canvas, this.ctx));
-            }, i * 300);
+            }, i * 500); // Delay lebih lama untuk inisialisasi bertahap
         }
         
         this.animate();
@@ -135,11 +231,20 @@ class JellyfishBackground {
     resize() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
+        
+        // Update target positions for existing jellyfishes
+        this.jellyfishes.forEach(jellyfish => {
+            jellyfish.setNewTarget();
+        });
     }
 
-    animate() {
-        // Clear canvas dengan background semi-transparent untuk trail effect
-        this.ctx.fillStyle = 'rgba(10, 10, 42, 0.1)'; // Dark blue dengan sedikit transparency
+    animate(currentTime = 0) {
+        // Calculate delta time for consistent animation speed
+        this.deltaTime = currentTime - this.lastTime;
+        this.lastTime = currentTime;
+        
+        // Clear canvas dengan background semi-transparent untuk trail effect yang halus
+        this.ctx.fillStyle = 'rgba(10, 10, 42, 0.08)'; // Lebih transparan untuk trail yang lebih panjang
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         
         // Update and draw all jellyfishes
@@ -148,7 +253,7 @@ class JellyfishBackground {
             jellyfish.draw();
         });
         
-        requestAnimationFrame(() => this.animate());
+        requestAnimationFrame((time) => this.animate(time));
     }
 }
 
@@ -160,7 +265,8 @@ document.addEventListener('DOMContentLoaded', () => {
 // Handle page visibility changes untuk optimasi performance
 document.addEventListener('visibilitychange', function() {
     if (document.hidden) {
-        // Reduce animation speed when tab is not visible
-        // Implementation can be added if needed
+        console.log('Jellyfish background paused');
+    } else {
+        console.log('Jellyfish background resumed');
     }
 });
