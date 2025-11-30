@@ -1,156 +1,118 @@
-/* ==========================================================
-   BMS WELCOME UI — FIX UNTUK JELLYFISH BACKGROUND
-========================================================== */
-
-/* Reset dasar untuk menghilangkan margin dan padding default */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box; /* Memastikan padding dan border termasuk dalam ukuran element */
-}
-
-/* Styling utama untuk body */
-body {
-    font-family: "Segoe UI", Arial, sans-serif; /* Font modern dan mudah dibaca */
-    color: #eafff5; /* Warna teks hijau muda */
-    overflow: hidden; /* Mencegah scrollbar muncul */
-    min-height: 100vh; /* Minimal tinggi viewport */
-    background: transparent !important; /* Background transparan agar canvas terlihat */
-}
-
 /* ==========================================
-   CANVAS BACKGROUND
+   WELCOME CONTAINER - PERBAIKI POSISI VERTICAL CENTER
 ========================================== */
-/* Container untuk animasi jellyfish background */
-#jellyCanvas {
-    position: fixed; /* Posisi tetap di belakang konten */
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -10;   /* Pastikan di belakang semua konten */
-    pointer-events: none; /* Tidak mengganggu interaksi user */
-}
-
-/* ==========================================
-   WELCOME CONTAINER
-========================================== */
-/* Container utama untuk konten welcome */
 .welcome-container {
     position: relative;
-    z-index: 10; /* Pastikan di atas canvas */
+    z-index: 10;
     text-align: center;
     padding: 20px;
-    margin-top: 15vh; /* Posisi dari atas viewport */
+    
+    /* GANTI margin-top dengan flexbox untuk center vertikal */
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Pusatkan vertikal */
+    align-items: center;     /* Pusatkan horizontal */
+    min-height: 100vh;       /* Gunakan full height viewport */
+    margin-top: 0;           /* Hapus margin top sebelumnya */
 
-    /* Efek blur lembut untuk meningkatkan readability teks */
     backdrop-filter: blur(2px);
 }
 
-/* Judul utama dengan efek neon */
-.welcome-container h1 {
-    font-size: clamp(38px, 6vw, 70px); /* Responsif antara 38px-70px */
-    font-weight: 900;
-    letter-spacing: 4px; /* Spasi huruf lebar untuk kesan elegan */
-    color: #8affd6; /* Warna hijau neon */
-    text-shadow: 
-        0 0 10px #32ffd1, /* Glow efek */
-        0 0 18px #00ffcc; /* Glow efek lebih luas */
-}
-
-/* Subjudul dengan weight lebih ringan */
-.welcome-container h2 {
-    font-size: clamp(18px, 4vw, 30px); /* Responsif antara 18px-30px */
-    font-weight: 600;
-    color: #d0fff0; /* Warna hijau lebih soft */
-    opacity: 0.9; /* Sedikit transparan */
-}
-
-/* Teks subtitle tambahan */
-.subtitle {
-    font-size: clamp(14px, 3vw, 20px); /* Responsif antara 14px-20px */
-    opacity: 0.75; /* Lebih transparan */
-    margin-bottom: 32px; /* Jarak dengan elemen berikutnya */
-}
-
 /* ========================================================
-   BUTTON GROUP — BIG NEON BUTTON
+   BUTTON GROUP - PERBESAR TOMBOL DAN ATUR LAYOUT
 ========================================================== */
 
-/* Container untuk grouping tombol */
 .button-group {
     display: flex;
-    flex-direction: column; /* Susun vertikal di mobile */
-    gap: 16px; /* Jarak antar tombol */
+    flex-direction: column;
+    gap: 20px;                 /* Tambah jarak antar tombol */
     width: 90%;
-    max-width: 380px; /* Lebar maksimum container */
-    margin: 0 auto; /* Posisi tengah */
+    max-width: 420px;          /* Perbesar maksimal width */
+    margin: 30px auto;         /* Tambah margin atas-bawah */
 }
 
-/* Styling dasar untuk semua tombol */
 .btn {
     display: block;
-    padding: 35px; /* Ukuran tombol besar */
-    font-size: clamp(16px, 3.8vw, 22px); /* Teks responsif */
-    border-radius: 14px; /* Sudut membulat */
-    font-weight: 700; /* Teks tebal */
+    padding: 22px;             /* Perbesar padding */
+    font-size: clamp(18px, 4vw, 24px); /* Perbesar font size */
+    border-radius: 16px;       /* Sedikit lebih rounded */
+    font-weight: 700;
+    width: 100%;               /* Pastikan tombol penuh width */
 
-    /* Warna background dengan transparansi */
     background: rgba(0, 180, 255, 0.85);
     color: white;
-    text-decoration: none; /* Hapus underline link */
+    text-decoration: none;
     text-align: center;
 
-    /* Efek blur di belakang tombol */
     backdrop-filter: blur(6px);
 
-    /* Efek glow neon cyan */
+    /* Perbesar glow effect */
     box-shadow:
-        0 0 10px rgba(0,255,255,0.45),
-        0 0 22px rgba(0,200,255,0.40);
+        0 0 15px rgba(0,255,255,0.5),
+        0 0 25px rgba(0,200,255,0.45);
 
-    transition: 0.25s ease; /* Animasi halus untuk hover */
+    transition: 0.25s ease;
 }
 
-/* Efek saat tombol dihover */
 .btn:hover {
-    transform: scale(1.08); /* Sedikit membesar */
-    background: rgba(0, 200, 255, 1); /* Warna lebih solid */
+    transform: scale(1.08);
+    background: rgba(0, 200, 255, 1);
 
-    /* Glow effect lebih intens */
+    /* Perbesar glow saat hover */
     box-shadow:
-        0 0 14px rgba(0,255,255,0.55),
-        0 0 30px rgba(0,200,255,0.45);
+        0 0 20px rgba(0,255,255,0.6),
+        0 0 35px rgba(0,200,255,0.5);
 }
 
 /* ========================================================
-   FOOTER
+   TITLE & SUBTITLE - ATUR JARAK DENGAN TOMBOL
 ========================================================== */
 
-/* Styling untuk footer */
-footer {
-    margin-top: 50px; /* Jarak dari konten di atas */
-    opacity: 0.75; /* Sedikit transparan */
-    font-size: clamp(12px, 2vw, 16px); /* Teks responsif */
+.welcome-container h1 {
+    font-size: clamp(40px, 7vw, 75px); /* Sedikit perbesar */
+    font-weight: 900;
+    letter-spacing: 4px;
+    color: #8affd6;
+    text-shadow: 
+        0 0 10px #32ffd1,
+        0 0 18px #00ffcc;
+    margin-bottom: 15px; /* Tambah jarak bawah */
+}
+
+.welcome-container h2 {
+    font-size: clamp(20px, 4.5vw, 32px); /* Sedikit perbesar */
+    font-weight: 600;
+    color: #d0fff0;
+    opacity: 0.9;
+    margin-bottom: 10px; /* Tambah jarak bawah */
+}
+
+.subtitle {
+    font-size: clamp(15px, 3.5vw, 22px); /* Sedikit perbesar */
+    opacity: 0.75;
+    margin-bottom: 40px; /* Perbesar jarak dengan tombol */
 }
 
 /* ========================================================
-   PC MODE - Responsive design untuk desktop
+   PC MODE - PENYESUAIAN UNTUK DESKTOP
 ========================================================== */
 @media (min-width: 768px) {
 
-    /* Untuk desktop, tombol disusun horizontal */
     .button-group {
         flex-direction: row;
-        justify-content: center; /* Rata tengah */
-        gap: 20px; /* Jarak lebih lebar */
-        max-width: 700px; /* Container lebih lebar */
+        justify-content: center;
+        gap: 25px;
+        max-width: 750px; /* Perbesar max-width untuk desktop */
+        margin: 40px auto; /* Tambah margin */
     }
 
-    /* Tombol lebih lebar di desktop */
     .btn {
-        width: 240px;
-        padding: 20px;
-        font-size: 22px;
+        width: 280px;   /* Perbesar lebar tombol di desktop */
+        padding: 24px;   /* Perbesar padding */
+        font-size: 24px;
+    }
+    
+    .welcome-container {
+        padding: 40px; /* Tambah padding di desktop */
     }
 }
