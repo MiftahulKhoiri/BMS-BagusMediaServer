@@ -1,140 +1,62 @@
-/* ==========================================================
-   BMS WELCOME UI — FIX UNTUK JELLYFISH BACKGROUND
-========================================================== */
-
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-}
-
-body {
-    font-family: "Segoe UI", Arial, sans-serif;
-    color: #eafff5;
-    overflow: hidden;
-    min-height: 100vh;
-    background: transparent !important;     /* Pastikan canvas terlihat */
-}
-
-/* ==========================================
-   CANVAS BACKGROUND
-========================================== */
-#jellyCanvas {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    z-index: -10;   
-    pointer-events: none;
-}
-
-/* ==========================================
-   WELCOME CONTAINER
-========================================== */
-.welcome-container {
-    position: relative;
-    z-index: 10;
-    text-align: center;
-    padding: 20px;
-    margin-top: 15vh;
-
-    /* sedikit blur lembut supaya teks tidak tenggelam */
-    backdrop-filter: blur(2px);
-}
-
-.welcome-container h1 {
-    font-size: clamp(38px, 6vw, 70px);
-    font-weight: 900;
-    letter-spacing: 4px;
-    color: #8affd6;
-    text-shadow: 
-        0 0 10px #32ffd1,
-        0 0 18px #00ffcc;
-}
-
-.welcome-container h2 {
-    font-size: clamp(18px, 4vw, 30px);
-    font-weight: 600;
-    color: #d0fff0;
-    opacity: 0.9;
-}
-
-.subtitle {
-    font-size: clamp(14px, 3vw, 20px);
-    opacity: 0.75;
-    margin-bottom: 32px;
-}
-
 /* ========================================================
-   BUTTON GROUP — BIG NEON BUTTON
-========================================================== */
+   BUTTON GROUP — PREMIUM STABLE VERSION
+======================================================== */
 
 .button-group {
     display: flex;
     flex-direction: column;
-    gap: 16px;                 /* jarak tombol lebih besar */
+    gap: 14px;
     width: 90%;
-    max-width: 380px;          /* tombol lebih besar */
+    max-width: 330px;
     margin: 0 auto;
 }
 
+/* TOMBOL BESAR PREMIUM */
 .btn {
-    display: block;
-    padding: 18px;             /* ukuran tombol besar */
-    font-size: clamp(16px, 3.8vw, 22px); /* teks besar */
-    border-radius: 14px;
+    padding: 16px 14px;
+    font-size: clamp(16px, 4.5vw, 22px);
     font-weight: 700;
 
-    background: rgba(0, 180, 255, 0.85);
-    color: white;
+    border-radius: 14px;
     text-decoration: none;
     text-align: center;
 
-    backdrop-filter: blur(6px);
+    background: rgba(0, 180, 255, 0.85);
+    color: #fff;
 
-    /* Glow neon */
+    letter-spacing: 1px;
+
     box-shadow:
-        0 0 10px rgba(0,255,255,0.45),
-        0 0 22px rgba(0,200,255,0.40);
+        0 0 10px rgba(0,255,255,0.35),
+        0 0 18px rgba(0,200,255,0.25);
 
-    transition: 0.25s ease;
+    transition: 0.2s ease;
+    backdrop-filter: blur(4px);
 }
 
+/* Hover / sentuh */
 .btn:hover {
-    transform: scale(1.08);
+    transform: scale(1.06);
     background: rgba(0, 200, 255, 1);
-
     box-shadow:
-        0 0 14px rgba(0,255,255,0.55),
-        0 0 30px rgba(0,200,255,0.45);
+        0 0 16px rgba(0,255,255,0.55),
+        0 0 26px rgba(0,200,255,0.45);
 }
 
 /* ========================================================
-   FOOTER
-========================================================== */
-
-footer {
-    margin-top: 50px;
-    opacity: 0.75;
-    font-size: clamp(12px, 2vw, 16px);
-}
-
-/* ========================================================
-   PC MODE
-========================================================== */
+   PC MODE (Tombol lebih panjang)
+======================================================== */
 @media (min-width: 768px) {
-
     .button-group {
         flex-direction: row;
         justify-content: center;
         gap: 20px;
-        max-width: 700px;
+        max-width: 720px;
     }
 
     .btn {
-        width: 240px;   /* tombol lebih lebar di PC */
-        padding: 20px;
+        width: 220px;
+        padding: 18px;
         font-size: 22px;
     }
 }
