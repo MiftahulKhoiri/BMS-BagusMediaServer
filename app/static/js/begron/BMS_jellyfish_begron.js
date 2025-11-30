@@ -9,15 +9,15 @@ class Jellyfish {
         this.ctx = ctx;
         
         // ⭐⭐ UKURAN DIPERKECIL: dari 25-60 menjadi 12-30 pixels ⭐⭐
-        this.size = 8 + Math.random() * 15; // 12-30 pixels
+        this.size = 5 + Math.random() * 10; // 12-30 pixels
         
         // POSISI: Random di dalam canvas
         this.x = Math.random() * canvas.width;
         this.y = Math.random() * canvas.height;
         
         // KECEPATAN: Diperlambat secara signifikan untuk pergerakan lebih halus
-        this.speedX = (Math.random() - 0.5) * 0.3;
-        this.speedY = (Math.random() - 0.5) * 0.2;
+        this.speedX = (Math.random() - 0.6) * 0.4;
+        this.speedY = (Math.random() - 0.6) * 0.3;
         
         // VARIABEL UNTUK PERGERAKAN YANG LEBIH HALUS
         this.waveOffset = Math.random() * Math.PI * 2;
@@ -28,7 +28,7 @@ class Jellyfish {
         this.accelerationX = 0;
         this.accelerationY = 0;
         this.maxAcceleration = 0.02;
-        this.friction = 0.98;
+        this.friction = 0.99;
         
         // OPACITY: Ditingkatkan untuk visibilitas lebih baik
         this.opacity = 0.8 + Math.random() * 0.2;
@@ -200,7 +200,7 @@ class JellyfishBackground {
         this.jellyfishes = [];
         
         // ⭐⭐ JUMLAH JELLYFISH: Bisa ditambah karena ukuran lebih kecil ⭐⭐
-        this.jellyfishCount = 8; // Ditambah dari 6 menjadi 8
+        this.jellyfishCount = 16; // Ditambah dari 6 menjadi 8
         
         this.lastTime = 0;
         this.deltaTime = 0;
