@@ -1,38 +1,19 @@
-// MATRIX BACKGROUND
-const canvas = document.getElementById("matrixCanvas");
-const ctx = canvas.getContext("2d");
+/* ==========================================
+   BMS WELCOME PAGE — LIGHT JS
+   (Fade-in animasi & smooth UI)
+========================================== */
 
-function resizeCanvas() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-}
+document.addEventListener("DOMContentLoaded", () => {
 
-resizeCanvas();
-window.addEventListener("resize", resizeCanvas);
+    const box = document.querySelector(".welcome-container");
 
-const letters = "アカサタナハマヤラワ0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-const fontSize = 16;
-let columns = Math.floor(window.innerWidth / fontSize);
+    // Animasi fade-in halus
+    box.style.opacity = "0";
+    box.style.transform = "translateY(20px)";
+    setTimeout(() => {
+        box.style.transition = "0.9s ease";
+        box.style.opacity = "1";
+        box.style.transform = "translateY(0)";
+    }, 150);
 
-let drops = Array(columns).fill(1);
-
-function drawMatrix() {
-    ctx.fillStyle = "rgba(0, 0, 0, 0.06)";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    ctx.fillStyle = "#00ff55";
-    ctx.font = fontSize + "px monospace";
-
-    for (let i = 0; i < drops.length; i++) {
-        const text = letters.charAt(Math.floor(Math.random() * letters.length));
-        ctx.fillText(text, i * fontSize, drops[i] * fontSize);
-
-        if (drops[i] * fontSize > canvas.height && Math.random() > 0.95) {
-            drops[i] = 0;
-        }
-
-        drops[i]++;
-    }
-}
-
-setInterval(drawMatrix, 50);
+});
