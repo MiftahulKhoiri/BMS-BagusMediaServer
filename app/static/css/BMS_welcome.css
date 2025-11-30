@@ -1,5 +1,5 @@
 /* ==========================================
-   WELCOME CONTAINER - PERBAIKI POSISI VERTICAL CENTER
+   WELCOME CONTAINER - FIX POSISI TANPA TUTUPI BACKGROUND
 ========================================== */
 .welcome-container {
     position: relative;
@@ -7,37 +7,39 @@
     text-align: center;
     padding: 20px;
     
-    /* GANTI margin-top dengan flexbox untuk center vertikal */
-    display: flex;
-    flex-direction: column;
-    justify-content: center; /* Pusatkan vertikal */
-    align-items: center;     /* Pusatkan horizontal */
-    min-height: 100vh;       /* Gunakan full height viewport */
-    margin-top: 0;           /* Hapus margin top sebelumnya */
+    /* KEMBALIKAN ke margin-top untuk posisi vertikal */
+    margin-top: 10vh; /* Kurangi sedikit dari 15vh agar lebih center */
+    
+    /* HAPUS properti flex yang menutupi seluruh layar */
+    /* display: flex; */
+    /* flex-direction: column; */
+    /* justify-content: center; */
+    /* align-items: center; */
+    /* min-height: 100vh; */
 
     backdrop-filter: blur(2px);
 }
 
 /* ========================================================
-   BUTTON GROUP - PERBESAR TOMBOL DAN ATUR LAYOUT
+   BUTTON GROUP - PERTAHANKAN UKURAN BESAR
 ========================================================== */
 
 .button-group {
     display: flex;
     flex-direction: column;
-    gap: 20px;                 /* Tambah jarak antar tombol */
+    gap: 20px;
     width: 90%;
-    max-width: 420px;          /* Perbesar maksimal width */
-    margin: 30px auto;         /* Tambah margin atas-bawah */
+    max-width: 420px;
+    margin: 30px auto;
 }
 
 .btn {
     display: block;
-    padding: 22px;             /* Perbesar padding */
-    font-size: clamp(18px, 4vw, 24px); /* Perbesar font size */
-    border-radius: 16px;       /* Sedikit lebih rounded */
+    padding: 22px;
+    font-size: clamp(18px, 4vw, 24px);
+    border-radius: 16px;
     font-weight: 700;
-    width: 100%;               /* Pastikan tombol penuh width */
+    width: 100%;
 
     background: rgba(0, 180, 255, 0.85);
     color: white;
@@ -46,7 +48,6 @@
 
     backdrop-filter: blur(6px);
 
-    /* Perbesar glow effect */
     box-shadow:
         0 0 15px rgba(0,255,255,0.5),
         0 0 25px rgba(0,200,255,0.45);
@@ -58,61 +59,33 @@
     transform: scale(1.08);
     background: rgba(0, 200, 255, 1);
 
-    /* Perbesar glow saat hover */
     box-shadow:
         0 0 20px rgba(0,255,255,0.6),
         0 0 35px rgba(0,200,255,0.5);
 }
 
 /* ========================================================
-   TITLE & SUBTITLE - ATUR JARAK DENGAN TOMBOL
+   TITLE & SUBTITLE - ATUR JARAK
 ========================================================== */
 
 .welcome-container h1 {
-    font-size: clamp(40px, 7vw, 75px); /* Sedikit perbesar */
+    font-size: clamp(40px, 7vw, 75px);
     font-weight: 900;
     letter-spacing: 4px;
     color: #8affd6;
     text-shadow: 
         0 0 10px #32ffd1,
         0 0 18px #00ffcc;
-    margin-bottom: 15px; /* Tambah jarak bawah */
+    margin-bottom: 15px;
 }
 
 .welcome-container h2 {
-    font-size: clamp(20px, 4.5vw, 32px); /* Sedikit perbesar */
+    font-size: clamp(20px, 4.5vw, 32px);
     font-weight: 600;
     color: #d0fff0;
     opacity: 0.9;
-    margin-bottom: 10px; /* Tambah jarak bawah */
+    margin-bottom: 10px;
 }
 
 .subtitle {
-    font-size: clamp(15px, 3.5vw, 22px); /* Sedikit perbesar */
-    opacity: 0.75;
-    margin-bottom: 40px; /* Perbesar jarak dengan tombol */
-}
-
-/* ========================================================
-   PC MODE - PENYESUAIAN UNTUK DESKTOP
-========================================================== */
-@media (min-width: 768px) {
-
-    .button-group {
-        flex-direction: row;
-        justify-content: center;
-        gap: 25px;
-        max-width: 750px; /* Perbesar max-width untuk desktop */
-        margin: 40px auto; /* Tambah margin */
-    }
-
-    .btn {
-        width: 280px;   /* Perbesar lebar tombol di desktop */
-        padding: 24px;   /* Perbesar padding */
-        font-size: 24px;
-    }
-    
-    .welcome-container {
-        padding: 40px; /* Tambah padding di desktop */
-    }
-}
+    font-size: clamp(15
