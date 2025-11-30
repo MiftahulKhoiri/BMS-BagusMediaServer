@@ -1,7 +1,8 @@
 /* ==========================================================
-   BMS JELLYFISH BEGRON (NEON AQUA)
-   - Ubur-ubur bergerak lembut
-   - Glow warna cyan/pink/purple
+   BMS JELLYFISH BEGRON (NEON AQUA ENHANCED)
+   - Ubur-ubur bergerak lembut dengan warna lebih terang
+   - Jumlah jellyfish dikurangi, ukuran diperkecil
+   - Glow effect ditingkatkan untuk visibilitas lebih baik
    - Fullscreen, responsive
 ========================================================== */
 
@@ -9,7 +10,7 @@ body, html {
     margin: 0;
     padding: 0;
     overflow: hidden;
-    background: #020205;
+    background: #0a0a2a; /* Background lebih gelap untuk kontras lebih baik */
 }
 
 #jellyCanvas {
@@ -18,12 +19,15 @@ body, html {
     left: 0;
     width: 100vw;
     height: 100vh;
-    z-index: -2;       /* pastikan berada di belakang */
-    pointer-events: none; /* biar tidak ganggu tombol */
+    z-index: -2;
+    pointer-events: none;
+    
+    /* Filter tambahan untuk meningkatkan kontras dan kecerahan */
+    filter: contrast(1.3) brightness(1.1);
 }
 
-/* Glow lembut */
+/* Enhanced glow effect untuk jellyfish */
 .jelly-glow {
-    filter: blur(25px);
-    opacity: 0.85;
+    filter: blur(20px) brightness(1.4);
+    opacity: 0.9;
 }
