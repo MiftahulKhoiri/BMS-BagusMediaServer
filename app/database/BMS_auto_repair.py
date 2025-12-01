@@ -54,17 +54,20 @@ def ensure_root_user():
     user = cur.fetchone()
 
     if not user:
+        import hashlib
+        hashed_pw = hashlib.sha256("root123".encode()).hexdigest()
+
         cur.execute("""
             INSERT INTO users (username, password, role, nama)
-            VALUES ('root', 'root123', 'root', 'System Root')
-        """)
+            VALUES ('root', ?, 'root', 'System Root')
+        """, (hashed_pw,))
+
         print("[DB FIX] User ROOT dibuat: username=root password=root123")
     else:
         print("[DB FIX] User ROOT sudah ada.")
 
     conn.commit()
     conn.close()
-
 
 # ======================================================
 # 3. TABEL FOLDERS (BARU)
