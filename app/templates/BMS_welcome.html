@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>BMS - Welcome</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <!-- WELCOME UI STYLE -->
+    <link rel="stylesheet" href="/static/css/BMS_welcome.css">
+
+    <!-- JELLYFISH CANVAS STYLE -->
+    <link rel="stylesheet" href="/static/css/begron/BMS_jellyfish_begron.css">
+</head>
+<body>
+
+<!-- BACKGROUND -->
+<canvas id="jellyCanvas"></canvas>
+
+<!-- WELCOME CARD -->
+<div class="welcome-card">
+    <div class="card-header">
+        <h1 class="logo">[BMS]</h1>
+        <h2 class="title">BAGUS MEDIA SERVER</h2>
+        <p class="subtitle">Sistem Manajemen Media & Tools Modern</p>
+    </div>
+
+    <div class="card-body">
+        <div class="button-group">
+            <a href="/auth/login" class="btn btn-login">
+                <span class="btn-icon">🔑</span>
+                <span class="btn-text">Login</span>
+            </a>
+            <a href="/auth/register" class="btn btn-register">
+                <span class="btn-icon">🆕</span>
+                <span class="btn-text">Register</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="card-footer">
+        <p>© 2025 BMS • Bagus Choiri</p>
+    </div>
+</div>
+
+<!-- JELLYFISH ANIMATION -->
+<script src="/static/js/begron/BMS_jellyfish_begron.js"></script>
+
+<!-- FOR ANY UI SCRIPT -->
+<script src="/static/js/BMS_welcome.js"></script>
+
+</body>
+</html>

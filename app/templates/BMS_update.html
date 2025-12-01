@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMS – Update System</title>
+
+    <link rel="stylesheet" href="/static/css/BMS_update.css">
+</head>
+<body>
+
+<div class="update-container">
+
+    <h1 class="title">[ ⚙️ BMS UPDATE SYSTEM ]</h1>
+    <p class="subtitle">Periksa dan terapkan pembaruan terbaru</p>
+
+    <!-- CHECK UPDATE PANEL -->
+    <div class="panel">
+        <h2 class="panel-title">🔍 Cek Pembaruan</h2>
+
+        <button id="checkBtn" class="btn btn-check">Cek Update</button>
+
+        <div id="checkResult" class="check-result"></div>
+    </div>
+
+    <!-- COMMIT LIST -->
+    <div class="panel">
+        <h2 class="panel-title">📜 Commit Terbaru</h2>
+
+        <div id="commitList" class="commit-list">
+            <p class="loading">Memuat data commit...</p>
+        </div>
+    </div>
+
+    <!-- UPDATE CONTROL -->
+    <div class="panel">
+        <h2 class="panel-title">🚀 Update Sekarang</h2>
+
+        <button id="updateBtn" class="btn btn-update" disabled>
+            Download & Apply Update
+        </button>
+
+        <div id="updateStatus" class="status-box"></div>
+    </div>
+
+</div>
+
+<script src="/static/js/BMS_update.js"></script>
+</body>
+</html>

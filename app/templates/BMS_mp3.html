@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>BMS - MP3 Library</title>
+
+    <link rel="stylesheet" href="/static/css/BMS_mp3.css">
+</head>
+<body>
+
+<div class="topbar">
+
+    <!-- LOGO / HOME BUTTON -->
+    <h2 class="home-btn" onclick="goHome()">🎵 BMS MP3 Library</h2>
+
+    <div>
+        <button class="btn" onclick="scanMP3()">🔍 Scan</button>
+    </div>
+
+</div>
+
+<!-- Tombol Back -->
+<div id="backButton" style="display:none; margin-bottom:10px;">
+    <button class="btn" onclick="goBack()">⬅ Kembali</button>
+</div>
+
+<div id="status" class="status"></div>
+
+<!-- GRID UNTUK FOLDER & FILE -->
+<div id="library" class="grid"></div>
+
+<script src="/static/js/BMS_mp3.js"></script>
+
+</body>
+</html>

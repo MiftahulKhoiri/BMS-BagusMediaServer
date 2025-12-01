@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMS - Edit Profil</title>
+
+    <!-- Matrix Background -->
+    <link rel="stylesheet" href="/static/css/begron/BMSmatrik_begron.css">
+
+    <!-- Style halaman edit profil -->
+    <link rel="stylesheet" href="/static/css/BMS_edit_profile.css">
+</head>
+<body>
+
+<!-- MATRIX BG -->
+<canvas id="matrixCanvas"></canvas>
+
+<div class="edit-container">
+
+    <!-- =============== SIDEBAR =============== -->
+    <div class="sidebar">
+
+        <div class="sidebar-header">
+            <h2>BMS</h2>
+            <span>Edit Profile</span>
+        </div>
+
+        <!-- Tombol kembali sesuai role -->
+        {% if session['role'] in ['admin', 'root'] %}
+            <a class="menu-item" href="/admin/home">🏠 Home Admin</a>
+        {% else %}
+            <a class="menu-item" href="/user/home">🏠 Home User</a>
+        {% endif %}
+
+        <a class="menu-item" href="/profile">👤 Lihat Profil</a>
+        <a class="menu-item logout" href="/auth/logout">🚪 Logout</a>
+    </div>
+
+
+
+    <!-- =============== KONTEN EDIT =============== -->
+    <div class="content">
+
+        <div class="form-box">
+
+            <h1>[ ✏ EDIT PROFIL ]</h1>
+
+            <!-- Form Edit Profil -->
+            <form action="/profile/save" method="POST" enctype="multipart/form-data">
+
+                <!-- Foto Profil -->
+                <label class="label-title">Foto Profil</label>
+                <input type="file" name="foto_profile" class="input-file">
+
+                <!-- Foto Background -->
+                <label class="label-title">Foto Background</label>
+                <input type="file" name="foto_background" class="input-file">
+
+
+                <!-- Nama -->
+                <label class="label-title">Nama Lengkap</label>
+                <input type="text" name="nama" class="input-text" placeholder="Masukkan nama">
+
+                <!-- Umur -->
+                <label class="label-title">Umur</label>
+                <input type="number" name="umur" class="input-text" placeholder="Umur">
+
+                <!-- Gender -->
+                <label class="label-title">Jenis Kelamin</label>
+                <select name="gender" class="input-text">
+                    <option value="Laki-laki">Laki-laki</option>
+                    <option value="Perempuan">Perempuan</option>
+                </select>
+
+                <!-- Email -->
+                <label class="label-title">Email</label>
+                <input type="email" name="email" class="input-text" placeholder="contoh@gmail.com">
+
+                <!-- Bio -->
+                <label class="label-title">Bio</label>
+                <textarea name="bio" class="input-text" rows="4" placeholder="Deskripsi singkat..."></textarea>
+
+                <button type="submit" class="btn-save">💾 Simpan</button>
+
+            </form>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script src="/static/js/begron/BMSmatrik_begron.js"></script>
+
+</body>
+</html>

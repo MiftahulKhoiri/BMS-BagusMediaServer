@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>BMS System Information</title>
+
+    <!-- Neon CSS -->
+    <link rel="stylesheet" href="/static/css/BMSadmin.css">
+
+    <style>
+        .info-card {
+            padding: 15px;
+            border: 1px solid #00ff88;
+            margin-bottom: 15px;
+            border-radius: 10px;
+            background: rgba(0, 25, 0, 0.4);
+            box-shadow: 0 0 20px #00ff88;
+        }
+        .bar {
+            height: 12px;
+            background: #003300;
+            border: 1px solid #00ff88;
+            border-radius: 6px;
+            overflow: hidden;
+            margin-top: 5px;
+        }
+        .bar-fill {
+            height: 100%;
+            background: #00ff88;
+            width: 0%;
+            transition: width .5s;
+        }
+        .title {
+            color: #00ff88;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .value {
+            color: #bbffcc;
+            font-size: 14px;
+            margin-bottom: 3px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="section-box">
+
+    <h2>[ 🖥 SYSTEM INFORMATION ]</h2>
+
+    <!-- CPU -->
+    <div class="info-card">
+        <div class="title">CPU Usage</div>
+        <div class="value" id="cpuText">Loading...</div>
+        <div class="bar"><div class="bar-fill" id="cpuBar"></div></div>
+    </div>
+
+    <!-- RAM -->
+    <div class="info-card">
+        <div class="title">RAM Usage</div>
+        <div class="value" id="ramText">Loading...</div>
+        <div class="bar"><div class="bar-fill" id="ramBar"></div></div>
+    </div>
+
+    <!-- Disk -->
+    <div class="info-card">
+        <div class="title">Disk Usage</div>
+        <div class="value" id="diskText">Loading...</div>
+        <div class="bar"><div class="bar-fill" id="diskBar"></div></div>
+    </div>
+
+    <!-- System Info -->
+    <div class="info-card">
+        <div class="title">System Info</div>
+        <div class="value" id="osText">Loading...</div>
+        <div class="value" id="pythonText">Loading...</div>
+        <div class="value" id="uptimeText">Loading...</div>
+        <div class="value" id="bootText">Loading...</div>
+    </div>
+
+</div>
+
+<script>
+// ==========================================
+//  UPDATE SYSTEM INFO SETIAP 1 DETIK
+// ==========================================
+function updateSystem() {
+    fetch("/system/info")
+        .then(r => r.json())
+        .then(data => {
+
+            // CPU
+            document.getElementById("cpuText").textContent = data.cpu_usage + "%";
+            document.getElementById("cpuBar").style.width = data.cpu_usage + "%";
+
+            // RAM
+            let ramPercent = (data.ram_used / data.ram_total) * 100;
+            document.getElementById("ramText").textContent =
+                `${data.ram_used}GB / ${data.ram_total}GB (${ramPercent.toFixed(2)}%)`;
+            document.getElementById("ramBar").style.width = ramPercent + "%";
+
+            // DISK
+            let diskPercent = (data.disk_used / data.disk_total) * 100;
+            document.getElementById("diskText").textContent =
+                `${data.disk_used}GB / ${data.disk_total}GB (${diskPercent.toFixed(2)}%)`;
+            document.getElementById("diskBar").style.width = diskPercent + "%";
+
+            // System info
+            document.getElementById("osText").textContent = "OS: " + data.os;
+            document.getElementById("pythonText").textContent = "Python: " + data.python;
+            document.getElementById("uptimeText").textContent = "Uptime: " + data.uptime_hours + " jam";
+            document.getElementById("bootText").textContent = "Boot Time: " + data.boot_time;
+        });
+}
+
+// Update realtime
+setInterval(updateSystem, 1000);
+updateSystem();
+</script>
+
+</body>
+</html>

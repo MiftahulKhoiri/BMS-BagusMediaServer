@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMS - Profil User</title>
+
+    <!-- Background Matrix -->
+    <link rel="stylesheet" href="/static/css/begron/BMSmatrik_begron.css">
+
+    <!-- Style profil -->
+    <link rel="stylesheet" href="/static/css/BMS_profile.css">
+</head>
+<body>
+
+<!-- MATRIX BG -->
+<canvas id="matrixCanvas"></canvas>
+
+<div class="profile-container">
+
+    <!-- ==================== SIDEBAR ==================== -->
+    <div class="sidebar">
+
+        <div class="sidebar-header">
+            <h2>BMS</h2>
+            <span>Profile Panel</span>
+        </div>
+
+        {% if session['role'] in ['admin','root'] %}
+            <a href="/admin/home" class="menu-item">🏠 Home Admin</a>
+        {% else %}
+            <a href="/user/home" class="menu-item">🏠 Home User</a>
+        {% endif %}
+
+        <a href="/profile/edit" class="menu-item">✏ Edit Profil</a>
+
+        <a href="/auth/logout" class="menu-item logout">🚪 Logout</a>
+    </div>
+
+
+    <!-- ==================== MAIN CONTENT ==================== -->
+    <div class="content">
+
+        <!-- COVER FOTO -->
+        <div class="cover-box">
+            {% if user['foto_background'] %}
+                <img src="/profile/image/{{ user['foto_background'] }}" class="cover-img">
+            {% else %}
+                <img src="/static/img/default_cover.jpg" class="cover-img">
+            {% endif %}
+        </div>
+
+        <!-- FOTO PROFIL DI TENGAH -->
+        <div class="profile-photo-box">
+            {% if user['foto_profile'] %}
+                <img src="/profile/image/{{ user['foto_profile'] }}" class="profile-photo">
+            {% else %}
+                <img src="/static/img/default_user.png" class="profile-photo">
+            {% endif %}
+        </div>
+
+        <!-- INFORMASI USER -->
+        <div class="info-box">
+
+            <h1>{{ user['nama'] if user['nama'] else user['username'] }}</h1>
+            <p class="role">{{ user['role'] }}</p>
+
+            <div class="bio-box">
+                <p>{{ user['bio'] if user['bio'] else "Belum ada bio." }}</p>
+            </div>
+
+            <div class="detail-list">
+                <p><strong>👤 Username:</strong> {{ user['username'] }}</p>
+                <p><strong>📧 Email:</strong> {{ user['email'] if user['email'] else '-' }}</p>
+                <p><strong>🎂 Umur:</strong> {{ user['umur'] if user['umur'] else '-' }}</p>
+                <p><strong>⚥ Gender:</strong> {{ user['gender'] if user['gender'] else '-' }}</p>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+<script src="/static/js/begron/BMSmatrik_begron.js"></script>
+
+</body>
+</html>

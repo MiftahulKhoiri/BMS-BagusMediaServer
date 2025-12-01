@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BMS Player</title>
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="/static/css/BMS_video_play.css">
+</head>
+<body>
+
+<div class="container">
+
+  <!-- header -->
+  <div class="header">
+    <button class="btn back" id="btnBack">⬅ Kembali</button>
+    <div id="videoTitle" class="video-title">Memuat...</div>
+  </div>
+
+  <!-- player -->
+  <div class="player-box">
+    <!-- data attributes here allow server to inject values; otherwise JS will read query params -->
+    <div id="player-meta"
+         data-video-id="{{ video_id|default('') }}"
+         data-folder-id="{{ folder_id|default('') }}"></div>
+
+    <video id="playerVideo" controls playsinline webkit-playsinline></video>
+  </div>
+
+  <!-- playlist (scrollable) -->
+  <div class="playlist-container">
+    <div class="playlist-title">📄 Daftar Video Dalam Folder</div>
+    <div id="playlist" class="playlist-box" role="list"></div>
+  </div>
+
+</div>
+
+<!-- JS -->
+<script src="/static/js/BMS_video_play.js"></script>
+
+<script>
+  // initialize: JS will detect server-injected data or fall back to URL params
+  initializePlayerFromPage();
+  // back button handler
+  document.getElementById('btnBack').addEventListener('click', () => {
+      // go back to folder list page, include folder id if known
+      const meta = document.getElementById('player-meta');
+      const fid = meta.dataset.folderId || new URLSearchParams(location.search).get('folder');
+      if (fid) {
+          location.href = `/video/?folder=${fid}`;
+      } else {
+          location.href = `/video/`;
+      }
+  });
+</script>
+
+</body>
+</html>

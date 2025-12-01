@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>BMS FileManager Premium</title>
+
+    <link rel="stylesheet" href="/static/css/BMS_filemanager.css">
+</head>
+<body>
+
+<div id="fm-container">
+
+    <!-- ================= SIDEBAR ================= -->
+    <div id="fm-sidebar">
+        <h3>📁 Direktori</h3>
+        <ul id="folder-tree"></ul>
+    </div>
+
+    <!-- ================= MAIN ================= -->
+    <div id="fm-main">
+
+        <!-- Toolbar -->
+        <div id="fm-toolbar">
+            <button onclick="goUp()">⬆ Naik</button>
+            <button onclick="makeFolder()">📂 Folder Baru</button>
+            <button onclick="openUpload()">⬆ Upload</button>
+            <button onclick="refreshList()">🔄 Refresh</button>
+        </div>
+
+        <!-- Current Path -->
+        <div id="fm-path"></div>
+
+        <!-- File list -->
+        <div id="fm-list"></div>
+    </div>
+
+</div>
+
+<!-- File Preview Popup -->
+<div id="fm-preview" class="hidden">
+    <div class="box">
+        <pre id="preview-content"></pre>
+        <button onclick="closePreview()">Tutup</button>
+    </div>
+</div>
+
+<!-- Upload Box -->
+<input id="upload-input" type="file" multiple class="hidden" onchange="uploadFiles()">
+
+<script src="/static/js/BMS_filemanager.js"></script>
+</body>
+</html>
