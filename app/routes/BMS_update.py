@@ -264,16 +264,16 @@ def apply_update():
     if not ok:
         return jsonify({"success": False, "step": "backup", "error": backup_file})
 
-# REPLACE
-ok, msg = replace_with_new_version(extracted_root)
-if not ok:
-    rollback_from_backup(backup_file)
-    return jsonify({
-        "success": False,
-        "step": "replace",
-        "error": msg,
-        "rollback": "Rollback otomatis dilakukan"
-    })
+    # Replace
+    ok, msg = replace_with_new_version(extracted_root)
+    if not ok:
+        rollback_from_backup(backup_file)
+        return jsonify({
+            "success": False,
+            "step": "replace",
+            "error": msg,
+            "rollback": "Rollback otomatis dilakukan"
+        })
 
     # Update version.json
     remote_commit = BMS_check_update()["remote_commit"]
@@ -285,7 +285,6 @@ if not ok:
         "backup_file": backup_file,
         "new_commit": remote_commit
     })
-
 
 # =========================================================
 #  TAMBAHAN: UI Route, Git Updater Lama, Log Commit Lama
