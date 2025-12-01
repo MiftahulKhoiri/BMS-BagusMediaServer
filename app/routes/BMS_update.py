@@ -10,6 +10,11 @@ from app.routes.BMS_logger import BMS_write_log
 from app.BMS_config import BASE
 import requests
 from app.BMS_config import BMS_load_version
+import zipfile
+import requests
+import shutil
+from datetime import datetime
+
 
 update = Blueprint("update", __name__, url_prefix="/update")
 
@@ -82,6 +87,40 @@ def check_update_api():
 
     info = BMS_check_update()
     return jsonify(info)
+
+
+GITHUB_ZIP_URL = "https://github.com/MiftahulKhoiri/BMS-BagusMediaServer/archive/refs/heads/main.zip"
+
+
+@update.route("/start-download")
+def start_download():
+    """Download ZIP update terbaru dan simpan ke folder UPDATE/"""
+
+    if not BMS_update_required_simple():
+        return jsonify({"error": "Akses ditolak"}), 403
+
+    try:
+        # Lokasi file ZIP yang akan disimpan
+        zip_path = os.path.join(UPDATE_PATH, "update_latest.zip")
+
+        # Download ZIP
+        r = requests.get(GITHUB_ZIP_URL, stream=True)
+        r.raise_for_status()
+
+        with open(zip_path, "wb") as f:
+            shutil.copyfileobj(r.raw, f)
+
+        return jsonify({
+            "success": True,
+            "zip_path": zip_path,
+            "message": "Download ZIP update berhasil"
+        })
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 500
 
 
 # ---------------------------------------------------------
