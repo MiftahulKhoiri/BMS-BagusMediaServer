@@ -2,20 +2,21 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>Upload File - BMS</title>
-    <link rel="stylesheet" href="/static/css/BMSadmin.css">
+    <title>BMS Upload Premium</title>
+    <link rel="stylesheet" href="/static/css/BMS_upload.css">
 </head>
 <body>
 
-<div class="section-box">
-    <h2>[ 📤 UPLOAD FILE ]</h2>
+<h2>⚡ BMS Premium Upload (Multi File)</h2>
 
-    <form action="/upload" method="POST" enctype="multipart/form-data">
-        <input type="file" name="file" class="input-text" required>
-        <br><br>
-        <button type="submit">Upload File</button>
-    </form>
+<div id="upload-box">
+    <input type="file" id="fileInput" multiple>
+    <button onclick="startMultiUpload()">Unggah Semua</button>
 </div>
+
+<div id="upload-list"></div>
+
+<script src="/static/js/BMS_upload.js"></script>
 
 </body>
 </html>
