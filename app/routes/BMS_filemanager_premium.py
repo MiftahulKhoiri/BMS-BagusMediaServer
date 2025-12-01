@@ -5,7 +5,7 @@ import hashlib
 import tarfile
 import time
 import base64
-from flask import Blueprint, request, jsonify, session, send_file, send_from_directory, Response
+from flask import Blueprint, request, jsonify, session, send_file, send_from_directory, Response, render_template
 from werkzeug.utils import secure_filename
 
 # ROOT dan Auth
@@ -17,7 +17,8 @@ from app.routes.BMS_auth import (
 )
 from app.routes.BMS_logger import BMS_write_log
 
-fm = Blueprint("fm_premium", __name__, url_prefix="/filemanager")
+# === FIX: blueprint pakai nama fm_premium ===
+fm_premium = Blueprint("fm_premium", __name__, url_prefix="/filemanager")
 
 ROOT = BASE
 TRASH = os.path.join(ROOT, ".trash")
@@ -26,6 +27,7 @@ SHARE = os.path.join(ROOT, ".share")
 os.makedirs(ROOT, exist_ok=True)
 os.makedirs(TRASH, exist_ok=True)
 os.makedirs(SHARE, exist_ok=True)
+
 
 # ===================================================================
 # Helper keamanan
@@ -50,7 +52,7 @@ def fm_auth():
 # PREMIUM — ADVANCED SEARCH
 # ===================================================================
 
-@fm.route("/search")
+@fm_premium.route("/search")
 def fm_search():
     check = fm_auth()
     if check: return check
@@ -73,7 +75,7 @@ def fm_search():
 # PREMIUM — FILE INFO DETAIL
 # ===================================================================
 
-@fm.route("/info")
+@fm_premium.route("/info")
 def fm_info():
     check = fm_auth()
     if check: return check
@@ -107,7 +109,7 @@ def fm_info():
 # PREMIUM — EDITOR (Read & Save)
 # ===================================================================
 
-@fm.route("/edit")
+@fm_premium.route("/edit")
 def fm_edit_read():
     check = fm_auth()
     if check: return check
@@ -119,7 +121,7 @@ def fm_edit_read():
     with open(path, "r", encoding="utf8", errors="ignore") as f:
         return jsonify({"content": f.read()})
 
-@fm.route("/edit", methods=["POST"])
+@fm_premium.route("/edit", methods=["POST"])
 def fm_edit_write():
     check = fm_auth()
     if check: return check
@@ -136,7 +138,7 @@ def fm_edit_write():
 # PREMIUM — TAR/GZIP/RAR/7Z (tanpa rar/7z extractor)
 # ===================================================================
 
-@fm.route("/compress", methods=["POST"])
+@fm_premium.route("/compress", methods=["POST"])
 def fm_compress():
     check = fm_auth()
     if check: return check
@@ -166,7 +168,7 @@ def fm_compress():
 
     return jsonify({"status": "ok", "file": out})
 
-@fm.route("/extract", methods=["POST"])
+@fm_premium.route("/extract", methods=["POST"])
 def fm_extract():
     check = fm_auth()
     if check: return check
@@ -187,7 +189,7 @@ def fm_extract():
 # PREMIUM — RECYCLE BIN (Soft Delete)
 # ===================================================================
 
-@fm.route("/delete", methods=["POST"])
+@fm_premium.route("/delete", methods=["POST"])
 def fm_delete_trash():
     check = fm_auth()
     if check: return check
@@ -201,7 +203,7 @@ def fm_delete_trash():
 
     return jsonify({"status": "trashed", "trash": new})
 
-@fm.route("/restore", methods=["POST"])
+@fm_premium.route("/restore", methods=["POST"])
 def fm_restore():
     check = fm_auth()
     if check: return check
@@ -212,7 +214,7 @@ def fm_restore():
     shutil.move(src, dest)
     return jsonify({"status": "restored"})
 
-@fm.route("/trash/empty", methods=["POST"])
+@fm_premium.route("/trash/empty", methods=["POST"])
 def fm_empty_trash():
     check = fm_auth()
     if check: return check
@@ -225,7 +227,7 @@ def fm_empty_trash():
 # PREMIUM — PERMISSIONS (chmod + chown)
 # ===================================================================
 
-@fm.route("/chmod", methods=["POST"])
+@fm_premium.route("/chmod", methods=["POST"])
 def fm_chmod():
     check = fm_auth()
     if check: return check
@@ -235,7 +237,7 @@ def fm_chmod():
     os.chmod(path, mode)
     return jsonify({"status": "ok"})
 
-@fm.route("/chown", methods=["POST"])
+@fm_premium.route("/chown", methods=["POST"])
 def fm_chown():
     check = fm_auth()
     if check: return check
@@ -251,7 +253,7 @@ def fm_chown():
 # PREMIUM — SHARE LINK (Token)
 # ===================================================================
 
-@fm.route("/share", methods=["POST"])
+@fm_premium.route("/share", methods=["POST"])
 def fm_share():
     check = fm_auth()
     if check: return check
@@ -266,7 +268,7 @@ def fm_share():
     return jsonify({"url": f"/filemanager/share/{token}"})
 
 
-@fm.route("/share/<token>")
+@fm_premium.route("/share/<token>")
 def fm_share_download(token):
     meta = os.path.join(SHARE, token + ".txt")
     if not os.path.exists(meta):
@@ -281,7 +283,7 @@ def fm_share_download(token):
 # PREMIUM — STREAMING VIDEO/AUDIO
 # ===================================================================
 
-@fm.route("/stream")
+@fm_premium.route("/stream")
 def fm_stream():
     check = fm_auth()
     if check: return check
@@ -299,7 +301,7 @@ def fm_stream():
 # PREMIUM — CHUNK UPLOAD (1GB Aman)
 # ===================================================================
 
-@fm.route("/upload_chunk/start", methods=["POST"])
+@fm_premium.route("/upload_chunk/start", methods=["POST"])
 def fm_chunk_start():
     check = fm_auth()
     if check: return check
@@ -309,7 +311,7 @@ def fm_chunk_start():
     open(temp, "wb").close()
     return jsonify({"temp": temp})
 
-@fm.route("/upload_chunk/append", methods=["POST"])
+@fm_premium.route("/upload_chunk/append", methods=["POST"])
 def fm_chunk_append():
     check = fm_auth()
     if check: return check
@@ -322,7 +324,7 @@ def fm_chunk_append():
 
     return jsonify({"status": "ok"})
 
-@fm.route("/upload_chunk/finish", methods=["POST"])
+@fm_premium.route("/upload_chunk/finish", methods=["POST"])
 def fm_chunk_finish():
     check = fm_auth()
     if check: return check
@@ -333,9 +335,11 @@ def fm_chunk_finish():
     os.rename(temp, final)
     return jsonify({"status": "finished", "file": final})
 
-from flask import render_template
+# ===================================================================
+# PREMIUM UI ROUTE
+# ===================================================================
 
-@fm.route("/ui")
+@fm_premium.route("/ui")
 def fm_ui():
     check = fm_auth()
     if check: return check
