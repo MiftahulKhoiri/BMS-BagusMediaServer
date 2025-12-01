@@ -393,15 +393,6 @@ def fm_stream():
 #  PREMIUM CHUNK UPLOAD (FINAL OPTIMAL VERSION)
 # ===================================================================
 
-import os
-import time
-import uuid
-import shutil
-import hashlib
-from threading import Lock
-from flask import request, jsonify, session
-from werkzeug.utils import secure_filename
-
 # Storage folder internal khusus upload
 UPLOAD_INTERNAL = ".uploads"
 BACKUP_INTERNAL = ".backups"
