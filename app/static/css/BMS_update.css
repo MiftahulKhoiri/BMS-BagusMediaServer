@@ -1,60 +1,110 @@
 body {
-    background: #0f0f0f;
-    font-family: Arial, sans-serif;
-    color: white;
     margin: 0;
+    padding: 0;
+    font-family: Consolas, monospace;
+    background: #0a0f16;
+    color: #d4fff9;
+}
+
+.update-container {
+    max-width: 900px;
+    margin: 30px auto;
     padding: 20px;
 }
 
-.box {
-    background: #1a1a1a;
+.title {
+    text-align: center;
+    font-size: 28px;
+    color: #00ffe7;
+    text-shadow: 0 0 8px #00ffe7;
+}
+
+.subtitle {
+    text-align: center;
+    margin-top: -5px;
+    margin-bottom: 30px;
+    opacity: 0.7;
+}
+
+/* PANEL */
+.panel {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid #1c2b33;
     padding: 20px;
+    margin-bottom: 25px;
     border-radius: 10px;
-    width: 95%;
-    margin: auto;
-    box-shadow: 0 0 15px #000;
+    backdrop-filter: blur(8px);
 }
 
-h2 { text-align: center; margin-bottom: 20px; }
+.panel-title {
+    color: #7efcff;
+    margin-top: 0;
+    margin-bottom: 15px;
+}
 
+/* BUTTON */
 .btn {
-    padding: 10px 20px;
-    background: #008cff;
+    padding: 12px 18px;
     border: none;
-    color: white;
-    border-radius: 6px;
     cursor: pointer;
-    margin: 5px;
-    font-weight: bold;
-}
-
-.btn.green { background: #00c853; }
-.btn.red { background: #ff3b3b; }
-
-.status {
-    margin-top: 15px;
-    font-weight: bold;
-}
-
-.log-box {
-    background: #111;
-    padding: 10px;
-    height: 220px;
-    overflow-y: auto;
-    font-family: monospace;
-    border: 1px solid #333;
     border-radius: 6px;
-    margin-top: 20px;
+    font-size: 14px;
+    font-weight: bold;
 }
 
-.commit-list {
+.btn-check {
+    background: #2e81ff;
+    color: white;
+}
+.btn-check:hover {
+    background: #1b5fd1;
+}
+
+.btn-update {
+    background: #00ff9d;
+    color: #00311f;
+}
+.btn-update:hover {
+    background: #00cc7e;
+}
+
+.btn:disabled {
+    background: #333;
+    color: #777;
+    cursor: not-allowed;
+}
+
+/* STATUS BOX */
+.status-box {
     margin-top: 15px;
+    padding: 15px;
+    border-radius: 6px;
+    background: rgba(0, 25, 20, 0.5);
+    font-size: 13px;
+    max-height: 250px;
+    overflow-y: auto;
+    white-space: pre-line;
+}
+
+/* COMMIT LIST */
+.commit-list {
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 5px;
 }
 
 .commit-item {
-    background: #222;
     padding: 10px;
-    border-radius: 6px;
-    margin-bottom: 8px;
-    border-left: 4px solid #008cff;
+    border-bottom: 1px solid #203036;
+}
+
+.commit-hash {
+    color: #00ffea;
+}
+.commit-msg {
+    color: #a0fff3;
+}
+.commit-time {
+    font-size: 12px;
+    opacity: 0.7;
 }
