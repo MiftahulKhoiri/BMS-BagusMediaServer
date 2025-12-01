@@ -8,6 +8,8 @@ from app.routes.BMS_auth import (
 )
 from app.routes.BMS_logger import BMS_write_log
 from app.BMS_config import BASE
+import requests
+from app.BMS_config import BMS_load_version
 
 update = Blueprint("update", __name__, url_prefix="/update")
 
@@ -29,6 +31,57 @@ def BMS_update_required_simple():
     if not (BMS_auth_is_admin() or BMS_auth_is_root()):
         return False
     return True
+
+# ---------------------------------------------------------
+#  CEK UPDATE via GitHub API (Mode Universal)
+# ---------------------------------------------------------
+
+GITHUB_API_COMMITS = "https://api.github.com/repos/MiftahulKhoiri/BMS-BagusMediaServer/commits?per_page=1"
+
+def BMS_check_update():
+    """Cek commit terbaru dari GitHub dan bandingkan dengan versi lokal."""
+    
+    local_info = BMS_load_version()
+    local_commit = local_info.get("commit", "local")
+    local_version = local_info.get("version", "1.0.0")
+
+    try:
+        response = requests.get(GITHUB_API_COMMITS, timeout=5)
+        response.raise_for_status()
+
+        data = response.json()[0]  # Commit terbaru
+        remote_commit = data["sha"]
+        remote_message = data["commit"]["message"]
+        remote_date = data["commit"]["author"]["date"]
+
+        update_available = remote_commit != local_commit
+
+        return {
+            "success": True,
+            "local_version": local_version,
+            "local_commit": local_commit,
+            "remote_commit": remote_commit,
+            "remote_message": remote_message,
+            "remote_date": remote_date,
+            "update_available": update_available
+        }
+
+    except Exception as e:
+        return {
+            "success": False,
+            "error": str(e),
+            "update_available": False
+        }
+
+@update.route("/check-api")
+def check_update_api():
+    """API untuk cek update via GitHub API."""
+    
+    if not BMS_update_required_simple():
+        return jsonify({"error": "Akses ditolak"}), 403
+
+    info = BMS_check_update()
+    return jsonify(info)
 
 
 # ---------------------------------------------------------
@@ -193,3 +246,4 @@ def latest_commits():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
