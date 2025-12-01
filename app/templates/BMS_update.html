@@ -3,119 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BMS Update System</title>
+    <title>BMS – Update System</title>
 
     <link rel="stylesheet" href="/static/css/BMS_update.css">
-
-    <style>
-        /* Bisa digabung ke CSS kalau mau */
-        .update-box {
-            max-width: 700px;
-            margin: 40px auto;
-            background: rgba(0,0,0,0.6);
-            border-radius: 15px;
-            padding: 20px;
-            color: #00ffe2;
-            box-shadow: 0 0 10px #00ffd5;
-        }
-        .title {
-            font-size: 28px;
-            text-align: center;
-            margin-bottom: 20px;
-        }
-        .info-line {
-            margin: 6px 0;
-            font-size: 16px;
-        }
-        .commit-box {
-            background: rgba(255,255,255,0.07);
-            padding: 10px;
-            border-radius: 10px;
-            margin-top: 10px;
-        }
-        .btn-update {
-            display: block;
-            margin: 20px auto 10px auto;
-            padding: 12px 25px;
-            background: #00ffa2;
-            color: black;
-            border-radius: 10px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 16px;
-        }
-        .btn-update:hover {
-            background: #00ffcc;
-        }
-        #status {
-            margin-top: 15px;
-            text-align: center;
-        }
-    </style>
 </head>
 <body>
 
-<div class="update-box">
-    <div class="title">🔄 BMS Update Panel</div>
+<div class="update-container">
 
-    <div id="updateInfo">
-        <p class="info-line">Memeriksa pembaruan...</p>
+    <h1 class="title">[ ⚙️ BMS UPDATE SYSTEM ]</h1>
+    <p class="subtitle">Periksa dan terapkan pembaruan terbaru</p>
+
+    <!-- CHECK UPDATE PANEL -->
+    <div class="panel">
+        <h2 class="panel-title">🔍 Cek Pembaruan</h2>
+
+        <button id="checkBtn" class="btn btn-check">Cek Update</button>
+
+        <div id="checkResult" class="check-result"></div>
     </div>
 
-    <div id="status"></div>
+    <!-- COMMIT LIST -->
+    <div class="panel">
+        <h2 class="panel-title">📜 Commit Terbaru</h2>
 
-    <button id="btnUpdate" class="btn-update" style="display:none;">
-        🚀 Update Sekarang
-    </button>
+        <div id="commitList" class="commit-list">
+            <p class="loading">Memuat data commit...</p>
+        </div>
+    </div>
+
+    <!-- UPDATE CONTROL -->
+    <div class="panel">
+        <h2 class="panel-title">🚀 Update Sekarang</h2>
+
+        <button id="updateBtn" class="btn btn-update" disabled>
+            Download & Apply Update
+        </button>
+
+        <div id="updateStatus" class="status-box"></div>
+    </div>
+
 </div>
 
-
-<script>
-document.addEventListener("DOMContentLoaded", function() {
-    fetch("/update/check-api")
-        .then(res => res.json())
-        .then(data => {
-            const box = document.getElementById("updateInfo");
-            const btn = document.getElementById("btnUpdate");
-
-            if (!data.success) {
-                box.innerHTML = `<p class="info-line" style="color:red;">Gagal cek update: ${data.error}</p>`;
-                return;
-            }
-
-            box.innerHTML = `
-                <p class="info-line">Versi Lokal: <b>${data.local_version}</b></p>
-                <p class="info-line">Commit Lokal: <b>${data.local_commit}</b></p>
-                <p class="info-line">Commit Terbaru: <b>${data.remote_commit}</b></p>
-                <p class="info-line">Tanggal Update: ${data.remote_date}</p>
-
-                <div class="commit-box">
-                    <b>Pesan Update:</b><br>
-                    ${data.remote_message}
-                </div>
-            `;
-
-            if (data.update_available) {
-                btn.style.display = "block";
-                document.getElementById("status").innerHTML =
-                    "<p style='color:#00ff9d;'>✨ Update tersedia!</p>";
-            } else {
-                btn.style.display = "none";
-                document.getElementById("status").innerHTML =
-                    "<p style='color:#ff0062;'>✔ Aplikasi sudah versi terbaru.</p>";
-            }
-        })
-        .catch(err => {
-            document.getElementById("updateInfo").innerHTML =
-                `<p style="color:red;">Error: ${err}</p>`;
-        });
-
-    // Tombol update (nanti dipakai Tahap 4)
-    document.getElementById("btnUpdate").addEventListener("click", function() {
-        alert("Tahap 4: proses update akan ditambahkan setelah UI.");
-    });
-});
-</script>
-
+<script src="/static/js/BMS_update.js"></script>
 </body>
 </html>
