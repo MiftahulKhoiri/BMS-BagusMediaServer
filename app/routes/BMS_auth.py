@@ -65,7 +65,9 @@ def BMS_auth_register():
 
     username = request.form.get("username", "").strip()
     password = request.form.get("password", "").strip()
-    role = request.form.get("role", "user").strip()
+    
+    # Paksa semua akun baru menjadi user
+    role = "user"
 
     # Cek jika AJAX (fetch)
     is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
