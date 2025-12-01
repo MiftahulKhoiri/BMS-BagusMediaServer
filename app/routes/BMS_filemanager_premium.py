@@ -332,3 +332,12 @@ def fm_chunk_finish():
 
     os.rename(temp, final)
     return jsonify({"status": "finished", "file": final})
+
+from flask import render_template
+
+@fm.route("/ui")
+def fm_ui():
+    check = fm_auth()
+    if check: return check
+
+    return render_template("BMS_filemanager.html")
