@@ -11,7 +11,6 @@ from app.BMS_config import BASE
 import requests
 from app.BMS_config import BMS_load_version
 import zipfile
-import requests
 import shutil
 from datetime import datetime
 
@@ -121,6 +120,115 @@ def start_download():
             "success": False,
             "error": str(e)
         }), 500
+
+def extract_update_zip():
+    """Extract ZIP update ke folder TEMP."""
+
+    zip_path = os.path.join(UPDATE_PATH, "update_latest.zip")
+    temp_extract = os.path.join(UPDATE_PATH, "TEMP_EXTRACT")
+
+    # Bersihkan folder TEMP_EXTRACT jika sudah ada
+    if os.path.exists(temp_extract):
+        shutil.rmtree(temp_extract)
+
+    os.makedirs(temp_extract, exist_ok=True)
+
+    try:
+        with zipfile.ZipFile(zip_path, 'r') as z:
+            z.extractall(temp_extract)
+
+        # Folder hasil extract biasanya: BMS-BagusMediaServer-main/
+        extracted_root = None
+        for name in os.listdir(temp_extract):
+            full = os.path.join(temp_extract, name)
+            if os.path.isdir(full):
+                extracted_root = full
+                break
+
+        return True, extracted_root
+
+    except Exception as e:
+        return False, str(e)
+
+def backup_current_version():
+    """Backup seluruh project kecuali folder UPDATE & BACKUP."""
+
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_file = os.path.join(BACKUP_PATH, f"BMS_backup_{timestamp}.zip")
+
+    try:
+        with zipfile.ZipFile(backup_file, 'w', zipfile.ZIP_DEFLATED) as backup_zip:
+            for root, dirs, files in os.walk(BASE):
+                
+                # Skip folder UPDATE & BACKUP agar tidak backup diri sendiri
+                if "UPDATE" in root or "BACKUP" in root:
+                    continue
+
+                for file in files:
+                    filepath = os.path.join(root, file)
+                    arcname = os.path.relpath(filepath, BASE)
+                    backup_zip.write(filepath, arcname)
+
+        return True, backup_file
+
+    except Exception as e:
+        return False, str(e)
+
+def replace_with_new_version(extracted_root):
+    """Ganti file lama dengan file baru."""
+
+    try:
+        for root, dirs, files in os.walk(extracted_root):
+
+            rel_path = os.path.relpath(root, extracted_root)
+            target_dir = os.path.join(BASE, rel_path)
+
+            # Buat folder jika belum ada
+            os.makedirs(target_dir, exist_ok=True)
+
+            for file in files:
+                src = os.path.join(root, file)
+                dst = os.path.join(target_dir, file)
+
+                # Overwrite file
+                shutil.copy2(src, dst)
+
+        return True, "Replace selesai"
+
+    except Exception as e:
+        return False, str(e)
+
+@update.route("/apply-update")
+def apply_update():
+    """Proses utama update: extract → backup → replace → selesai."""
+    
+    if not BMS_update_required_simple():
+        return jsonify({"error": "Akses ditolak"}), 403
+
+    # EXTRACT ZIP
+    ok, result = extract_update_zip()
+    if not ok:
+        return jsonify({"success": False, "step": "extract", "error": result})
+
+    extracted_root = result
+
+    # BACKUP
+    ok, backup_info = backup_current_version()
+    if not ok:
+        return jsonify({"success": False, "step": "backup", "error": backup_info})
+
+    backup_file = backup_info
+
+    # REPLACE
+    ok, msg = replace_with_new_version(extracted_root)
+    if not ok:
+        return jsonify({"success": False, "step": "replace", "error": msg})
+
+    return jsonify({
+        "success": True,
+        "message": "Update berhasil diterapkan!",
+        "backup_file": backup_file
+    })
 
 
 # ---------------------------------------------------------
