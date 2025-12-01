@@ -5,6 +5,7 @@ import hashlib
 import tarfile
 import time
 import base64
+from threading import Lock
 from flask import Blueprint, request, jsonify, session, send_file, send_from_directory, Response, render_template
 from werkzeug.utils import secure_filename
 
