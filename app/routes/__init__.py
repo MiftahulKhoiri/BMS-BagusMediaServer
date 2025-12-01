@@ -37,12 +37,8 @@ def register_blueprints(app):
     app.register_blueprint(media_video)
 
     # --- Tools / System ---
-    app.register_blueprint(upload)
     app.register_blueprint(update)
     app.register_blueprint(profile)
-
-    # FileManager
-    app.register_blueprint(filemanager)
 
     # FileManager Premium
     app.register_blueprint(fm_premium)
