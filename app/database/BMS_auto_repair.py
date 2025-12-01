@@ -55,7 +55,7 @@ def ensure_root_user():
 
     if not user:
         import hashlib
-        hashed_pw = hashlib.sha256("root123".encode()).hexdigest()
+        hashed_pw = hashlib.sha256("Root123".encode()).hexdigest()
 
         cur.execute("""
             INSERT INTO users (username, password, role, nama)
