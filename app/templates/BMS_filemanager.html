@@ -2,240 +2,51 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>BMS File Manager</title>
+    <title>BMS FileManager Premium</title>
 
-    <!-- Neon CSS -->
-    <link rel="stylesheet" href="/static/css/BMSadmin.css">
-
-    <style>
-        .fm-box {
-            background: rgba(0,20,0,0.45);
-            border: 1px solid #00ff88;
-            padding: 15px;
-            border-radius: 12px;
-            box-shadow: 0 0 25px #00ff88;
-            margin-bottom: 20px;
-        }
-        .fm-item {
-            padding: 8px;
-            margin: 3px 0;
-            border-bottom: 1px solid #00ff88;
-            cursor: pointer;
-        }
-        .fm-item:hover {
-            background: rgba(0,255,100,0.2);
-        }
-        .actions button {
-            margin-left: 10px;
-        }
-        .path-box {
-            padding: 10px;
-            background: rgba(0,40,0,0.4);
-            border: 1px solid #00ff88;
-            margin-bottom: 10px;
-            border-radius: 8px;
-        }
-        .input-bar {
-            width: 100%;
-            padding: 8px;
-            background: black;
-            color: #0f0;
-            border: 1px solid #00ff88;
-            border-radius: 8px;
-        }
-    </style>
+    <link rel="stylesheet" href="/static/css/BMS_filemanager.css">
 </head>
 <body>
 
-<div class="section-box">
-    <h2>[ 📁 FILE MANAGER ]</h2>
+<div id="fm-container">
 
-    <!-- CURRENT PATH -->
-    <div class="path-box">
-        <strong>Path:</strong> <span id="fm-path">Loading...</span>
+    <!-- ================= SIDEBAR ================= -->
+    <div id="fm-sidebar">
+        <h3>📁 Direktori</h3>
+        <ul id="folder-tree"></ul>
     </div>
 
-    <!-- BUTTONS -->
-    <div style="margin-bottom:10px;">
-        <button onclick="goUp()">⬆ Kembali Folder Atas</button>
-        <button onclick="openMakeFolder()">📂 Buat Folder Baru</button>
-    </div>
+    <!-- ================= MAIN ================= -->
+    <div id="fm-main">
 
-    <!-- LIST FILE & FOLDER -->
-    <div id="fm-list" class="fm-box">
-        Memuat...
+        <!-- Toolbar -->
+        <div id="fm-toolbar">
+            <button onclick="goUp()">⬆ Naik</button>
+            <button onclick="makeFolder()">📂 Folder Baru</button>
+            <button onclick="openUpload()">⬆ Upload</button>
+            <button onclick="refreshList()">🔄 Refresh</button>
+        </div>
+
+        <!-- Current Path -->
+        <div id="fm-path"></div>
+
+        <!-- File list -->
+        <div id="fm-list"></div>
     </div>
 
 </div>
 
-<!-- POPUP RENAME -->
-<div id="renameBox" class="section-box" style="display:none; max-width:400px; margin:auto;">
-    <h3>✏ Rename</h3>
-    <input id="renameOld" type="text" class="input-bar" readonly>
-    <br><br>
-    <input id="renameNew" type="text" class="input-bar" placeholder="Nama baru">
-    <br><br>
-    <button onclick="doRename()">Simpan</button>
-    <button onclick="closeRename()">Batal</button>
+<!-- File Preview Popup -->
+<div id="fm-preview" class="hidden">
+    <div class="box">
+        <pre id="preview-content"></pre>
+        <button onclick="closePreview()">Tutup</button>
+    </div>
 </div>
 
-<!-- POPUP MKDIR -->
-<div id="mkdirBox" class="section-box" style="display:none; max-width:400px; margin:auto;">
-    <h3>📂 Buat Folder Baru</h3>
-    <input id="mkdirName" type="text" class="input-bar" placeholder="Nama folder">
-    <br><br>
-    <button onclick="doMkdir()">Buat</button>
-    <button onclick="closeMkdir()">Batal</button>
-</div>
+<!-- Upload Box -->
+<input id="upload-input" type="file" multiple class="hidden" onchange="uploadFiles()">
 
-<script>
-// =========================================
-// LOAD FILE/FOLDER
-// =========================================
-let currentPath = "/storage/emulated/0/BMS/";
-
-function loadFM(path = currentPath) {
-    fetch(`/filemanager/list?path=${encodeURIComponent(path)}`)
-        .then(r => r.json())
-        .then(data => {
-            if (data.error) {
-                alert(data.error);
-                return;
-            }
-
-            currentPath = data.current;
-            document.getElementById("fm-path").innerText = currentPath;
-
-            let html = "";
-            data.items.forEach(item => {
-                html += `
-                <div class="fm-item">
-                    <span onclick="openItem('${item.path}', ${item.is_dir})">
-                        ${item.is_dir ? "📂" : "📄"} ${item.name}
-                    </span>
-
-                    <span class="actions">
-                        ${item.is_dir ? "" : `<button onclick="downloadFile('${item.path}')">⬇</button>`}
-                        <button onclick="openRename('${item.path}')">✏</button>
-                        <button onclick="deleteItem('${item.path}')">🗑</button>
-                    </span>
-                </div>
-                `;
-            });
-
-            document.getElementById("fm-list").innerHTML = html;
-        });
-}
-
-function openItem(path, isDir) {
-    if (isDir) {
-        loadFM(path);
-    } else {
-        alert("Ini file. Gunakan tombol download.");
-    }
-}
-
-function goUp() {
-    let parts = currentPath.split("/");
-    parts.pop();
-    parts.pop();
-    let newPath = parts.join("/") + "/";
-    loadFM(newPath);
-}
-
-// =========================================
-// DOWNLOAD
-// =========================================
-function downloadFile(path) {
-    window.location.href = `/filemanager/download?path=${encodeURIComponent(path)}`;
-}
-
-// =========================================
-// DELETE
-// =========================================
-function deleteItem(path) {
-    if (!confirm("Hapus file/folder ini?")) return;
-
-    let fd = new FormData();
-    fd.append("path", path);
-
-    fetch("/filemanager/delete", { method:"POST", body:fd })
-        .then(r => r.text())
-        .then(alert)
-        .then(() => loadFM());
-}
-
-// =========================================
-// RENAME
-// =========================================
-function openRename(path) {
-    document.getElementById("renameOld").value = path;
-    document.getElementById("renameNew").value = "";
-    document.getElementById("renameBox").style.display = "block";
-}
-
-function closeRename() {
-    document.getElementById("renameBox").style.display = "none";
-}
-
-function doRename() {
-    let old = document.getElementById("renameOld").value;
-    let newName = document.getElementById("renameNew").value;
-
-    if (newName.trim() === "") return alert("Nama baru kosong!");
-
-    let newPath = old.split("/");
-    newPath.pop();
-    newPath = newPath.join("/") + "/" + newName;
-
-    let fd = new FormData();
-    fd.append("old", old);
-    fd.append("new", newPath);
-
-    fetch("/filemanager/rename", { method:"POST", body:fd })
-        .then(r => r.text())
-        .then(alert)
-        .then(() => {
-            closeRename();
-            loadFM();
-        });
-}
-
-// =========================================
-// MKDIR
-// =========================================
-function openMakeFolder() {
-    document.getElementById("mkdirBox").style.display = "block";
-}
-
-function closeMkdir() {
-    document.getElementById("mkdirBox").style.display = "none";
-}
-
-function doMkdir() {
-    let folderName = document.getElementById("mkdirName").value;
-
-    if (folderName.trim() === "")
-        return alert("Nama folder kosong!");
-
-    let newPath = currentPath + folderName;
-
-    let fd = new FormData();
-    fd.append("path", newPath);
-
-    fetch("/filemanager/mkdir", { method:"POST", body:fd })
-        .then(r => r.text())
-        .then(alert)
-        .then(() => {
-            closeMkdir();
-            loadFM();
-        });
-}
-
-// Load pertama
-loadFM();
-
-</script>
-
+<script src="/static/js/BMS_filemanager.js"></script>
 </body>
 </html>
