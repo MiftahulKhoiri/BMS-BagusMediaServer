@@ -21,9 +21,10 @@ from app.routes.BMS_logger import BMS_write_log
 fm_premium = Blueprint("fm_premium", __name__, url_prefix="/filemanager")
 
 ROOT = BASE
-TRASH = os.path.join(ROOT, ".trash")
-SHARE = os.path.join(ROOT, ".share")
+TRASH = os.path.join(ROOT, ".trash")  # Folder untuk recycle bin
+SHARE = os.path.join(ROOT, ".share")  # Folder untuk menyimpan link sharing
 
+# Buat folder utama jika belum ada
 os.makedirs(ROOT, exist_ok=True)
 os.makedirs(TRASH, exist_ok=True)
 os.makedirs(SHARE, exist_ok=True)
@@ -34,6 +35,10 @@ os.makedirs(SHARE, exist_ok=True)
 # ===================================================================
 
 def safe(p):
+    """
+    Memastikan path tetap dalam ROOT directory untuk keamanan
+    Mengembalikan ROOT jika path mencoba keluar dari direktori aman
+    """
     if not p:
         return ROOT
     real = os.path.abspath(p)
@@ -42,6 +47,10 @@ def safe(p):
     return real
 
 def fm_auth():
+    """
+    Middleware untuk memeriksa otentikasi user
+    Mengembalikan error response jika user tidak terautentikasi atau bukan admin/root
+    """
     if not BMS_auth_is_login():
         return jsonify({"error": "Belum login"}), 403
     if not (BMS_auth_is_admin() or BMS_auth_is_root()):
@@ -54,17 +63,25 @@ def fm_auth():
 
 @fm_premium.route("/search")
 def fm_search():
+    """
+    Pencarian file/folder berdasarkan query
+    Mencari secara rekursif dari path yang ditentukan
+    Mengembalikan list hasil pencarian dalam format JSON
+    """
     check = fm_auth()
     if check: return check
 
-    query = request.args.get("q", "").lower()
-    start = safe(request.args.get("path") or ROOT)
+    query = request.args.get("q", "").lower()  # Query pencarian
+    start = safe(request.args.get("path") or ROOT)  # Direktori mulai pencarian
 
     results = []
+    # Walk melalui semua direktori dan file
     for root, dirs, files in os.walk(start):
+        # Cek file yang sesuai query
         for f in files:
             if query in f.lower():
                 results.append(os.path.join(root, f))
+        # Cek folder yang sesuai query
         for d in dirs:
             if query in d.lower():
                 results.append(os.path.join(root, d))
@@ -77,6 +94,11 @@ def fm_search():
 
 @fm_premium.route("/info")
 def fm_info():
+    """
+    Mendapatkan informasi detail tentang file/folder
+    Termasuk size, waktu created/modified, MD5 hash (untuk file)
+    Mengembalikan informasi dalam format JSON
+    """
     check = fm_auth()
     if check: return check
 
@@ -87,6 +109,7 @@ def fm_info():
     stat = os.stat(path)
     md5 = ""
 
+    # Hitung MD5 hash hanya untuk file (bukan folder)
     if os.path.isfile(path):
         h = hashlib.md5()
         with open(path, "rb") as f:
@@ -111,6 +134,10 @@ def fm_info():
 
 @fm_premium.route("/edit")
 def fm_edit_read():
+    """
+    Membaca konten file untuk diedit
+    Mengembalikan konten file dalam format JSON
+    """
     check = fm_auth()
     if check: return check
 
@@ -118,17 +145,23 @@ def fm_edit_read():
     if not os.path.exists(path):
         return jsonify({"error": "Tidak ada"}), 404
 
+    # Baca file dengan encoding UTF-8, ignore errors untuk file binary
     with open(path, "r", encoding="utf8", errors="ignore") as f:
         return jsonify({"content": f.read()})
 
 @fm_premium.route("/edit", methods=["POST"])
 def fm_edit_write():
+    """
+    Menyimpan konten yang diedit ke file
+    Menerima path dan content dari form data
+    """
     check = fm_auth()
     if check: return check
 
     path = safe(request.form.get("path"))
     content = request.form.get("content", "")
 
+    # Tulis konten ke file dengan encoding UTF-8
     with open(path, "w", encoding="utf8") as f:
         f.write(content)
 
@@ -140,6 +173,11 @@ def fm_edit_write():
 
 @fm_premium.route("/compress", methods=["POST"])
 def fm_compress():
+    """
+    Kompresi file/folder ke format zip, tar, atau gz
+    Menerima path file/folder dan mode kompresi
+    Mengembalikan path file hasil kompresi
+    """
     check = fm_auth()
     if check: return check
 
@@ -150,19 +188,23 @@ def fm_compress():
     out = safe(os.path.join(os.path.dirname(path), base + f".{mode}"))
 
     if mode == "zip":
+        # Kompresi ZIP dengan deflate compression
         with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as zf:
             if os.path.isfile(path):
                 zf.write(path, arcname=base)
             else:
+                # Kompresi folder secara rekursif
                 for r, d, f in os.walk(path):
                     for x in f:
                         full = os.path.join(r, x)
                         arc = os.path.relpath(full, os.path.dirname(path))
                         zf.write(full, arcname=arc)
     elif mode == "tar":
+        # Kompresi TAR tanpa compression
         with tarfile.open(out, "w") as tf:
             tf.add(path, arcname=base)
     elif mode == "gz":
+        # Kompresi TAR dengan GZIP compression
         with tarfile.open(out, "w:gz") as tf:
             tf.add(path, arcname=base)
 
@@ -170,6 +212,10 @@ def fm_compress():
 
 @fm_premium.route("/extract", methods=["POST"])
 def fm_extract():
+    """
+    Ekstrak file archive (zip, tar, gz)
+    Menerima path file archive dan destination folder
+    """
     check = fm_auth()
     if check: return check
 
@@ -177,9 +223,11 @@ def fm_extract():
     dest = safe(request.form.get("dest") or os.path.dirname(path))
 
     if path.endswith(".zip"):
+        # Ekstrak file ZIP
         with zipfile.ZipFile(path) as zf:
             zf.extractall(dest)
     elif path.endswith(".tar") or path.endswith(".gz"):
+        # Ekstrak file TAR atau TAR.GZ
         with tarfile.open(path) as tf:
             tf.extractall(dest)
 
@@ -191,6 +239,10 @@ def fm_extract():
 
 @fm_premium.route("/delete", methods=["POST"])
 def fm_delete_trash():
+    """
+    Soft delete - Memindahkan file/folder ke recycle bin
+    File di-rename dengan timestamp untuk menghindari konflik nama
+    """
     check = fm_auth()
     if check: return check
 
@@ -198,6 +250,7 @@ def fm_delete_trash():
     if not os.path.exists(path):
         return jsonify({"error": "Tidak ada"}), 404
 
+    # Tambahkan timestamp untuk menghindari konflik nama
     new = os.path.join(TRASH, f"{int(time.time())}_" + os.path.basename(path))
     shutil.move(path, new)
 
@@ -205,6 +258,10 @@ def fm_delete_trash():
 
 @fm_premium.route("/restore", methods=["POST"])
 def fm_restore():
+    """
+    Memulihkan file/folder dari recycle bin
+    Menerima path file di trash dan destination untuk restore
+    """
     check = fm_auth()
     if check: return check
 
@@ -216,9 +273,14 @@ def fm_restore():
 
 @fm_premium.route("/trash/empty", methods=["POST"])
 def fm_empty_trash():
+    """
+    Mengosongkan recycle bin secara permanen
+    Menghapus semua file di folder trash
+    """
     check = fm_auth()
     if check: return check
 
+    # Hapus seluruh folder trash dan buat kembali
     shutil.rmtree(TRASH)
     os.makedirs(TRASH, exist_ok=True)
     return jsonify({"status": "trash emptied"})
@@ -229,16 +291,24 @@ def fm_empty_trash():
 
 @fm_premium.route("/chmod", methods=["POST"])
 def fm_chmod():
+    """
+    Mengubah permission file/folder (chmod)
+    Menerima path dan mode permission dalam format octal
+    """
     check = fm_auth()
     if check: return check
 
     path = safe(request.form.get("path"))
-    mode = int(request.form.get("mode"), 8)
+    mode = int(request.form.get("mode"), 8)  # Convert string octal ke integer
     os.chmod(path, mode)
     return jsonify({"status": "ok"})
 
 @fm_premium.route("/chown", methods=["POST"])
 def fm_chown():
+    """
+    Mengubah ownership file/folder (chown)
+    Menerima path, user ID (uid), dan group ID (gid)
+    """
     check = fm_auth()
     if check: return check
 
@@ -255,12 +325,19 @@ def fm_chown():
 
 @fm_premium.route("/share", methods=["POST"])
 def fm_share():
+    """
+    Membuat shareable link untuk file/folder
+    Generate token unik dan simpan mapping token-path
+    Mengembalikan URL untuk mengakses file
+    """
     check = fm_auth()
     if check: return check
 
     path = safe(request.form.get("path"))
+    # Generate token acak yang aman
     token = base64.urlsafe_b64encode(os.urandom(24)).decode()
 
+    # Simpan mapping token ke path asli
     meta = os.path.join(SHARE, token + ".txt")
     with open(meta, "w") as f:
         f.write(path)
@@ -270,13 +347,19 @@ def fm_share():
 
 @fm_premium.route("/share/<token>")
 def fm_share_download(token):
+    """
+    Endpoint untuk mengakses file melalui share link
+    Menerima token dan mengembalikan file yang sesuai
+    """
     meta = os.path.join(SHARE, token + ".txt")
     if not os.path.exists(meta):
         return "Invalid link", 404
 
+    # Baca path asli dari file meta
     with open(meta) as f:
         path = safe(f.read().strip())
 
+    # Kirim file menggunakan send_file Flask
     return send_file(path)
 
 # ===================================================================
@@ -285,14 +368,23 @@ def fm_share_download(token):
 
 @fm_premium.route("/stream")
 def fm_stream():
+    """
+    Streaming file video/audio
+    Menggunakan generator untuk chunked response
+    Mendukung seek/range requests secara basic
+    """
     check = fm_auth()
     if check: return check
 
     path = safe(request.args.get("path"))
 
     def generate():
+        """
+        Generator untuk membaca file dalam chunks
+        Memungkinkan streaming file besar tanpa load memory berlebihan
+        """
         with open(path, "rb") as f:
-            while chunk := f.read(1024 * 512):
+            while chunk := f.read(1024 * 512):  # Baca 512KB per chunk
                 yield chunk
 
     return Response(generate(), mimetype="video/mp4")
@@ -303,22 +395,32 @@ def fm_stream():
 
 @fm_premium.route("/upload_chunk/start", methods=["POST"])
 def fm_chunk_start():
+    """
+    Inisialisasi upload chunked
+    Membuat file temporary untuk menampung chunks
+    Mengembalikan path file temporary
+    """
     check = fm_auth()
     if check: return check
 
     filename = secure_filename(request.form.get("name"))
     temp = safe(os.path.join(ROOT, filename + ".part"))
-    open(temp, "wb").close()
+    open(temp, "wb").close()  # Buat file kosong
     return jsonify({"temp": temp})
 
 @fm_premium.route("/upload_chunk/append", methods=["POST"])
 def fm_chunk_append():
+    """
+    Menambahkan chunk data ke file temporary
+    Menerima chunk file dan menambahkannya ke file temporary
+    """
     check = fm_auth()
     if check: return check
 
     temp = safe(request.form.get("temp"))
     chunk = request.files["chunk"]
 
+    # Append chunk ke file temporary
     with open(temp, "ab") as f:
         f.write(chunk.read())
 
@@ -326,12 +428,17 @@ def fm_chunk_append():
 
 @fm_premium.route("/upload_chunk/finish", methods=["POST"])
 def fm_chunk_finish():
+    """
+    Menyelesaikan upload chunked
+    Mengubah nama file temporary ke nama final
+    """
     check = fm_auth()
     if check: return check
 
     temp = safe(request.form.get("temp"))
     final = safe(request.form.get("final"))
 
+    # Rename file temporary ke nama final
     os.rename(temp, final)
     return jsonify({"status": "finished", "file": final})
 
@@ -341,6 +448,10 @@ def fm_chunk_finish():
 
 @fm_premium.route("/ui")
 def fm_ui():
+    """
+    Menampilkan interface file manager premium
+    Mengembalikan template HTML untuk file manager
+    """
     check = fm_auth()
     if check: return check
 
