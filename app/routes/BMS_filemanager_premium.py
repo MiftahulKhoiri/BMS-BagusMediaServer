@@ -679,3 +679,14 @@ def fm_ui():
     if check: return check
 
     return render_template("BMS_filemanager.html")
+
+
+# ROUTES ui upload 
+
+@fm_premium.route("/upload")
+def fm_upload_ui():
+    check = fm_auth()
+    if check: 
+        return check
+
+    return render_template("BMS_upload.html")
