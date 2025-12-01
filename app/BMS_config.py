@@ -1,6 +1,26 @@
 import os
 import sys
 import platform
+import json
+
+VERSION_FILE = os.path.join(os.path.dirname(__file__), "version.json")
+
+# Deteksi versi 
+
+def BMS_load_version():
+    """Load versi lokal dari version.json"""
+    try:
+        with open(VERSION_FILE, "r") as f:
+            return json.load(f)
+    except:
+        # Jika file tidak ada → buat default
+        return {"version": "1.0.0", "commit": "local"}
+
+def BMS_save_version(version, commit):
+    """Update version.json setelah update selesai"""
+    data = {"version": version, "commit": commit}
+    with open(VERSION_FILE, "w") as f:
+        json.dump(data, f, indent=4)
 
 # =====================================================
 # 🔥  DETEKSI TERMUX SUPER AKURAT (berdasarkan Python PATH)
