@@ -168,17 +168,70 @@ def backup_current_version():
     except Exception as e:
         return False, str(e)
 
-
+PROTECTED_FOLDERS = [
+    "database",
+    "uploads",
+    "uploads/mp3",
+    "uploads/video",
+    "instance"
+]
+PROTECTED_FILES = [
+    "config.json",
+    "version.json",
+    ".env"
+]
 # =========================================================
 #  REPLACE FILE PROJECT DENGAN FILE BARU
 # =========================================================
 def replace_with_new_version(extracted_root):
+    """Smart replace: aman, melewati folder & file penting."""
+
     try:
         for root, dirs, files in os.walk(extracted_root):
 
             rel_path = os.path.relpath(root, extracted_root)
-            target_dir = os.path.join(BASE, rel_path)
 
+            # PROTEKSI: Lewati folder penting
+            if any(rel_path.startswith(pf) for pf in PROTECTED_FOLDERS):
+                continue
+
+            target_dir = os.path.join(BASE, rel_path)
+            os.makedirs(target_dir, exist_ok=True)
+
+            for file in files:
+                # PROTEKSI: Lewati file penting
+                if file in PROTECTED_FILES:
+                    continue
+
+                src = os.path.join(root, file)
+                dst = os.path.join(target_dir, file)
+
+                shutil.copy2(src, dst)
+
+        return True, "Replace aman selesai"
+
+    except Exception as e:
+        return False, str(e)
+
+def rollback_from_backup(backup_zip):
+    """Restore project dari backup jika update gagal."""
+
+    try:
+        temp_restore = os.path.join(UPDATE_PATH, "TEMP_RESTORE")
+
+        if os.path.exists(temp_restore):
+            shutil.rmtree(temp_restore)
+
+        os.makedirs(temp_restore, exist_ok=True)
+
+        # Extract backup
+        with zipfile.ZipFile(backup_zip, 'r') as z:
+            z.extractall(temp_restore)
+
+        # Replace semua file lama
+        for root, dirs, files in os.walk(temp_restore):
+            rel_path = os.path.relpath(root, temp_restore)
+            target_dir = os.path.join(BASE, rel_path)
             os.makedirs(target_dir, exist_ok=True)
 
             for file in files:
@@ -186,7 +239,7 @@ def replace_with_new_version(extracted_root):
                 dst = os.path.join(target_dir, file)
                 shutil.copy2(src, dst)
 
-        return True, "Replace selesai"
+        return True, "Rollback berhasil"
 
     except Exception as e:
         return False, str(e)
@@ -211,10 +264,16 @@ def apply_update():
     if not ok:
         return jsonify({"success": False, "step": "backup", "error": backup_file})
 
-    # Replace
-    ok, msg = replace_with_new_version(extracted_root)
-    if not ok:
-        return jsonify({"success": False, "step": "replace", "error": msg})
+# REPLACE
+ok, msg = replace_with_new_version(extracted_root)
+if not ok:
+    rollback_from_backup(backup_file)
+    return jsonify({
+        "success": False,
+        "step": "replace",
+        "error": msg,
+        "rollback": "Rollback otomatis dilakukan"
+    })
 
     # Update version.json
     remote_commit = BMS_check_update()["remote_commit"]
