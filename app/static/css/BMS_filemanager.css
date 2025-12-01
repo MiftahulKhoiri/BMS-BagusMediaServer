@@ -1,23 +1,103 @@
-.fm-box {
-    background: rgba(0, 20, 0, 0.4);
-    border: 1px solid #00ff88;
+body {
+    margin: 0;
+    font-family: Arial;
+    background: #0c0f14;
+    color: #e4f4ff;
+}
+
+#fm-container {
+    display: flex;
+    height: 100vh;
+}
+
+/* Sidebar */
+#fm-sidebar {
+    width: 240px;
+    background: #141821;
+    border-right: 1px solid #222;
     padding: 15px;
-    border-radius: 12px;
-    box-shadow: 0 0 20px #00ff88;
+    overflow-y: auto;
+}
+
+#fm-sidebar ul li {
+    padding: 5px 0;
+    cursor: pointer;
+}
+
+#fm-sidebar ul li:hover {
+    color: #00ffd9;
+}
+
+/* Main Area */
+#fm-main {
+    flex: 1;
+    padding: 10px;
+    overflow-y: auto;
+}
+
+#fm-toolbar button {
+    margin-right: 10px;
+    padding: 6px 12px;
+    background: #1e242f;
+    color: white;
+    border: 1px solid #333;
+    cursor: pointer;
+}
+
+#fm-toolbar button:hover {
+    background: #283040;
+}
+
+#fm-path {
+    margin: 10px 0;
+    padding: 8px;
+    background: #1a1f29;
+    border-left: 4px solid #00ffd9;
+    font-size: 14px;
+}
+
+/* File list */
+#fm-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 10px;
 }
 
 .fm-item {
-    padding: 8px;
-    border-bottom: 1px solid #00ff88;
+    background: #1a1f29;
+    padding: 12px;
+    text-align: center;
+    border: 1px solid #222;
     cursor: pointer;
-    display: flex;
-    justify-content: space-between;
 }
 
 .fm-item:hover {
-    background: rgba(0, 255, 120, 0.18);
+    background: #242b38;
 }
 
-.actions button {
-    margin-left: 8px;
+.fm-item .icon {
+    font-size: 30px;
+}
+
+/* Preview Popup */
+#fm-preview {
+    position: fixed;
+    top: 0; left: 0;
+    background: rgba(0,0,0,0.85);
+    width: 100%;
+    height: 100%;
+}
+
+#fm-preview .box {
+    background: #10141b;
+    width: 80%;
+    height: 80%;
+    margin: 50px auto;
+    padding: 20px;
+    border: 1px solid #555;
+    overflow-y: auto;
+}
+
+.hidden {
+    display: none;
 }
