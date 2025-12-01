@@ -541,15 +541,15 @@ def fm_chunk_finish():
 
     session_data = upload_sessions[session_id]
     temp_path = session_data["temp_path"]
-    final_path = safe(os.path.join(ROOT, final_filename))
+    original_path = safe(os.path.join(ROOT, final_filename))
 
     try:
-        # Verifikasi size
+        # ====== VERIFIKASI FINAL UKURAN ======
         actual_size = os.path.getsize(temp_path)
         if actual_size != session_data["file_size"]:
             return jsonify({"error": "File size mismatch"}), 400
 
-        # Verifikasi MD5 kalau ada
+        # ====== VERIFIKASI MD5 ======
         if session_data["file_md5"]:
             file_hash = hashlib.md5()
             with open(temp_path, "rb") as f:
@@ -558,7 +558,39 @@ def fm_chunk_finish():
             if file_hash.hexdigest() != session_data["file_md5"]:
                 return jsonify({"error": "MD5 checksum mismatch"}), 400
 
-        # Handle overwrite → buat folder backup
+
+        # ===================================================================
+        #  AUTO SORT FULL AUTO — Menentukan folder berdasarkan ekstensi file
+        # ===================================================================
+        ext = os.path.splitext(final_filename)[1].lower()
+
+        CATEGORY_MAP = {
+            "music":  [".mp3", ".wav", ".flac", ".aac", ".ogg"],
+            "video":  [".mp4", ".mkv", ".mov", ".avi", ".flv"],
+            "photo":  [".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"],
+            "docs":   [".pdf", ".txt", ".docx", ".xlsx", ".csv"],
+            "archive":[".zip", ".rar", ".7z", ".tar", ".gz"],
+            "apps":   [".apk", ".exe", ".iso"],
+        }
+
+        # DEFAULT folder jika tidak cocok
+        target_folder = "others"
+
+        for folder, exts in CATEGORY_MAP.items():
+            if ext in exts:
+                target_folder = folder
+                break
+
+        # Path final setelah auto-sort
+        final_dir = safe(os.path.join(ROOT, target_folder))
+        os.makedirs(final_dir, exist_ok=True)
+
+        final_path = safe(os.path.join(final_dir, final_filename))
+
+        # ===================================================================
+
+
+        # ====== HANDLE FILE YANG SUDAH ADA (BACKUP OTOMATIS) ======
         os.makedirs(safe_internal(BACKUP_INTERNAL), exist_ok=True)
 
         if os.path.exists(final_path):
@@ -568,20 +600,22 @@ def fm_chunk_finish():
             )
             shutil.move(final_path, backup_path)
 
-        # Pindahkan file
+        # ====== PINDAHKAN FILE TEMPORARY → FINAL ======
         os.rename(temp_path, final_path)
 
-        # Statistik
+        # ====== HITUNG STATISTIK ======
         upload_time = time.time() - session_data["start_time"]
         speed = session_data["file_size"] / upload_time if upload_time > 0 else 0
 
-        # Hapus session
+        # Bersihkan session
         with upload_lock:
             del upload_sessions[session_id]
 
+        # JSON hasil berhasil
         return jsonify({
             "status": "finished",
-            "file": final_path,
+            "sorted_folder": target_folder,
+            "final_path": final_path,
             "file_size": actual_size,
             "upload_time": round(upload_time, 2),
             "speed_bytes": round(speed, 2),
@@ -589,13 +623,11 @@ def fm_chunk_finish():
         })
 
     finally:
-        # Cleanup temp jika masih ada
         if os.path.exists(temp_path):
             try:
                 os.remove(temp_path)
             except:
                 pass
-
 
 # ===================================================================
 # CANCEL UPLOAD
