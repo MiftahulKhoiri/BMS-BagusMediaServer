@@ -220,16 +220,20 @@ def apply_update():
     backup_file = backup_info
 
     # REPLACE
-    ok, msg = replace_with_new_version(extracted_root)
-    if not ok:
-        return jsonify({"success": False, "step": "replace", "error": msg})
+ok, msg = replace_with_new_version(extracted_root)
+if not ok:
+    return jsonify({"success": False, "step": "replace", "error": msg})
 
-    return jsonify({
-        "success": True,
-        "message": "Update berhasil diterapkan!",
-        "backup_file": backup_file
-    })
+# --- UPDATE VERSION.JSON ---
+remote_commit = BMS_check_update()["remote_commit"]
+BMS_save_version("1.0.0", remote_commit)
 
+return jsonify({
+    "success": True,
+    "message": "Update berhasil diterapkan!",
+    "backup_file": backup_file,
+    "new_commit": remote_commit
+})
 
 # ---------------------------------------------------------
 #  UI ROUTE
