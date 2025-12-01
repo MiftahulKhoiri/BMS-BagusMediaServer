@@ -1,151 +1,113 @@
-// ============================================
-//  BMS FILE MANAGER - CLIENT SIDE
-// ============================================
+let currentPath = "";
 
-let currentPath = "/storage/emulated/0/BMS/";
+window.onload = () => {
+    loadTree();
+    loadList("/");
+};
 
-document.addEventListener("DOMContentLoaded", () => {
-    loadFolder(currentPath);
-});
+function api(url) {
+    return fetch(url).then(r => r.json());
+}
 
+// =============================
+//  LOAD FOLDER TREE (Sidebar)
+// =============================
+function loadTree() {
+    api("/filemanager/list").then(res => {
+        let html = "";
+        res.items.forEach(i => {
+            if (i.is_dir) html += `<li onclick="loadList('${i.path}')">📁 ${i.name}</li>`;
+        });
+        document.getElementById("folder-tree").innerHTML = html;
+    });
+}
 
-// ==========================================
-// 🔄 Load Folder
-// ==========================================
-function loadFolder(path) {
-    fetch(`/filemanager/list?path=` + encodeURIComponent(path))
+// =============================
+//  LOAD FILE LIST
+// =============================
+function loadList(path) {
+    api("/filemanager/list?path=" + path).then(res => {
+        currentPath = res.current;
+        document.getElementById("fm-path").innerText = res.current;
+
+        let html = "";
+        res.items.forEach(f => {
+            html += `
+            <div class="fm-item" onclick="openItem('${f.path}', ${f.is_dir})">
+                <div class="icon">${f.is_dir ? "📁" : "📄"}</div>
+                <div>${f.name}</div>
+            </div>`;
+        });
+
+        document.getElementById("fm-list").innerHTML = html;
+    });
+}
+
+function refreshList() {
+    loadList(currentPath);
+}
+
+function goUp() {
+    let up = currentPath.split("/").slice(0, -1).join("/");
+    loadList(up === "" ? "/" : up);
+}
+
+// =============================
+// OPEN FILE OR FOLDER
+// =============================
+function openItem(path, isDir) {
+    if (isDir) return loadList(path);
+    preview(path);
+}
+
+// =============================
+// PREVIEW FILE
+// =============================
+function preview(path) {
+    fetch(`/filemanager/edit?path=${path}`)
         .then(r => r.json())
-        .then(data => {
-            if (data.error) {
-                alert(data.error);
-                return;
-            }
-
-            currentPath = data.current;
-            document.getElementById("fm-current-path").innerText = currentPath;
-
-            let box = document.getElementById("fm-list");
-            box.innerHTML = "";
-
-            data.items.forEach(item => {
-                let div = document.createElement("div");
-                div.className = "fm-item";
-
-                let icon = item.is_dir ? "📁" : "📄";
-
-                div.innerHTML = `
-                    <span onclick="itemClick('${item.path}', ${item.is_dir})">${icon} ${item.name}</span>
-                    <div class="actions">
-                        <button onclick="downloadItem('${item.path}')">⬇</button>
-                        <button onclick="renameItem('${item.path}')">✏</button>
-                        <button onclick="deleteItem('${item.path}')">🗑</button>
-                    </div>
-                `;
-
-                box.appendChild(div);
-            });
-        })
-        .catch(() => {
-            alert("Gagal memuat folder!");
+        .then(res => {
+            document.getElementById("preview-content").innerText = res.content;
+            document.getElementById("fm-preview").classList.remove("hidden");
         });
 }
 
-
-// ==========================================
-// 📂 Klik Item
-// ==========================================
-function itemClick(path, isDir) {
-    if (isDir) {
-        loadFolder(path);
-    } else {
-        alert("Gunakan tombol download untuk mengambil file!");
-    }
+function closePreview() {
+    document.getElementById("fm-preview").classList.add("hidden");
 }
 
-
-// ==========================================
-// 🔙 Back Folder
-// ==========================================
-function goBack() {
-    let parent = currentPath.split("/").slice(0, -1).join("/");
-    if (!parent) return;
-    loadFolder(parent);
+// =============================
+// UPLOAD FILE
+// =============================
+function openUpload() {
+    document.getElementById("upload-input").click();
 }
 
+function uploadFiles() {
+    let files = document.getElementById("upload-input").files;
 
-// ==========================================
-// 🗑 Delete
-// ==========================================
-function deleteItem(path) {
-    if (!confirm("Hapus item ini?")) return;
+    [...files].forEach(file => {
+        let form = new FormData();
+        form.append("file", file);
+        form.append("target", currentPath);
 
-    let form = new FormData();
-    form.append("path", path);
-
-    fetch("/filemanager/delete", { method: "POST", body: form })
-        .then(r => r.text())
-        .then(msg => {
-            alert(msg);
-            loadFolder(currentPath);
-        });
+        fetch("/filemanager/upload", {
+            method: "POST",
+            body: form
+        }).then(() => refreshList());
+    });
 }
 
-
-// ==========================================
-// ✏ Rename
-// ==========================================
-function renameItem(oldPath) {
-    let newName = prompt("Nama baru:");
-    if (!newName) return;
-
-    let folder = oldPath.split("/").slice(0, -1).join("/");
-    let newPath = folder + "/" + newName;
-
-    let form = new FormData();
-    form.append("old", oldPath);
-    form.append("new", newPath);
-
-    fetch("/filemanager/rename", { method: "POST", body: form })
-        .then(r => r.text())
-        .then(msg => {
-            alert(msg);
-            loadFolder(currentPath);
-        });
-}
-
-
-// ==========================================
-// 📁 Create Folder
-// ==========================================
-function createFolder() {
-    let name = prompt("Nama folder baru:");
+// =============================
+// MAKING FOLDER
+// =============================
+function makeFolder() {
+    let name = prompt("Nama Folder:");
     if (!name) return;
 
-    let full = currentPath + "/" + name;
-
     let form = new FormData();
-    form.append("path", full);
+    form.append("path", currentPath + "/" + name);
 
     fetch("/filemanager/mkdir", { method: "POST", body: form })
-        .then(r => r.text())
-        .then(msg => {
-            alert(msg);
-            loadFolder(currentPath);
-        });
-}
-
-
-// ==========================================
-// ⬇ Download File
-// ==========================================
-function downloadItem(path) {
-    window.location.href = "/filemanager/download?path=" + encodeURIComponent(path);
-}
-
-
-// ==========================================
-// 🔄 Refresh
-// ==========================================
-function refreshFolder() {
-    loadFolder(currentPath);
+        .then(() => refreshList());
 }
