@@ -1,71 +1,106 @@
-function checkUpdate() {
-    document.getElementById("update-status").innerHTML = "⏳ Mengecek pembaruan...";
+document.addEventListener("DOMContentLoaded", () => {
 
-    fetch("/update/check-update")
-        .then(res => res.json())
-        .then(data => {
-            if (data.error) {
-                document.getElementById("update-status").innerHTML = "❌ Error: " + data.error;
-                return;
-            }
+    const checkBtn = document.getElementById("checkBtn");
+    const updateBtn = document.getElementById("updateBtn");
+    const commitList = document.getElementById("commitList");
+    const checkResult = document.getElementById("checkResult");
+    const updateStatus = document.getElementById("updateStatus");
 
-            if (data.update_available) {
-                document.getElementById("update-status").innerHTML = "✅ Update tersedia!";
-            } else {
-                document.getElementById("update-status").innerHTML = "✔ Perangkat lunak sudah versi terbaru.";
-            }
+    loadCommitList(); // tampilkan commit terbaru saat UI dibuka
 
-            loadCommits();
-        });
-}
 
-function loadCommits() {
-    fetch("/update/latest-commits")
-        .then(res => res.json())
-        .then(data => {
-            const box = document.getElementById("commit-container");
-            box.innerHTML = "";
+    // ================================
+    //  LOAD COMMIT TERBARU
+    // ================================
+    function loadCommitList() {
+        fetch("/update/latest-commits")
+            .then(res => res.json())
+            .then(data => {
+                commitList.innerHTML = "";
 
-            if (!data.commits) {
-                box.innerHTML = `<p>Tidak bisa mengambil commit.</p>`;
-                return;
-            }
+                if (!data.commits) {
+                    commitList.innerHTML = "<p>Gagal memuat commit.</p>";
+                    return;
+                }
 
-            data.commits.forEach(c => {
-                box.innerHTML += `
-                    <div class="commit-item">
-                        <b>${c.hash}</b> — ${c.message}<br>
-                        <small>${c.author} • ${c.time}</small>
-                    </div>
-                `;
+                data.commits.forEach(c => {
+                    commitList.innerHTML += `
+                        <div class="commit-item">
+                            <div class="commit-hash">🔗 ${c.hash}</div>
+                            <div class="commit-msg">${c.message}</div>
+                            <div class="commit-time">${c.time}</div>
+                        </div>
+                    `;
+                });
             });
-        });
-}
+    }
 
-function startUpdate() {
-    document.getElementById("log").innerHTML = "";
-    const protocol = location.protocol === "https:" ? "wss://" : "ws://";
-    const ws = new WebSocket(protocol +location.host + "/ws/update");
 
-    ws.onopen = () => {
-        addLog("▶ Memulai proses update...");
-    };
+    // ================================
+    //  CEK UPDATE
+    // ================================
+    checkBtn.addEventListener("click", () => {
+        checkResult.innerHTML = "<p>⏳ Memeriksa pembaruan...</p>";
 
-    ws.onmessage = (evt) => {
-        addLog(evt.data);
+        fetch("/update/check-api")
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success) {
+                    checkResult.innerHTML = `<p style="color:red;">Gagal: ${data.error}</p>`;
+                    return;
+                }
 
-        if (evt.data.includes("[END]")) {
-            addLog("✔ Update selesai.");
-        }
-    };
+                if (data.update_available) {
+                    checkResult.innerHTML = `
+                        <p style="color:#00ff9d;">
+                            ✔ Update tersedia!<br>
+                            Commit baru: ${data.remote_commit}<br>
+                            Pesan: ${data.remote_message}
+                        </p>
+                    `;
+                    updateBtn.disabled = false;
+                } else {
+                    checkResult.innerHTML = `
+                        <p style="color:#fff;">
+                            ✔ Perangkat lunak sudah versi terbaru.
+                        </p>`;
+                    updateBtn.disabled = true;
+                }
+            });
+    });
 
-    ws.onerror = () => {
-        addLog("❌ WebSocket error.");
-    };
-}
 
-function addLog(text) {
-    const logBox = document.getElementById("log");
-    logBox.innerHTML += text + "<br>";
-    logBox.scrollTop = logBox.scrollHeight;
-}
+    // ================================
+    //  UPDATE SYSTEM (download → apply)
+    // ================================
+    updateBtn.addEventListener("click", () => {
+        if (!confirm("Yakin download dan menerapkan update?")) return;
+
+        updateStatus.innerHTML = "⏳ Mendownload update...\n";
+
+        fetch("/update/start-download")
+            .then(res => res.json())
+            .then(data => {
+                if (!data.success) {
+                    updateStatus.innerHTML += "❌ Gagal download ZIP\n";
+                    return;
+                }
+
+                updateStatus.innerHTML += "✔ Download selesai!\n";
+                updateStatus.innerHTML += "⏳ Menerapkan update...\n";
+
+                return fetch("/update/apply-update");
+            })
+            .then(res => res.json())
+            .then(result => {
+                if (!result.success) {
+                    updateStatus.innerHTML += `❌ Gagal pada tahap ${result.step}\nError: ${result.error}`;
+                    return;
+                }
+
+                updateStatus.innerHTML += `✔ Update selesai!\nCommit baru: ${result.new_commit}\n`;
+                updateStatus.innerHTML += "\n🔄 Silakan restart server jika tidak otomatis.";
+            });
+    });
+
+});
