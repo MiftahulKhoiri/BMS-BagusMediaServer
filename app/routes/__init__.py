@@ -16,6 +16,7 @@ from .BMS_upload import upload
 from .BMS_update import update
 from .BMS_profile import profile
 from .BMS_filemanager import filemanager
+from .BMS_filemanager_premium import fm_premium   # ← TAMBAHKAN INI
 from .BMS_systeminfo import systeminfo
 from .BMS_terminal import terminal
 
@@ -24,10 +25,6 @@ from .BMS_terminal import terminal
 #   REGISTER SEMUA BLUEPRINT
 # =======================================================
 def register_blueprints(app):
-    """
-    Mendaftarkan seluruh blueprint BMS ke aplikasi Flask.
-    Urutan dibuat logis: Auth → Logger → User → Admin → Modules
-    """
 
     # --- Core Auth ---
     app.register_blueprint(auth)
@@ -45,7 +42,13 @@ def register_blueprints(app):
     app.register_blueprint(upload)
     app.register_blueprint(update)
     app.register_blueprint(profile)
+
+    # FileManager
     app.register_blueprint(filemanager)
+
+    # FileManager Premium
+    app.register_blueprint(fm_premium)
+
     app.register_blueprint(systeminfo)
     app.register_blueprint(terminal)
 
