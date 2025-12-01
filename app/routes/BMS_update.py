@@ -129,7 +129,14 @@ def extract_update_zip():
 
     try:
         with zipfile.ZipFile(zip_path, 'r') as z:
-            z.extractall(temp_extract)
+            for member in z.infolist():
+
+                # Hindari error Termux FUSE → file ini tidak boleh di-extract
+                if member.filename.endswith("version.json"):
+                    print("[SKIP] version.json dilewati")
+                    continue
+
+                z.extract(member, temp_extract)
 
         extracted_root = None
         for name in os.listdir(temp_extract):
