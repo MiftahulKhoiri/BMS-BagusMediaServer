@@ -52,8 +52,10 @@ echo "======================================"
 echo ""
 
 # Sesuaikan jika create_app kamu ada di file app.py
+nginx
 gunicorn -w 3 -b 127.0.0.1:5000 "app:create_app()"
 
 # Setelah Gunicorn mati (CTRL+C)
 echo ""
 echo "[✓] BMS Server dihentikan."
+nginx -s stop
