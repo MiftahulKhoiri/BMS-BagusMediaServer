@@ -58,4 +58,7 @@ gunicorn -w 3 -b 127.0.0.1:5000 "app:create_app()"
 # Setelah Gunicorn mati (CTRL+C)
 echo ""
 echo "[✓] BMS Server dihentikan."
-nginx -s stop
+echo "Mematikan server nginx "
+pkill nginx
+echo "program selesai"
+echo "======================================"
