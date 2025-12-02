@@ -43,7 +43,7 @@ else
 fi
 
 # ----------------------------------------
-# 5. MENJALANKAN BMS DENGAN GUNICORN
+# 5. MENJALANKAN BMS DENGAN GUNICORN + NGINX 
 # ----------------------------------------
 echo ""
 echo "======================================"
@@ -52,7 +52,9 @@ echo "======================================"
 echo ""
 
 # Sesuaikan jika create_app kamu ada di file app.py
+echo "mulai nginx "
 nginx
+echo "mulai server BMS"
 gunicorn -w 3 -b 127.0.0.1:5000 "app:create_app()"
 
 # Setelah Gunicorn mati (CTRL+C)
