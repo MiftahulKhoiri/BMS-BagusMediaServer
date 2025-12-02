@@ -2,122 +2,71 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <title>BMS System Information</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMS – System Monitor</title>
 
-    <!-- Neon CSS -->
-    <link rel="stylesheet" href="/static/css/BMSadmin.css">
-
-    <style>
-        .info-card {
-            padding: 15px;
-            border: 1px solid #00ff88;
-            margin-bottom: 15px;
-            border-radius: 10px;
-            background: rgba(0, 25, 0, 0.4);
-            box-shadow: 0 0 20px #00ff88;
-        }
-        .bar {
-            height: 12px;
-            background: #003300;
-            border: 1px solid #00ff88;
-            border-radius: 6px;
-            overflow: hidden;
-            margin-top: 5px;
-        }
-        .bar-fill {
-            height: 100%;
-            background: #00ff88;
-            width: 0%;
-            transition: width .5s;
-        }
-        .title {
-            color: #00ff88;
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-        .value {
-            color: #bbffcc;
-            font-size: 14px;
-            margin-bottom: 3px;
-        }
-    </style>
+    <link rel="stylesheet" href="/static/css/BMS_systeminfo.css">
 </head>
 <body>
 
-<div class="section-box">
+<div class="sys-container">
+    <header class="sys-header">
+        <h1>[ 🖥 BMS SYSTEM MONITOR ]</h1>
+        <p>Realtime status perangkat untuk BagusMedia Server</p>
+    </header>
 
-    <h2>[ 🖥 SYSTEM INFORMATION ]</h2>
-
-    <!-- CPU -->
-    <div class="info-card">
-        <div class="title">CPU Usage</div>
-        <div class="value" id="cpuText">Loading...</div>
-        <div class="bar"><div class="bar-fill" id="cpuBar"></div></div>
+    <div class="sys-top-bar">
+        <div class="sys-badge" id="osInfo">OS: -</div>
+        <div class="sys-badge" id="pythonInfo">Python: -</div>
+        <div class="sys-badge" id="bootInfo">Boot: -</div>
+        <div class="sys-badge" id="uptimeInfo">Uptime: - jam</div>
+        <button id="refreshBtn" class="btn-refresh">⟳ Refresh</button>
     </div>
 
-    <!-- RAM -->
-    <div class="info-card">
-        <div class="title">RAM Usage</div>
-        <div class="value" id="ramText">Loading...</div>
-        <div class="bar"><div class="bar-fill" id="ramBar"></div></div>
-    </div>
+    <!-- GRID CARD -->
+    <div class="sys-grid">
 
-    <!-- Disk -->
-    <div class="info-card">
-        <div class="title">Disk Usage</div>
-        <div class="value" id="diskText">Loading...</div>
-        <div class="bar"><div class="bar-fill" id="diskBar"></div></div>
-    </div>
+        <!-- CPU -->
+        <div class="card">
+            <h2>⚡ CPU Usage</h2>
+            <div class="meter">
+                <div class="meter-bar" id="cpuBar"></div>
+            </div>
+            <div class="meter-label" id="cpuLabel">0%</div>
+        </div>
 
-    <!-- System Info -->
-    <div class="info-card">
-        <div class="title">System Info</div>
-        <div class="value" id="osText">Loading...</div>
-        <div class="value" id="pythonText">Loading...</div>
-        <div class="value" id="uptimeText">Loading...</div>
-        <div class="value" id="bootText">Loading...</div>
+        <!-- RAM -->
+        <div class="card">
+            <h2>💾 RAM Usage</h2>
+            <div class="meter">
+                <div class="meter-bar" id="ramBar"></div>
+            </div>
+            <div class="meter-label" id="ramLabel">0 / 0 GB</div>
+        </div>
+
+        <!-- DISK -->
+        <div class="card">
+            <h2>📀 Disk Usage</h2>
+            <div class="meter">
+                <div class="meter-bar" id="diskBar"></div>
+            </div>
+            <div class="meter-label" id="diskLabel">0 / 0 GB</div>
+        </div>
+
+        <!-- INFO BOX -->
+        <div class="card card-log">
+            <h2>📊 Detail</h2>
+            <div class="info-line" id="infoCpu">CPU: -</div>
+            <div class="info-line" id="infoRam">RAM: -</div>
+            <div class="info-line" id="infoDisk">Disk: -</div>
+            <div class="info-line" id="infoUptime">Uptime: - jam</div>
+            <div class="info-line" id="infoLastUpdate">Last update: -</div>
+        </div>
+
     </div>
 
 </div>
 
-<script>
-// ==========================================
-//  UPDATE SYSTEM INFO SETIAP 1 DETIK
-// ==========================================
-function updateSystem() {
-    fetch("/system/info")
-        .then(r => r.json())
-        .then(data => {
-
-            // CPU
-            document.getElementById("cpuText").textContent = data.cpu_usage + "%";
-            document.getElementById("cpuBar").style.width = data.cpu_usage + "%";
-
-            // RAM
-            let ramPercent = (data.ram_used / data.ram_total) * 100;
-            document.getElementById("ramText").textContent =
-                `${data.ram_used}GB / ${data.ram_total}GB (${ramPercent.toFixed(2)}%)`;
-            document.getElementById("ramBar").style.width = ramPercent + "%";
-
-            // DISK
-            let diskPercent = (data.disk_used / data.disk_total) * 100;
-            document.getElementById("diskText").textContent =
-                `${data.disk_used}GB / ${data.disk_total}GB (${diskPercent.toFixed(2)}%)`;
-            document.getElementById("diskBar").style.width = diskPercent + "%";
-
-            // System info
-            document.getElementById("osText").textContent = "OS: " + data.os;
-            document.getElementById("pythonText").textContent = "Python: " + data.python;
-            document.getElementById("uptimeText").textContent = "Uptime: " + data.uptime_hours + " jam";
-            document.getElementById("bootText").textContent = "Boot Time: " + data.boot_time;
-        });
-}
-
-// Update realtime
-setInterval(updateSystem, 1000);
-updateSystem();
-</script>
-
+<script src="/static/js/BMS_systeminfo.js"></script>
 </body>
 </html>
