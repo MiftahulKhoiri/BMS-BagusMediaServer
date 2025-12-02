@@ -2,55 +2,116 @@ import os
 import platform
 import psutil
 import time
+import socket
+import requests
 from flask import Blueprint, jsonify, render_template
 from datetime import datetime
 
 systeminfo = Blueprint("systeminfo", __name__, url_prefix="/system")
 
+# Try get public IP
+def get_public_ip():
+    try:
+        return requests.get("https://api.ipify.org").text
+    except:
+        return "Unknown"
 
-# ======================================================
-#   🖥 System Information (JSON)
-# ======================================================
+# Try get CPU temperature
+def get_cpu_temperature():
+    try:
+        temps = psutil.sensors_temperatures()
+        for name, entries in temps.items():
+            for entry in entries:
+                if entry.current:
+                    return entry.current
+        return None
+    except:
+        return None
+
+# Network speed helper
+last_net = psutil.net_io_counters()
+last_time = time.time()
+
+def get_network_speed():
+    global last_net, last_time
+    now_net = psutil.net_io_counters()
+    now_time = time.time()
+
+    down_speed = (now_net.bytes_recv - last_net.bytes_recv) / (now_time - last_time)
+    up_speed = (now_net.bytes_sent - last_net.bytes_sent) / (now_time - last_time)
+
+    last_net = now_net
+    last_time = now_time
+
+    return round(down_speed / 1024, 2), round(up_speed / 1024, 2)
+
+
 @systeminfo.route("/info")
 def BMS_system_info():
 
     # CPU usage
     cpu = psutil.cpu_percent(interval=1)
 
-    # RAM usage
+    # Temperature
+    temp = get_cpu_temperature()
+
+    # RAM
     ram = psutil.virtual_memory()
-    ram_total = round(ram.total / (1024**3), 2)
-    ram_used = round(ram.used / (1024**3), 2)
 
-    # Disk usage
-    disk = psutil.disk_usage("/")
-    disk_total = round(disk.total / (1024**3), 2)
-    disk_used = round(disk.used / (1024**3), 2)
+    # Disk list
+    disks = []
+    for part in psutil.disk_partitions():
+        try:
+            usage = psutil.disk_usage(part.mountpoint)
+            disks.append({
+                "device": part.device,
+                "mount": part.mountpoint,
+                "total": round(usage.total / 1024**3, 2),
+                "used": round(usage.used / 1024**3, 2)
+            })
+        except:
+            pass
 
-    # System uptime
-    boot_time = datetime.fromtimestamp(psutil.boot_time())
+    # Uptime
     uptime_seconds = time.time() - psutil.boot_time()
     uptime_hours = round(uptime_seconds / 3600, 2)
 
-    # OS info
-    os_name = platform.system()
-    os_version = platform.release()
+    # Load avg
+    try:
+        load1, load5, load15 = os.getloadavg()
+    except:
+        load1 = load5 = load15 = 0
 
-    # Python version
-    python_ver = platform.python_version()
+    # Network
+    down_kb, up_kb = get_network_speed()
+
+    # IP
+    local_ip = socket.gethostbyname(socket.gethostname())
+    public_ip = get_public_ip()
+
+    # OS
+    os_info = f"{platform.system()} {platform.release()}"
 
     return jsonify({
-        "cpu_usage": cpu,
-        "ram_total": ram_total,
-        "ram_used": ram_used,
-        "disk_total": disk_total,
-        "disk_used": disk_used,
+        "cpu": cpu,
+        "temperature": temp,
+        "ram_total": round(ram.total / 1024**3, 2),
+        "ram_used": round(ram.used / 1024**3, 2),
+        "disks": disks,
+        "loadavg": {
+            "1m": round(load1, 2),
+            "5m": round(load5, 2),
+            "15m": round(load15, 2),
+        },
         "uptime_hours": uptime_hours,
-        "boot_time": boot_time.strftime("%Y-%m-%d %H:%M:%S"),
-        "os": f"{os_name} {os_version}",
-        "python": python_ver
+        "local_ip": local_ip,
+        "public_ip": public_ip,
+        "net_down_kb": down_kb,
+        "net_up_kb": up_kb,
+        "os": os_info,
+        "python": platform.python_version(),
+        "boot": datetime.fromtimestamp(psutil.boot_time()).strftime("%Y-%m-%d %H:%M:%S")
     })
-
 
 # ======================================================
 #   🌐 GUI PAGE — BMS_systeminfo.html
