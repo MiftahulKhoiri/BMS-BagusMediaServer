@@ -1,0 +1,33 @@
+/* ==========================================================
+   BMS JELLYFISH BEGRON (NEON AQUA ENHANCED)
+   - Ubur-ubur bergerak lembut dengan warna lebih terang
+   - Jumlah jellyfish dikurangi, ukuran diperkecil
+   - Glow effect ditingkatkan untuk visibilitas lebih baik
+   - Fullscreen, responsive
+========================================================== */
+
+body, html {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    background: #0a0a2a; /* Background lebih gelap untuk kontras lebih baik */
+}
+
+#jellyCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -2;
+    pointer-events: none;
+    
+    /* Filter tambahan untuk meningkatkan kontras dan kecerahan */
+    filter: contrast(1.3) brightness(1.1);
+}
+
+/* Enhanced glow effect untuk jellyfish */
+.jelly-glow {
+    filter: blur(20px) brightness(1.4);
+    opacity: 0.9;
+}
