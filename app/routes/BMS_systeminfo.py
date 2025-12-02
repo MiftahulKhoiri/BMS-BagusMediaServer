@@ -2,116 +2,85 @@ import os
 import platform
 import psutil
 import time
-import socket
-import requests
+import subprocess
+import json
 from flask import Blueprint, jsonify, render_template
 from datetime import datetime
 
 systeminfo = Blueprint("systeminfo", __name__, url_prefix="/system")
 
-# Try get public IP
-def get_public_ip():
+
+# ======================================================
+#   🔧 Helper: Ambil CPU Usage (Android Termux Safe)
+# ======================================================
+def get_cpu_usage_android():
+    """
+    Ambil CPU usage memakai Termux API.
+    Jika gagal → return 0 (safe mode).
+    """
     try:
-        return requests.get("https://api.ipify.org").text
+        result = subprocess.run(
+            ["termux-cpu-info"],
+            capture_output=True,
+            text=True
+        )
+
+        if result.returncode != 0:
+            return 0   # Termux API tidak ada / error
+
+        data = json.loads(result.stdout)
+
+        # Termux API format ada "cpu_usage": 12.3
+        if "cpu_usage" in data:
+            return float(data["cpu_usage"])
+
+        return 0
+
     except:
-        return "Unknown"
-
-# Try get CPU temperature
-def get_cpu_temperature():
-    try:
-        temps = psutil.sensors_temperatures()
-        for name, entries in temps.items():
-            for entry in entries:
-                if entry.current:
-                    return entry.current
-        return None
-    except:
-        return None
-
-# Network speed helper
-last_net = psutil.net_io_counters()
-last_time = time.time()
-
-def get_network_speed():
-    global last_net, last_time
-    now_net = psutil.net_io_counters()
-    now_time = time.time()
-
-    down_speed = (now_net.bytes_recv - last_net.bytes_recv) / (now_time - last_time)
-    up_speed = (now_net.bytes_sent - last_net.bytes_sent) / (now_time - last_time)
-
-    last_net = now_net
-    last_time = now_time
-
-    return round(down_speed / 1024, 2), round(up_speed / 1024, 2)
+        return 0  # fallback aman
 
 
+# ======================================================
+#   🖥 System Information (JSON)
+# ======================================================
 @systeminfo.route("/info")
 def BMS_system_info():
 
-    # CPU usage
-    cpu = psutil.cpu_percent(interval=1)
+    # ===== CPU via Termux API =====
+    cpu_usage = get_cpu_usage_android()
 
-    # Temperature
-    temp = get_cpu_temperature()
-
-    # RAM
+    # ===== RAM =====
     ram = psutil.virtual_memory()
+    ram_total = round(ram.total / (1024**3), 2)
+    ram_used = round(ram.used / (1024**3), 2)
 
-    # Disk list
-    disks = []
-    for part in psutil.disk_partitions():
-        try:
-            usage = psutil.disk_usage(part.mountpoint)
-            disks.append({
-                "device": part.device,
-                "mount": part.mountpoint,
-                "total": round(usage.total / 1024**3, 2),
-                "used": round(usage.used / 1024**3, 2)
-            })
-        except:
-            pass
+    # ===== DISK =====
+    disk = psutil.disk_usage("/")
+    disk_total = round(disk.total / (1024**3), 2)
+    disk_used = round(disk.used / (1024**3), 2)
 
-    # Uptime
+    # ===== SYSTEM UPTIME =====
     uptime_seconds = time.time() - psutil.boot_time()
     uptime_hours = round(uptime_seconds / 3600, 2)
+    boot_time = datetime.fromtimestamp(psutil.boot_time())
 
-    # Load avg
-    try:
-        load1, load5, load15 = os.getloadavg()
-    except:
-        load1 = load5 = load15 = 0
-
-    # Network
-    down_kb, up_kb = get_network_speed()
-
-    # IP
-    local_ip = socket.gethostbyname(socket.gethostname())
-    public_ip = get_public_ip()
-
-    # OS
-    os_info = f"{platform.system()} {platform.release()}"
+    # ===== OS & Python =====
+    os_name = platform.system()
+    os_version = platform.release()
+    python_ver = platform.python_version()
 
     return jsonify({
-        "cpu": cpu,
-        "temperature": temp,
-        "ram_total": round(ram.total / 1024**3, 2),
-        "ram_used": round(ram.used / 1024**3, 2),
-        "disks": disks,
-        "loadavg": {
-            "1m": round(load1, 2),
-            "5m": round(load5, 2),
-            "15m": round(load15, 2),
-        },
+        "cpu_usage": cpu_usage,
+        "ram_total": ram_total,
+        "ram_used": ram_used,
+        "disk_total": disk_total,
+        "disk_used": disk_used,
         "uptime_hours": uptime_hours,
-        "local_ip": local_ip,
-        "public_ip": public_ip,
-        "net_down_kb": down_kb,
-        "net_up_kb": up_kb,
-        "os": os_info,
-        "python": platform.python_version(),
-        "boot": datetime.fromtimestamp(psutil.boot_time()).strftime("%Y-%m-%d %H:%M:%S")
+        "boot_time": boot_time.strftime("%Y-%m-%d %H:%M:%S"),
+        "os": f"{os_name} {os_version}",
+        "python": python_ver
     })
+
 
 # ======================================================
 #   🌐 GUI PAGE — BMS_systeminfo.html
