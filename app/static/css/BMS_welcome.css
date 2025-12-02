@@ -1,0 +1,276 @@
+/* ==========================================================
+   BMS WELCOME UI - CARD DESIGN (MORE TRANSPARENT)
+========================================================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    color: #eafff5;
+    overflow: hidden;
+    min-height: 100vh;
+    background: transparent !important;
+    
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+}
+
+/* ==========================================
+   WELCOME CARD STYLES - LEBIH TRANSPARAN
+========================================== */
+.welcome-card {
+    background: rgba(15, 30, 40, 0.65); /* Lebih transparan */
+    backdrop-filter: blur(6px) saturate(140%);
+    border-radius: 20px;
+    border: 1px solid rgba(0, 255, 255, 0.1);
+    box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.3),
+        0 0 25px rgba(0, 200, 255, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    
+    width: 100%;
+    max-width: 480px;
+    padding: 40px 30px;
+    text-align: center;
+    
+    animation: cardAppear 0.6s ease-out;
+    transition: all 0.3s ease;
+}
+
+@keyframes cardAppear {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Card Header */
+.card-header {
+    margin-bottom: 35px;
+}
+
+.logo {
+    font-size: clamp(42px, 7vw, 60px);
+    font-weight: 900;
+    letter-spacing: 3px;
+    color: #8affd6;
+    text-shadow: 
+        0 0 15px #32ffd1,
+        0 0 25px #00ffcc;
+    margin-bottom: 15px;
+}
+
+.title {
+    font-size: clamp(20px, 4.5vw, 26px);
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 8px;
+    letter-spacing: 1px;
+}
+
+.subtitle {
+    font-size: clamp(14px, 3vw, 16px);
+    color: #b0fde5;
+    opacity: 0.9;
+    line-height: 1.5;
+}
+
+/* Card Body */
+.card-body {
+    margin-bottom: 30px;
+}
+
+/* ========================================================
+   BUTTON STYLES - MODERN NEON (SEDIKIT TRANSPARAN)
+========================================================== */
+.button-group {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+}
+
+.btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    padding: 18px 24px;
+    font-size: clamp(16px, 4vw, 18px);
+    font-weight: 600;
+    border-radius: 12px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s ease;
+}
+
+.btn:hover::before {
+    left: 100%;
+}
+
+/* Login Button */
+.btn-login {
+    background: linear-gradient(135deg, rgba(0, 180, 255, 0.85), rgba(0, 140, 255, 0.85));
+    color: white;
+    box-shadow: 
+        0 4px 15px rgba(0, 180, 255, 0.4),
+        0 0 20px rgba(0, 200, 255, 0.3);
+}
+
+.btn-login:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+        0 6px 20px rgba(0, 180, 255, 0.6),
+        0 0 30px rgba(0, 200, 255, 0.4);
+}
+
+/* Register Button */
+.btn-register {
+    background: linear-gradient(135deg, rgba(0, 255, 180, 0.85), rgba(0, 200, 140, 0.85));
+    color: white;
+    box-shadow: 
+        0 4px 15px rgba(0, 255, 180, 0.4),
+        0 0 20px rgba(0, 255, 200, 0.3);
+}
+
+.btn-register:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+        0 6px 20px rgba(0, 255, 180, 0.6),
+        0 0 30px rgba(0, 255, 200, 0.4);
+}
+
+.btn-icon {
+    font-size: 20px;
+    filter: drop-shadow(0 0 3px rgba(255,255,255,0.5));
+}
+
+.btn-text {
+    flex: 1;
+}
+
+/* ========================================================
+   CARD FOOTER
+========================================================== */
+.card-footer {
+    border-top: 1px solid rgba(0, 255, 255, 0.1);
+    padding-top: 20px;
+}
+
+.card-footer p {
+    font-size: clamp(12px, 2.5vw, 14px);
+    color: #88ccbb;
+    opacity: 0.8;
+}
+
+/* ========================================================
+   RESPONSIVE DESIGN
+========================================================== */
+@media (min-width: 768px) {
+    .welcome-card {
+        padding: 50px 40px;
+        max-width: 520px;
+        background: rgba(15, 30, 40, 0.68); /* Sedikit lebih solid di desktop */
+    }
+    
+    .button-group {
+        gap: 20px;
+    }
+    
+    .btn {
+        padding: 20px 28px;
+        font-size: 18px;
+    }
+    
+    .logo {
+        font-size: 64px;
+    }
+    
+    .title {
+        font-size: 28px;
+    }
+}
+
+/* Untuk mobile landscape */
+@media (max-height: 500px) and (orientation: landscape) {
+    body {
+        padding: 10px;
+        align-items: flex-start;
+    }
+    
+    .welcome-card {
+        padding: 25px 30px;
+        max-width: 90%;
+    }
+    
+    .card-header {
+        margin-bottom: 20px;
+    }
+    
+    .button-group {
+        flex-direction: row;
+        gap: 15px;
+    }
+    
+    .btn {
+        flex: 1;
+        padding: 15px 20px;
+    }
+}
+
+/* Ripple effect styles */
+.btn {
+    position: relative;
+    overflow: hidden;
+}
+
+.ripple-effect {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.6);
+    transform: scale(0);
+    animation: ripple-animation 0.6s linear;
+    pointer-events: none;
+}
+
+@keyframes ripple-animation {
+    to {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+/* Loading states */
+body.loading .welcome-card {
+    opacity: 0;
+    transform: translateY(20px);
+}
+
+body.loaded .welcome-card {
+    opacity: 1;
+    transform: translateY(0);
+}

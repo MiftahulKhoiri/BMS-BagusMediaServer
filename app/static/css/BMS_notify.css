@@ -1,0 +1,32 @@
+#bms-notify-box {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    min-width: 250px;
+    max-width: 350px;
+    padding: 15px;
+    border-radius: 10px;
+    color: #000;
+    font-weight: bold;
+    z-index: 999999;
+    font-family: monospace;
+    box-shadow: 0 0 20px #00ff88;
+    display: none;
+    opacity: 0;
+    transition: opacity .4s;
+}
+
+#bms-notify-box.success {
+    background: #00ff88;
+    color: #003300;
+}
+
+#bms-notify-box.error {
+    background: #ff4444;
+    color: #330000;
+}
+
+#bms-notify-box.info {
+    background: #44bbff;
+    color: #002233;
+}

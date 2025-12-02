@@ -1,0 +1,47 @@
+body {
+    background: #0d1117;
+    color: #e6edf3;
+    font-family: Arial;
+    padding: 20px;
+}
+
+#upload-box {
+    padding: 20px;
+    background: #161b22;
+    border: 1px solid #30363d;
+    width: 400px;
+}
+
+input, button {
+    margin-top: 10px;
+    padding: 10px;
+    width: 100%;
+    background: #21262d;
+    border: 1px solid #30363d;
+    color: #fff;
+}
+
+#upload-list {
+    margin-top: 20px;
+}
+
+.file-item {
+    background: #161b22;
+    padding: 15px;
+    border: 1px solid #30363d;
+    margin-bottom: 15px;
+}
+
+.progress-bar {
+    background: #30363d;
+    height: 20px;
+    width: 100%;
+    margin-top: 10px;
+}
+
+.progress-inner {
+    height: 100%;
+    width: 0%;
+    background: #00ffae;
+    transition: width 0.2s;
+}

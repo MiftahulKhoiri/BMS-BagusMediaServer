@@ -1,0 +1,55 @@
+body {
+    background: #0d1117;
+    font-family: Arial, sans-serif;
+    color: #fff;
+    padding: 20px;
+}
+
+.title {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 26px;
+}
+
+.user-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: #161b22;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.user-table th, .user-table td {
+    padding: 12px;
+    border-bottom: 1px solid #30363d;
+    text-align: left;
+}
+
+.user-table th {
+    background: #21262d;
+}
+
+.role-select {
+    padding: 5px;
+    border-radius: 5px;
+}
+
+.btn-delete {
+    background: #d33;
+    padding: 6px 12px;
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+}
+
+.btn-delete:hover {
+    background: #b22;
+}
+
+#notif {
+    margin-bottom: 15px;
+    padding: 10px;
+    display: none;
+    border-radius: 6px;
+}

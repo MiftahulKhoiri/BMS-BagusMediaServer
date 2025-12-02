@@ -1,0 +1,134 @@
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    color: #0f0;
+}
+
+/* Main layout */
+.edit-container {
+    display: flex;
+    height: 100vh;
+    width: 100%;
+}
+
+/* Sidebar */
+.sidebar {
+    width: 230px;
+    background: rgba(0,0,0,0.75);
+    border-right: 2px solid #00ff88;
+    padding: 20px;
+    backdrop-filter: blur(5px);
+}
+
+.sidebar-header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.sidebar-header h2 {
+    color: #00ff88;
+    margin: 0;
+}
+
+.sidebar-header span {
+    opacity: 0.8;
+    font-size: 14px;
+}
+
+.menu-item {
+    display: block;
+    padding: 10px;
+    margin-bottom: 12px;
+    border: 1px solid #00ff88;
+    border-radius: 6px;
+    text-decoration: none;
+    color: #00ff88;
+    transition: 0.2s;
+}
+
+.menu-item:hover {
+    background: #00ff8866;
+}
+
+.logout {
+    border: 1px solid red;
+    color: red;
+}
+
+.logout:hover {
+    background: #ff000044;
+}
+
+
+/* Content */
+.content {
+    width: 100%;
+    padding: 40px;
+    overflow-y: auto;
+}
+
+/* Form Box */
+.form-box {
+    max-width: 550px;
+    margin: auto;
+    background: rgba(0,0,0,0.65);
+    padding: 25px;
+    border-radius: 10px;
+    border: 1px solid #00ff88;
+    box-shadow: 0 0 15px #00ff66;
+}
+
+.form-box h1 {
+    text-align: center;
+    margin-bottom: 25px;
+}
+
+.label-title {
+    display: block;
+    margin: 10px 0 5px;
+    color: #0f0;
+}
+
+.input-text, .input-file, select, textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #00ff88;
+    border-radius: 6px;
+    background: rgba(0,0,0,0.6);
+    color: #0f0;
+    margin-bottom: 15px;
+}
+
+.input-file {
+    padding: 6px;
+}
+
+.btn-save {
+    width: 100%;
+    padding: 12px;
+    background: #00ff88;
+    border: none;
+    color: black;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 16px;
+    transition: 0.3s;
+}
+
+.btn-save:hover {
+    background: #00ffaa;
+    transform: scale(1.02);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .sidebar {
+        width: 180px;
+    }
+
+    .form-box {
+        width: 90%;
+    }
+}
