@@ -6,20 +6,14 @@ echo "=== BMS - BagusMediaServer Launcher ==="
 VENV_DIR="venv"
 
 # ----------------------------------------
-# 1. CEK APAKAH VIRTUAL ENV SUDAH ADA
+# 1. CEK VIRTUAL ENVIRONMENT
 # ----------------------------------------
 if [ ! -d "$VENV_DIR" ]; then
     echo "[+] Virtual environment belum ada. Membuat venv baru..."
     python3 -m venv $VENV_DIR
-
-    if [ $? -ne 0 ]; then
-        echo "[!] Gagal membuat virtual environment!"
-        exit 1
-    fi
 else
     echo "[✓] Virtual environment sudah ada."
 fi
-
 
 # ----------------------------------------
 # 2. AKTIVASI VIRTUAL ENV
@@ -32,13 +26,11 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-
 # ----------------------------------------
-# 3. UPDATE pip
+# 3. UPDATE PIP
 # ----------------------------------------
 echo "[+] Update pip..."
 pip install --upgrade pip
-
 
 # ----------------------------------------
 # 4. INSTALL REQUIREMENTS
@@ -50,20 +42,18 @@ else
     echo "[!] requirements.txt tidak ditemukan!"
 fi
 
-
 # ----------------------------------------
-# 5. MENJALANKAN FLASK SERVER
+# 5. MENJALANKAN BMS DENGAN GUNICORN
 # ----------------------------------------
 echo ""
 echo "======================================"
-echo " Menjalankan BMS Server (run.py)..."
+echo " Menjalankan BMS via Gunicorn..."
 echo "======================================"
 echo ""
 
-python3 run.py
+# Sesuaikan jika create_app kamu ada di file app.py
+gunicorn -w 3 -b 127.0.0.1:5000 "app:create_app()"
 
-# ----------------------------------------
-# Setelah selesai
-# ----------------------------------------
+# Setelah Gunicorn mati (CTRL+C)
 echo ""
-echo "[✓] BMS Server selesai dijalankan."
+echo "[✓] BMS Server dihentikan."
