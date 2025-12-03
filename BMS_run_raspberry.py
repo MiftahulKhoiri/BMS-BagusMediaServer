@@ -17,6 +17,37 @@ if [[ $EUID -eq 0 ]]; then
     exit 1
 fi
 
+# ----------------------------------------------------------
+# AUTO INSTALASI NGINX & SUPERVISOR
+# ----------------------------------------------------------
+echo ""
+echo "=== Mengecek kebutuhan sistem ==="
+
+# Update package list
+echo "[+] Update package list..."
+sudo apt update -y
+
+# Cek dan install Nginx
+if ! command -v nginx &> /dev/null; then
+    echo "[+] Menginstall Nginx..."
+    sudo apt install -y nginx
+    echo "[✓] Nginx terinstall."
+else
+    echo "[✓] Nginx sudah terpasang."
+fi
+
+# Cek dan install Supervisor
+if ! command -v supervisorctl &> /dev/null; then
+    echo "[+] Menginstall Supervisor..."
+    sudo apt install -y supervisor
+    echo "[✓] Supervisor terinstall."
+else
+    echo "[✓] Supervisor sudah terpasang."
+fi
+
+echo "=== Sistem siap digunakan ==="
+echo ""
+
 # ----------------------------------------
 # 2. CEK APAKAH DI RASPBERRY PI
 # ----------------------------------------
