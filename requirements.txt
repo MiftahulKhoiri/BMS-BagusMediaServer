@@ -5,3 +5,4 @@ flask-cors
 Flask-sock
 psutil
 requests
+waitress
