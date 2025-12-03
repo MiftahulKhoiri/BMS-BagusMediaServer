@@ -9,9 +9,9 @@ def run_development(env: dict, venv_python: str):
     """
     print("=== DEVELOPMENT MODE ===")
     if env.get("os") == "linux" and env.get("has_gunicorn"):
-        cmd = f"{venv_python} -m gunicorn -w 2 --threads 2 -b 0.0.0.0:5000 app:create_app()"
+        cmd = f"{venv_python} -m gunicorn -w 2 --threads 2 -b 0.0.0.0:5000 wsgi:application"
         print("[i] Menjalankan Gunicorn (development).")
     else:
-        cmd = f"{venv_python} -m waitress --listen=0.0.0.0:5000 app:create_app"
+        cmd = f"{venv_python} -m waitress --listen=0.0.0.0:5000 wsgi:application"
         print("[i] Menjalankan Waitress (development fallback).")
     run(cmd)
