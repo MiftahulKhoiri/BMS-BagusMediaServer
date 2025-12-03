@@ -355,6 +355,69 @@ def monitoring():
     print(f"Gunicorn Status    : {check_gunicorn()}")
     print(f"Supervisor Status  : {check_supervisor()}")
     print("===================================")
+
+# ============================================================
+# 7 — AUTO UPDATE SYSTEM (Git + Dependencies + Restart)
+# ============================================================
+
+def git_available():
+    return shutil.which("git") is not None
+
+
+def git_pull():
+    print("[i] Menarik update dari GitHub...")
+    if not git_available():
+        print("[!] Git tidak tersedia di sistem.")
+        return False
+
+    status = run("git pull")
+
+    if status != 0:
+        print("[!] Git pull gagal. Ada kemungkinan konflik perubahan.")
+        return False
+
+    print("[✓] Update berhasil.")
+    return True
+
+
+def has_requirements_changed():
+    # Jika requirements.txt berubah setelah git pull → install lagi
+    return os.path.exists("requirements.txt")
+
+
+def restart_services():
+    print("[i] Restarting services...")
+
+    if env["os"] == "linux":
+        print("[i] Memberhentikan Gunicorn...")
+        run("pkill gunicorn")
+
+        print("[i] Restart Supervisor (jika ada)...")
+        run("sudo supervisorctl restart BMS")
+
+    else:
+        print("[i] Non-Linux: tidak ada service yang perlu di-restart otomatis.")
+
+    print("[✓] Service berhasil direstart.")
+
+
+def auto_update():
+    print("====== BMS AUTO UPDATE ======")
+
+    # 1. Git Pull
+    if not git_pull():
+        print("[!] Update dihentikan akibat kegagalan git.")
+        return
+
+    # 2. Install dependencies
+    if has_requirements_changed():
+        print("[i] Menginstall ulang dependencies...")
+        install_requirements()
+
+    # 3. Restart server
+    restart_services()
+
+    print("====== UPDATE SELESAI ======")
 # ------------------------------------------------------------
 # 6. MENU MODE JALAN
 # ------------------------------------------------------------
