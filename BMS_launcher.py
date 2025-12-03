@@ -126,25 +126,93 @@ def run_development():
 # ------------------------------------------------------------
 # MODE: PRODUCTION
 # ------------------------------------------------------------
+# ============================================================
+# 4.1 — GENERATE NGINX CONFIG (LINUX ONLY)
+# ============================================================
+
+def generate_nginx_config():
+    nginx_path = "/etc/nginx/sites-available/BMS.conf"
+    nginx_enabled = "/etc/nginx/sites-enabled/BMS.conf"
+
+    STATIC_DIR = os.path.join(PROJECT_DIR, "app", "static")
+
+    config = f"""
+server {{
+    listen 80;
+    server_name _;
+
+    access_log /var/log/nginx/bms_access.log;
+    error_log  /var/log/nginx/bms_error.log;
+
+    location / {{
+        proxy_pass http://127.0.0.1:5000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }}
+
+    location /static {{
+        alias {STATIC_DIR};
+        try_files $uri =404;
+        expires 30d;
+    }}
+}}
+"""
+
+    print("[+] Membuat konfigurasi NGINX...")
+
+    # Tulis file ke sites-available
+    try:
+        with open("BMS_nginx_temp.conf", "w") as f:
+            f.write(config)
+
+        # copy ke /etc/nginx
+        run(f"sudo cp BMS_nginx_temp.conf {nginx_path}")
+        run(f"sudo ln -sf {nginx_path} {nginx_enabled}")
+
+        os.remove("BMS_nginx_temp.conf")
+        print("[✓] Konfigurasi NGINX berhasil dibuat.")
+
+    except Exception as e:
+        print("[!] Gagal membuat konfigurasi NGINX:", e)
+
+
+# ============================================================
+# 4.2 — RELOAD NGINX
+# ============================================================
+
+def reload_nginx():
+    print("[+] Testing konfigurasi nginx...")
+    run("sudo nginx -t")
+
+    print("[+] Restarting nginx...")
+    run("sudo systemctl restart nginx")
+
+    print("[✓] Nginx berhasil dijalankan.")
 def run_production():
     print("=== MODE PRODUCTION ===")
 
-    # Jika Linux, gunakan Gunicorn full power
+    # Jika Linux → NGINX + Gunicorn
     if env["os"] == "linux":
+
+        # Buat config nginx otomatis
+        generate_nginx_config()
+        reload_nginx()
+
+        # Jalankan Gunicorn
         cmd = (
             f"{VENV_PY} -m gunicorn -w 3 --threads 3 "
-            f"-b 0.0.0.0:5000 BMS:create_app()"
+            f"-b 127.0.0.1:5000 BMS:create_app()"
         )
-        print("[i] Production menggunakan Gunicorn (Linux)")
+        print("[i] Production menggunakan Gunicorn + NGINX (Linux)")
 
     else:
         # Selain Linux → fallback ke waitress
         cmd = f"{VENV_PY} -m waitress --listen=0.0.0.0:5000 BMS:create_app"
-        print("[i] Production fallback (Waitress)")
+        print("[i] Production fallback (Waitress non-Linux)")
 
     run(cmd)
-
-
 # ------------------------------------------------------------
 # 6. MENU MODE JALAN
 # ------------------------------------------------------------
