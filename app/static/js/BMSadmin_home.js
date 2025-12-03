@@ -39,3 +39,16 @@ function deleteUser(id) {
         window.location.href = "/admin/delete/" + id;
     }
 }
+
+
+function shutdownServer() {
+    fetch('/server/shutdown', {method: 'POST'})
+    .then(r => r.json())
+    .then(d => alert(d.message));
+}
+
+function restartServer() {
+    fetch('/server/restart', {method: 'POST'})
+    .then(r => r.json())
+    .then(d => alert(d.message));
+}
