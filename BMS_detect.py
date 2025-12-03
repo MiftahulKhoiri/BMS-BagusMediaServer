@@ -1,90 +1,74 @@
 #!/usr/bin/env python3
 
 """
-BMS Launcher — Tahap 2
-Fokus: Deteksi OS + Setup Virtual Environment + Install Dependencies
+BMS_detect.py
+Deteksi OS & environment untuk BMS launcher
 """
 
+import platform
+import shutil
 import os
-import subprocess
 import sys
-from BMS_detect import detect, pretty_print
-
-# ------------------------------------------------------------
-# 0. LOAD ENVIRONMENT INFO
-# ------------------------------------------------------------
-env = detect()
-
-print("=== BMS Environment Info ===")
-pretty_print(env)
-print("")
 
 
-# ------------------------------------------------------------
-# 1. PATH FOLDER PROJECT
-# ------------------------------------------------------------
-PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
-VENV_DIR = os.path.join(PROJECT_DIR, "venv")
-PYTHON_EXEC = sys.executable
+def detect():
+    info = {}
+    sys_name = platform.system().lower()
+    info["os"] = sys_name
+    info["platform"] = platform.platform()
+    info["python_version"] = platform.python_version()
+    info["python_executable"] = sys.executable
 
-print(f"[i] PROJECT_DIR : {PROJECT_DIR}")
-print(f"[i] VENV_DIR    : {VENV_DIR}")
-print("")
+    # distro only for Linux
+    distro = "unknown"
+    if sys_name == "linux" and os.path.exists("/etc/os-release"):
+        with open("/etc/os-release") as f:
+            for line in f:
+                if line.startswith("PRETTY_NAME="):
+                    distro = line.split("=", 1)[1].strip().strip('"')
+                    break
+    info["distro"] = distro
 
+    # detect Raspberry Pi
+    is_rpi = False
+    if os.path.exists("/proc/cpuinfo"):
+        cpuinfo = open("/proc/cpuinfo").read().lower()
+        if "bcm" in cpuinfo or "raspberry" in cpuinfo:
+            is_rpi = True
+    if shutil.which("vcgencmd"):
+        is_rpi = True
+    info["is_rpi"] = is_rpi
 
-# ------------------------------------------------------------
-# 2. FUNGSI SISTEM
-# ------------------------------------------------------------
-def run(cmd: str):
-    """Jalankan command shell dengan print, aman untuk semua OS."""
-    print(f"[cmd] {cmd}")
-    result = subprocess.run(cmd, shell=True)
-    if result.returncode != 0:
-        print("[!] Error menjalankan command!")
-    return result.returncode
+    # termux detection
+    info["is_termux"] = os.path.exists("/data/data/com.termux")
 
+    # commands availability
+    info["has_vcgencmd"] = bool(shutil.which("vcgencmd"))
+    info["supports_systemd"] = bool(shutil.which("systemctl"))
+    info["has_nginx"] = bool(shutil.which("nginx"))
+    info["has_gunicorn"] = bool(shutil.which("gunicorn") or shutil.which("gunicorn3"))
 
-def create_venv():
-    print("[+] Membuat Virtual Environment...")
-    run(f"{PYTHON_EXEC} -m venv venv")
+    # recommended
+    if sys_name == "linux":
+        info["recommended_prod"] = "gunicorn"
+    else:
+        info["recommended_prod"] = "waitress"
 
+    info["summary"] = (
+        f"OS={info['os']} | distro={info['distro']} | rpi={info['is_rpi']} | "
+        f"termux={info['is_termux']} | vcgencmd={info['has_vcgencmd']} | "
+        f"systemd={info['supports_systemd']}"
+    )
 
-def install_requirements():
-    req = os.path.join(PROJECT_DIR, "requirements.txt")
-
-    # Tidak ada requirements.txt
-    if not os.path.exists(req):
-        print("[!] requirements.txt tidak ditemukan.")
-        return
-
-    print("[+] Upgrade pip...")
-    run(f"{os.path.join(VENV_DIR, 'bin', 'python')} -m pip install --upgrade pip setuptools wheel")
-
-    print("[+] Install dependencies...")
-    run(f"{os.path.join(VENV_DIR, 'bin', 'python')} -m pip install -r requirements.txt")
-
-
-# ------------------------------------------------------------
-# 3. CEK & BUAT VENV
-# ------------------------------------------------------------
-if not os.path.exists(VENV_DIR):
-    create_venv()
-else:
-    print("[✓] venv ditemukan.")
-
-print("")
+    return info
 
 
-# ------------------------------------------------------------
-# 4. INSTALL REQUIREMENTS
-# ------------------------------------------------------------
-install_requirements()
-
-print("")
-print("=== Tahap 2 selesai — Environment siap ===")
-print("")
+def pretty_print(info):
+    print("=== BMS Environment Detection ===")
+    for k, v in info.items():
+        print(f"{k:20}: {v}")
+    print("=================================")
 
 
-# ------------------------------------------------------------
-# Launcher belum selesai — Mode server akan ditambahkan di Tahap 3
-# ------------------------------------------------------------
+if __name__ == "__main__":
+    pretty_print(detect())
