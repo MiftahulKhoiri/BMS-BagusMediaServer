@@ -2,155 +2,145 @@
 #
 # ==============================================
 #  BMS - BagusMediaServer Raspberry Pi Launcher
-#  Versi Stabil — Full Fix NGINX Static Alias
+#  FINAL VERSION — AUTO STATIC NGINX + AUTO INSTALL
 # ==============================================
 
+
 echo "=== BMS - BagusMediaServer Launcher ==="
-echo "Sistem: Raspberry Pi"
 echo ""
 
-# Nama folder untuk Virtual Environment
-VENV_DIR="venv"
+# ----------------------------------------------------------
+# 0. DETEKSI FOLDER PROJECT OTOMATIS
+# ----------------------------------------------------------
+PROJECT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+STATIC_DIR="$PROJECT_DIR/app/static"
+
+echo "[i] Project Directory: $PROJECT_DIR"
+echo "[i] Static Directory : $STATIC_DIR"
+echo ""
+
 
 # ----------------------------------------------------------
-# 1. CEGAH ROOT
+# 1. CEGAH JALAN SEBAGAI ROOT
 # ----------------------------------------------------------
 if [[ $EUID -eq 0 ]]; then
-    echo "[!] Script dijalankan sebagai root!"
-    echo "    Jalankan sebagai user biasa (pi)."
+    echo "[!] Jangan jalankan script ini sebagai root!"
     exit 1
 fi
+
 
 # ----------------------------------------------------------
 # 2. AUTO INSTALL NGINX & SUPERVISOR
 # ----------------------------------------------------------
-echo ""
 echo "=== Mengecek kebutuhan sistem ==="
-
-echo "[+] Update package list..."
 sudo apt update -y
 
 # Install Nginx
 if ! command -v nginx &> /dev/null; then
-    echo "[+] Menginstall Nginx..."
+    echo "[+] Menginstall NGINX..."
     sudo apt install -y nginx
-    echo "[✓] Nginx terinstall."
 else
-    echo "[✓] Nginx sudah terpasang."
+    echo "[✓] NGINX sudah ada."
 fi
 
 # Install Supervisor
 if ! command -v supervisorctl &> /dev/null; then
     echo "[+] Menginstall Supervisor..."
     sudo apt install -y supervisor
-    echo "[✓] Supervisor terinstall."
 else
-    echo "[✓] Supervisor sudah terpasang."
+    echo "[✓] Supervisor sudah ada."
 fi
 
-echo "=== Sistem siap digunakan ==="
 echo ""
 
-# ----------------------------------------------------------
-# 3. CEK RASPBERRY PI
-# ----------------------------------------------------------
-if ! grep -q "Raspberry Pi" /proc/device-tree/model 2>/dev/null; then
-    echo "[!] Sistem bukan Raspberry Pi!"
-    read -p "Lanjutkan? (y/N): " ans
-    [[ $ans =~ ^[Yy]$ ]] || exit 1
-fi
 
 # ----------------------------------------------------------
-# 4. BUAT VENV
+# 3. CEK & BUAT VENV
 # ----------------------------------------------------------
+VENV_DIR="venv"
+
 if [ ! -d "$VENV_DIR" ]; then
-    echo "[+] Membuat virtual environment..."
-    python3 -m venv $VENV_DIR || {
-        echo "[!] Gagal membuat virtual environment!"
-        exit 1
-    }
+    echo "[+] Membuat Virtual Environment..."
+    python3 -m venv $VENV_DIR
 else
-    echo "[✓] Virtual environment ditemukan."
+    echo "[✓] Virtual Environment ditemukan."
 fi
 
-# ----------------------------------------------------------
-# 5. AKTIVASI VENV
-# ----------------------------------------------------------
-echo "[+] Mengaktifkan virtual environment..."
-source $VENV_DIR/bin/activate || {
-    echo "[!] Gagal mengaktifkan venv!"
-    exit 1
-}
 
 # ----------------------------------------------------------
-# 6. INSTALL REQUIREMENTS
+# 4. AKTIVASI VENV
+# ----------------------------------------------------------
+echo "[+] Mengaktifkan venv..."
+source "$VENV_DIR/bin/activate"
+
+
+# ----------------------------------------------------------
+# 5. INSTALL REQUIREMENTS
 # ----------------------------------------------------------
 echo "[+] Update pip..."
 pip install --upgrade pip setuptools wheel
 
 if [ -f "requirements.txt" ]; then
-    echo "[+] Menginstall requirements..."
-    pip install -r requirements.txt || echo "[!] Ada error saat install dependencies."
+    echo "[+] Install dependencies..."
+    pip install -r requirements.txt
 else
-    echo "[!] requirements.txt tidak ditemukan."
+    echo "[!] File requirements.txt tidak ditemukan."
 fi
 
-# ----------------------------------------------------------
-# 7. INFO HARDWARE
-# ----------------------------------------------------------
-echo ""
-echo "========= INFO RASPBERRY PI ========="
 
-if command -v vcgencmd &> /dev/null; then
+# ----------------------------------------------------------
+# 6. INFO SISTEM
+# ----------------------------------------------------------
+IP_ADDR=$(hostname -I | awk '{print $1}')
+if command -v vcgencmd &>/dev/null; then
     CPU_TEMP=$(vcgencmd measure_temp | cut -d= -f2)
 else
     CPU_TEMP="N/A"
 fi
-echo "[i] CPU Temp    : $CPU_TEMP"
 
-MEM_FREE=$(free -h | awk '/^Mem:/ {print $4}')
-echo "[i] RAM Bebas   : $MEM_FREE"
-
-IP_ADDR=$(hostname -I | awk '{print $1}')
-echo "[i] IP Address  : $IP_ADDR"
-
-echo "====================================="
+echo ""
+echo "=========== INFO RASPBERRY PI ==========="
+echo "[i] IP Address : $IP_ADDR"
+echo "[i] CPU Temp   : $CPU_TEMP"
+echo "========================================="
 echo ""
 
+
 # ----------------------------------------------------------
-# 8. PILIH MODE
+# 7. MENU MODE JALAN
 # ----------------------------------------------------------
-echo "Mode:"
+echo "Pilih Mode:"
 echo "1) Development"
 echo "2) Production (NGINX + Gunicorn)"
 echo "3) Supervisord"
 echo "4) Test"
 echo ""
+
 read -p "Pilihan [1-4]: " MODE
 echo ""
 
+
 case $MODE in
 
-# ----------------------------------------------------------
-# MODE 1 - DEVELOPMENT
-# ----------------------------------------------------------
+# ==========================================================
+# MODE 1 — DEVELOPMENT
+# ==========================================================
 1)
     echo "=== MODE DEVELOPMENT ==="
-    echo "Server di: http://$IP_ADDR:5000"
-    echo "CTRL + C untuk menghentikan"
-    gunicorn -w 2 --threads 2 -b 0.0.0.0:5000 --timeout 120 "app:create_app()"
+    echo "Akses: http://$IP_ADDR:5000"
+    gunicorn -w 2 --threads 2 -b 0.0.0.0:5000 "app:create_app()"
     ;;
 
-# ----------------------------------------------------------
-# MODE 2 - PRODUCTION (NGINX + GUNICORN)
-# ----------------------------------------------------------
+
+# ==========================================================
+# MODE 2 — PRODUCTION
+# ==========================================================
 2)
-    echo "=== MODE PRODUCTION ==="
+    echo "=== MODE PRODUCTION (NGINX + GUNICORN) ==="
 
     NGINX_CONF="bms_server"
 
-    echo "[+] Membuat konfigurasi NGINX..."
-
+    # Buat konfigurasi nginx dengan placeholder STATIC_PATH_FIX
     sudo tee /etc/nginx/sites-available/$NGINX_CONF > /dev/null << EOF
 server {
     listen 80;
@@ -168,42 +158,37 @@ server {
     }
 
     location /static {
-        alias $(pwd)/app/static;
+        alias STATIC_PATH_FIX;
         try_files \$uri \$uri/ =404;
         expires 30d;
     }
 }
 EOF
 
+    # Ganti placeholder STATIC_PATH_FIX dengan path static asli
+    sudo sed -i "s|STATIC_PATH_FIX|$STATIC_DIR|g" /etc/nginx/sites-available/$NGINX_CONF
+
+    # Enable config
     sudo ln -sf /etc/nginx/sites-available/$NGINX_CONF /etc/nginx/sites-enabled/
 
-    echo "[+] Testing config..."
-    sudo nginx -t || exit 1
-
-    echo "[+] Restarting NGINX..."
+    # Reload nginx
+    sudo nginx -t
     sudo systemctl restart nginx
 
-    echo "[+] Menjalankan Gunicorn (daemon)..."
+    echo "[+] Menjalankan Gunicorn..."
     gunicorn -w 3 --threads 2 -b 127.0.0.1:5000 \
         --daemon --pid /tmp/gunicorn.pid \
         --access-logfile /tmp/gunicorn_access.log \
         --error-logfile /tmp/gunicorn_error.log \
         "app:create_app()"
 
-    echo "[✓] Gunicorn berjalan (PID: \$(cat /tmp/gunicorn.pid))"
-    echo "Akses: http://$IP_ADDR"
-
-    read -p "Tekan Enter untuk menghentikan server..."
-
-    echo "[+] Shutdown server..."
-    kill $(cat /tmp/gunicorn.pid 2>/dev/null)
-    sudo systemctl stop nginx
-    echo "[✓] Server dimatikan."
+    echo "Akses sekarang: http://$IP_ADDR"
     ;;
 
-# ----------------------------------------------------------
-# MODE 3 - SUPERVISORD
-# ----------------------------------------------------------
+
+# ==========================================================
+# MODE 3 — SUPERVISORD
+# ==========================================================
 3)
     echo "=== MODE SUPERVISORD ==="
 
@@ -211,42 +196,43 @@ EOF
 
     cat > bms_supervisor.conf << EOF
 [program:bms_gunicorn]
-directory=$(pwd)
-command=$(pwd)/$VENV_DIR/bin/gunicorn -w 3 --threads 2 -b 127.0.0.1:5000 --timeout 120 "app:create_app()"
+directory=$PROJECT_DIR
+command=$PROJECT_DIR/$VENV_DIR/bin/gunicorn -w 3 --threads 2 -b 127.0.0.1:5000 "app:create_app()"
 user=$USER
 autostart=true
 autorestart=true
-stderr_logfile=$(pwd)/logs/gunicorn_err.log
-stdout_logfile=$(pwd)/logs/gunicorn_out.log
-environment=PATH="$(pwd)/$VENV_DIR/bin"
+stderr_logfile=$PROJECT_DIR/logs/gunicorn_err.log
+stdout_logfile=$PROJECT_DIR/logs/gunicorn_out.log
+environment=PATH="$PROJECT_DIR/$VENV_DIR/bin"
 EOF
 
-    echo "[✓] File dibuat: bms_supervisor.conf"
-    echo "Install di supervisor:"
-    echo "  sudo cp bms_supervisor.conf /etc/supervisor/conf.d/bms.conf"
-    echo "  sudo supervisorctl reread"
-    echo "  sudo supervisorctl update"
-    echo "  sudo supervisorctl start bms_gunicorn"
+    echo "[✓] File supervisor dibuat: bms_supervisor.conf"
+    echo "Install:"
+    echo " sudo cp bms_supervisor.conf /etc/supervisor/conf.d/bms.conf"
+    echo " sudo supervisorctl reread"
+    echo " sudo supervisorctl update"
+    echo " sudo supervisorctl start bms_gunicorn"
     ;;
 
-# ----------------------------------------------------------
-# MODE 4 - TEST
-# ----------------------------------------------------------
+
+# ==========================================================
+# MODE 4 — TEST
+# ==========================================================
 4)
-    echo "=== MODE TEST ==="
+    echo "=== TEST MODE ==="
     echo "Gunicorn manual:"
     echo "gunicorn -w 2 -b 0.0.0.0:5000 app:create_app"
     ;;
 
 *)
-    echo "[!] Pilihan salah, mode development aktif."
-    gunicorn -w 2 -b 0.0.0.0:5000 "app:create_app()"
+    echo "Pilihan tidak valid."
     ;;
 esac
 
-deactivate 2>/dev/null
 
+# ----------------------------------------------------------
+# DEACTIVATE VENV
+# ----------------------------------------------------------
+deactivate 2>/dev/null
 echo ""
-echo "======================================"
-echo " BMS Launcher selesai"
-echo "======================================"
+echo "=== BMS Launcher Selesai ==="
