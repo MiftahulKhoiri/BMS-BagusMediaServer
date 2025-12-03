@@ -85,6 +85,101 @@ print("=== Tahap 2 selesai — Environment siap ===")
 print("")
 
 
+# ============================================================
+# 5. MODE SERVER (Tahap 3)
+# ============================================================
+
+def get_python_in_venv():
+    """Mencari python di dalam venv otomatis untuk semua OS."""
+    # Windows
+    win_path = os.path.join(VENV_DIR, "Scripts", "python.exe")
+    # Linux / Mac / Termux
+    unix_path = os.path.join(VENV_DIR, "bin", "python")
+
+    if os.path.exists(win_path):
+        return win_path
+    return unix_path
+
+
+VENV_PY = get_python_in_venv()
+
+
 # ------------------------------------------------------------
-# Launcher belum selesai — Mode server akan ditambahkan di Tahap 3
+# MODE: DEVELOPMENT
 # ------------------------------------------------------------
+def run_development():
+    print("=== MODE DEVELOPMENT ===")
+
+    # Di Linux: gunakan gunicorn jika ada
+    if env["os"] == "linux" and env["has_gunicorn"]:
+        cmd = f"{VENV_PY} -m gunicorn -w 2 --threads 2 -b 0.0.0.0:5000 BMS:create_app()"
+        print("[i] Server Development: Gunicorn (Linux)")
+    
+    # Non-Linux pakai waitress
+    else:
+        cmd = f"{VENV_PY} -m waitress --listen=0.0.0.0:5000 BMS:create_app"
+        print("[i] Server Development: Waitress (Cross-platform)")
+
+    run(cmd)
+
+
+# ------------------------------------------------------------
+# MODE: PRODUCTION
+# ------------------------------------------------------------
+def run_production():
+    print("=== MODE PRODUCTION ===")
+
+    # Jika Linux, gunakan Gunicorn full power
+    if env["os"] == "linux":
+        cmd = (
+            f"{VENV_PY} -m gunicorn -w 3 --threads 3 "
+            f"-b 0.0.0.0:5000 BMS:create_app()"
+        )
+        print("[i] Production menggunakan Gunicorn (Linux)")
+
+    else:
+        # Selain Linux → fallback ke waitress
+        cmd = f"{VENV_PY} -m waitress --listen=0.0.0.0:5000 BMS:create_app"
+        print("[i] Production fallback (Waitress)")
+
+    run(cmd)
+
+
+# ------------------------------------------------------------
+# 6. MENU MODE JALAN
+# ------------------------------------------------------------
+
+def show_menu():
+    print("Pilih Mode:")
+    print("1) Development")
+    print("2) Production")
+    print("3) Info Environment")
+    print("4) Exit")
+    print("")
+
+    pilih = input("Pilihan [1-4]: ").strip()
+
+    if pilih == "1":
+        run_development()
+
+    elif pilih == "2":
+        run_production()
+
+    elif pilih == "3":
+        pretty_print(env)
+
+    elif pilih == "4":
+        print("Keluar...")
+        sys.exit(0)
+
+    else:
+        print("Pilihan tidak valid.")
+
+
+# ============================================================
+# JALANKAN MENU
+# ============================================================
+show_menu()
+
+print("")
+print("=== Tahap 3 selesai — Server berjalan ===")
