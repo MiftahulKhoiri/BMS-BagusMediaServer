@@ -17,6 +17,7 @@ from .BMS_profile import profile
 from .BMS_filemanager_premium import fm_premium
 from .BMS_systeminfo import systeminfo
 from .BMS_terminal import terminal
+from app.routes.BMS_power import BMS_power
 
 
 # =======================================================
@@ -45,6 +46,7 @@ def register_blueprints(app):
 
     app.register_blueprint(systeminfo)
     app.register_blueprint(terminal)
+    app.register_blueprint(BMS_power)
 
     print(">> Semua Blueprint BMS berhasil terdaftar!")
 
