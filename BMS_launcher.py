@@ -262,6 +262,99 @@ def run_production():
         print("[i] Production fallback (Waitress non-Linux)")
 
     run(cmd)
+
+# ============================================================
+# 6 — SYSTEM MONITORING (CROSS PLATFORM)
+# ============================================================
+
+import time
+import socket
+
+def get_ip():
+    try:
+        return socket.gethostbyname(socket.gethostname())
+    except:
+        return "Unknown"
+
+
+def get_cpu_temp():
+    if env["is_rpi"] and env["has_vcgencmd"]:
+        out = os.popen("vcgencmd measure_temp").read().strip()
+        return out.replace("temp=", "")
+    return "Not supported"
+
+
+def get_uptime():
+    if env["os"] == "linux":
+        with open("/proc/uptime") as f:
+            seconds = float(f.read().split()[0])
+            hours = seconds / 3600
+            return f"{hours:.2f} jam"
+    return "Not supported"
+
+
+def get_cpu_load():
+    if env["os"] == "linux":
+        load1, load5, load15 = os.getloadavg()
+        return f"{load1}, {load5}, {load15}"
+    return "Not supported"
+
+
+def get_memory_usage():
+    if env["os"] == "linux":
+        meminfo = {}
+        with open("/proc/meminfo") as f:
+            for line in f:
+                key, val = line.split(":")
+                meminfo[key] = int(val.strip().split()[0])
+        total = meminfo["MemTotal"] // 1024
+        free = meminfo["MemAvailable"] // 1024
+        used = total - free
+        return f"{used}MB / {total}MB"
+    return "Not supported"
+
+
+def check_port_5000():
+    import socket
+    s = socket.socket()
+    try:
+        s.settimeout(0.5)
+        s.connect(("127.0.0.1", 5000))
+        s.close()
+        return "Aktif"
+    except:
+        return "Mati"
+
+
+def check_gunicorn():
+    if env["os"] != "linux":
+        return "Not available"
+    out = os.popen("pgrep gunicorn").read().strip()
+    return "Aktif" if out else "Mati"
+
+
+def check_supervisor():
+    if env["os"] != "linux":
+        return "Not available"
+    out = os.popen("sudo supervisorctl status BMS").read().strip()
+    if "RUNNING" in out:
+        return "Running"
+    return "Stopped / Not installed"
+
+
+def monitoring():
+    print("====== BMS SYSTEM MONITORING ======")
+    print(f"OS                 : {env['os']}")
+    print(f"IP Address         : {get_ip()}")
+    print(f"CPU Temperature    : {get_cpu_temp()}")
+    print(f"CPU Load (1/5/15)  : {get_cpu_load()}")
+    print(f"Memory Usage       : {get_memory_usage()}")
+    print(f"Uptime             : {get_uptime()}")
+    print("-----------------------------------")
+    print(f"Port 5000 Status   : {check_port_5000()}")
+    print(f"Gunicorn Status    : {check_gunicorn()}")
+    print(f"Supervisor Status  : {check_supervisor()}")
+    print("===================================")
 # ------------------------------------------------------------
 # 6. MENU MODE JALAN
 # ------------------------------------------------------------
