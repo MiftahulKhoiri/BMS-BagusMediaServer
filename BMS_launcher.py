@@ -517,9 +517,10 @@ def show_menu():
     print("5) Exit")
     print("6) Monitoring System")
     print("7) Update System")
+    print("8) Auto Repair System")
     print("")
 
-    pilih = input("Pilihan [1-7]: ").strip()
+    pilih = input("Pilihan [1-8]: ").strip()
 
     if pilih == "1":
         run_development()
@@ -542,6 +543,9 @@ def show_menu():
 
     elif pilih == "7":
         auto_update()
+
+    elif pilih == "8":
+        auto_repair()
 
     else:
         print("Pilihan tidak valid.")
