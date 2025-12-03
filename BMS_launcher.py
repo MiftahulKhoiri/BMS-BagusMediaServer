@@ -418,6 +418,88 @@ def auto_update():
     restart_services()
 
     print("====== UPDATE SELESAI ======")
+
+# ============================================================
+# 8 — AUTO REPAIR SYSTEM (Cross Platform & Linux Enhancements)
+# ============================================================
+
+def repair_gunicorn():
+    print("[i] Memperbaiki Gunicorn...")
+
+    # Hentikan Gunicorn
+    run("pkill gunicorn")
+
+    # Hapus PID file jika ada
+    if os.path.exists("/tmp/gunicorn.pid"):
+        run("sudo rm /tmp/gunicorn.pid")
+
+    print("[✓] Gunicorn diperbaiki.")
+
+
+def repair_port_5000():
+    print("[i] Membersihkan port 5000...")
+
+    if env["os"] == "linux":
+        run("sudo fuser -k 5000/tcp")
+    else:
+        # Cross OS method
+        run("kill -9 $(lsof -t -i:5000)")  # Windows mungkin skip
+    print("[✓] Port 5000 dibersihkan.")
+
+
+def repair_supervisor():
+    if env["os"] != "linux":
+        print("[!] Supervisor tidak tersedia di OS ini.")
+        return
+
+    print("[i] Memperbaiki Supervisor...")
+
+    run("sudo supervisorctl reread")
+    run("sudo supervisorctl update")
+    run("sudo supervisorctl restart BMS")
+
+    print("[✓] Supervisor diperbaiki.")
+
+
+def repair_nginx():
+    if env["os"] != "linux":
+        print("[!] Nginx hanya tersedia di Linux.")
+        return
+
+    print("[i] Memeriksa konfigurasi Nginx...")
+    run("sudo nginx -t")
+
+    print("[i] Restarting Nginx...")
+    run("sudo systemctl restart nginx")
+
+    print("[✓] Nginx diperbaiki.")
+
+
+def repair_permissions():
+    print("[i] Menyetel ulang permission folder proyek...")
+    run(f"sudo chmod -R 755 {PROJECT_DIR}")
+    print("[✓] Permission diperbaiki.")
+
+
+def auto_repair():
+    print("====== BMS AUTO REPAIR ======")
+
+    # 1. Perbaiki Gunicorn
+    repair_gunicorn()
+
+    # 2. Bersihkan port 5000
+    repair_port_5000()
+
+    # 3. Perbaiki Supervisor (Linux only)
+    repair_supervisor()
+
+    # 4. Perbaiki Nginx (Linux only)
+    repair_nginx()
+
+    # 5. Perbaiki permission
+    repair_permissions()
+
+    print("====== PERBAIKAN SELESAI ======")
 # ------------------------------------------------------------
 # 6. MENU MODE JALAN
 # ------------------------------------------------------------
