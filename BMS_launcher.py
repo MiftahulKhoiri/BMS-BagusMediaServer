@@ -370,9 +370,10 @@ def show_menu():
     print("3) Info Environment")
     print("4) Setup Supervisor (Linux)")
     print("5) Exit")
+    print("6) Monitoring System")
     print("")
 
-    pilih = input("Pilihan [1-5]: ").strip()
+    pilih = input("Pilihan [1-6]: ").strip()
 
     if pilih == "1":
         run_development()
@@ -389,6 +390,9 @@ def show_menu():
     elif pilih == "5":
         print("Keluar...")
         sys.exit(0)
+
+    elif pilih == "6":
+        monitoring()
 
     else:
         print("Pilihan tidak valid.")
