@@ -122,6 +122,55 @@ def run_development():
 
     run(cmd)
 
+# ============================================================
+# 5 — SUPERVISOR INTEGRASI (LINUX ONLY)
+# ============================================================
+
+def setup_supervisor():
+    if env["os"] != "linux":
+        print("[!] Supervisor hanya tersedia di Linux.")
+        return
+
+    print("=== Setup Supervisor ===")
+
+    SUPERVISOR_CONF = "/etc/supervisor/conf.d/BMS.conf"
+    LOG_DIR = os.path.join(PROJECT_DIR, "logs")
+
+    # Buat folder logs jika belum ada
+    if not os.path.exists(LOG_DIR):
+        os.makedirs(LOG_DIR)
+        print("[+] Folder logs dibuat.")
+
+    # Path python di venv
+    supervisor_python = VENV_PY
+
+    config = f"""
+[program:BMS]
+directory={PROJECT_DIR}
+command={supervisor_python} -m gunicorn -w 3 --threads 3 -b 127.0.0.1:5000 BMS:create_app()
+autostart=true
+autorestart=true
+stderr_logfile={LOG_DIR}/gunicorn_err.log
+stdout_logfile={LOG_DIR}/gunicorn_out.log
+environment=PATH="{os.path.join(PROJECT_DIR, 'venv', 'bin')}"
+"""
+
+    # Tulis file config
+    with open("BMS_supervisor_temp.conf", "w") as f:
+        f.write(config)
+
+    print("[+] Membuat file supervisor...")
+    run(f"sudo cp BMS_supervisor_temp.conf {SUPERVISOR_CONF}")
+    os.remove("BMS_supervisor_temp.conf")
+
+    print("[+] Reload supervisor...")
+    run("sudo supervisorctl reread")
+    run("sudo supervisorctl update")
+
+    print("[+] Start BMS process...")
+    run("sudo supervisorctl start BMS")
+
+    print("[✓] Supervisor berhasil dikonfigurasi.")
 
 # ------------------------------------------------------------
 # MODE: PRODUCTION
