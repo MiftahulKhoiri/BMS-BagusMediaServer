@@ -266,15 +266,20 @@ def run_production():
 # 6. MENU MODE JALAN
 # ------------------------------------------------------------
 
+# ============================================================
+# 5 — SUPERVISOR INTEGRASI (LINUX ONLY)
+# ============================================================
+
 def show_menu():
     print("Pilih Mode:")
     print("1) Development")
     print("2) Production")
     print("3) Info Environment")
-    print("4) Exit")
+    print("4) Setup Supervisor (Linux)")
+    print("5) Exit")
     print("")
 
-    pilih = input("Pilihan [1-4]: ").strip()
+    pilih = input("Pilihan [1-5]: ").strip()
 
     if pilih == "1":
         run_development()
@@ -286,12 +291,14 @@ def show_menu():
         pretty_print(env)
 
     elif pilih == "4":
+        setup_supervisor()
+
+    elif pilih == "5":
         print("Keluar...")
         sys.exit(0)
 
     else:
         print("Pilihan tidak valid.")
-
 
 # ============================================================
 # JALANKAN MENU
