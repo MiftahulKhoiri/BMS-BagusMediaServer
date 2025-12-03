@@ -1,23 +1,28 @@
 #!/usr/bin/env python3
-# launcher.py - Entrypoint BMS Launcher modular
 
-import os
+"""
+BMS Launcher (FINAL UNIVERSAL VERSION)
+Aman untuk: Linux, Raspberry Pi OS Bookworm, Termux, Windows, macOS.
+"""
+
 import sys
 from BMS_detect import detect, pretty_print
 
 # Import core modules
-from core.env_tools import project_root, venv_path, get_python_in_venv, create_venv, install_requirements
-from core.system_tools import run
+from core.env_tools import (
+    project_root, venv_path, create_venv,
+    get_python_in_venv, install_requirements
+)
 from core.server_dev import run_development
 from core.server_prod import run_production
-from core.nginx_tools import generate_nginx_config, reload_nginx
 from core.supervisor_tools import setup_supervisor
 from core.monitor_tools import monitoring
 from core.update_tools import auto_update
 from core.repair_tools import auto_repair
 
+
 # ------------------------------------------------------------
-# 0. Detect environment
+# 0. DETECT ENVIRONMENT
 # ------------------------------------------------------------
 env = detect()
 
@@ -25,33 +30,45 @@ print("=== BMS Environment Info ===")
 pretty_print(env)
 print("")
 
+
 # ------------------------------------------------------------
-# Paths
+# 1. PATH SETUP
 # ------------------------------------------------------------
 PROJECT_DIR = project_root()
 VENV_DIR = venv_path()
-VENV_PY = get_python_in_venv(VENV_DIR)
-PY_EXEC = sys.executable
 
 print(f"[i] PROJECT_DIR : {PROJECT_DIR}")
 print(f"[i] VENV_DIR    : {VENV_DIR}")
+print("")
+
+
+# ------------------------------------------------------------
+# 2. SETUP VENV
+# ------------------------------------------------------------
+VENV_PY = get_python_in_venv(VENV_DIR)
+
+if not VENV_PY:
+    print("[!] venv tidak ditemukan, membuat baru...")
+    create_venv(sys.executable)
+    VENV_PY = get_python_in_venv(VENV_DIR)
+
 print(f"[i] VENV_PY     : {VENV_PY}")
 print("")
 
-# ------------------------------------------------------------
-# Ensure venv exists
-# ------------------------------------------------------------
-if not os.path.exists(VENV_DIR):
-    create_venv(PY_EXEC)
-else:
-    print("[✓] venv ditemukan.")
 
-# Install requirements (safe)
+# ------------------------------------------------------------
+# 3. INSTALL REQUIREMENTS (SELALU DI VENV)
+# ------------------------------------------------------------
+print("[+] Upgrade pip di venv...")
 install_requirements(VENV_PY)
+
+print("")
+print("=== Environment siap ===")
 print("")
 
+
 # ------------------------------------------------------------
-# Menu
+# 4. MENU UTAMA
 # ------------------------------------------------------------
 def show_menu():
     print("Pilih Mode:")
@@ -93,7 +110,14 @@ def show_menu():
         auto_repair(env, PROJECT_DIR)
 
     else:
-        print("Pilihan tidak valid.")
+        print("[!] Pilihan tidak valid.")
 
+
+# ------------------------------------------------------------
+# 5. RUN MENU
+# ------------------------------------------------------------
 if __name__ == "__main__":
     show_menu()
+
+print("")
+print("=== Launcher selesai ===")
