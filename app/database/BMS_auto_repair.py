@@ -50,24 +50,27 @@ def ensure_root_user():
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
 
-    cur.execute("SELECT id FROM users WHERE username='root'")
-    user = cur.fetchone()
+    # Cek apakah user 'root' sudah ada
+    cur.execute("SELECT id FROM users WHERE username = ?", ("root",))
+    exists = cur.fetchone()
 
-    if not user:
-        from werkzeug.security import generate_password_hash
-        pw_hash = generate_password_hash("root123")
+    if exists:
+        print("[DB FIX] User root sudah ada. Tidak membuat ulang.")
+        conn.close()
+        return
 
-        cur.execute("""
-            INSERT INTO users (username, password, role, nama)
-            VALUES ('root', ?, 'root', 'System Root')
-        """, (pw_hash,))
+    # Jika belum ada, buat baru
+    from werkzeug.security import generate_password_hash
+    pw_hash = generate_password_hash("root123")
 
-        print("[DB FIX] User ROOT dibuat: username=root password=root123")
-    else:
-        print("[DB FIX] User ROOT sudah ada.")
+    cur.execute("""
+        INSERT INTO users (username, password, role, nama)
+        VALUES (?, ?, ?, ?)
+    """, ("root", pw_hash, "root", "System Root"))
 
     conn.commit()
     conn.close()
+    print("[DB FIX] User ROOT berhasil dibuat.")
 
 # ======================================================
 # 3. TABEL FOLDERS (BARU)
