@@ -13,14 +13,19 @@ def venv_path():
 def get_python_in_venv(venv_dir=None):
     if venv_dir is None:
         venv_dir = venv_path()
-    win_py = os.path.join(venv_dir, "Scripts", "python.exe")
-    unix_py = os.path.join(venv_dir, "bin", "python")
-    if os.path.exists(win_py):
-        return win_py
-    if os.path.exists(unix_py):
-        return unix_py
-    # fallback ke python global
-    return sys.executable
+
+    candidates = [
+        os.path.join(venv_dir, "Scripts", "python.exe"),  # Windows
+        os.path.join(venv_dir, "bin", "python3"),         # Linux / Raspberry Pi
+        os.path.join(venv_dir, "bin", "python"),          # Termux / Mac OS lama
+    ]
+
+    for c in candidates:
+        if os.path.exists(c):
+            return c
+
+    # tidak ada venv
+    return None
 
 def create_venv(python_exec=None):
     if python_exec is None:
