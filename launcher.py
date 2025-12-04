@@ -70,19 +70,20 @@ print("")
 # ------------------------------------------------------------
 # 4. MENU UTAMA
 # ------------------------------------------------------------
+
 def show_menu():
     print("Pilih Mode:")
     print("1) Development")
     print("2) Production")
     print("3) Info Environment")
     print("4) Setup Supervisor (Linux)")
-    print("5) Exit")
-    print("6) Monitoring System")
-    print("7) Update System")
-    print("8) Auto Repair System")
+    print("5) Monitoring System")
+    print("6) Update System")
+    print("7) Auto Repair System")
+    print("0) Exit")
     print("")
 
-    pilih = input("Pilihan [1-8]: ").strip()
+    pilih = input("Pilihan [1-7]: ").strip()
 
     if pilih == "1":
         run_development(env, VENV_PY)
@@ -97,21 +98,20 @@ def show_menu():
         setup_supervisor(env, PROJECT_DIR, VENV_PY)
 
     elif pilih == "5":
-        print("Keluar...")
-        sys.exit(0)
-
-    elif pilih == "6":
         monitoring(env)
 
-    elif pilih == "7":
+    elif pilih == "6":
         auto_update(env, PROJECT_DIR)
-
-    elif pilih == "8":
+        
+    elif pilih == "7":
         auto_repair(env, PROJECT_DIR)
 
+    elif pilih == "0":
+        print("Keluar...")
+        sys.exit(0)
+        
     else:
         print("[!] Pilihan tidak valid.")
-
 
 # ------------------------------------------------------------
 # 5. RUN MENU
