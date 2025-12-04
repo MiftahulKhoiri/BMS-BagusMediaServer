@@ -9,7 +9,7 @@ from app.routes.BMS_logger import BMS_write_log
 
 media_mp3 = Blueprint("media_mp3", __name__, url_prefix="/mp3")
 
-os.makedirs(MP3_FOLDER, exist_ok=True)
+os.makedirs(MUSIC_FOLDER, exist_ok=True)
 
 
 # ======================================================
