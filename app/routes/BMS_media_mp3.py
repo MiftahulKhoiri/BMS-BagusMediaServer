@@ -46,7 +46,7 @@ def scan_storage_for_mp3():
         "/storage/emulated/0/Download",
         "/storage/emulated/0/WhatsApp/Media",
         "/storage/emulated/0/",
-        MP3_FOLDER
+        MUSIC_FOLDER
     ]
 
     found = []
