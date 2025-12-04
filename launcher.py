@@ -117,7 +117,8 @@ def show_menu():
 # 5. RUN MENU
 # ------------------------------------------------------------
 if __name__ == "__main__":
-    show_menu()
+    while True:
+        show_menu()
 
 print("")
 print("=== Launcher selesai ===")
