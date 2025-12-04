@@ -13,22 +13,15 @@ main = Blueprint("main", __name__)
 #  HALAMAN UTAMA ("/")
 # ===============================
 
-@main.route("/")
-def BMS_main_home():
+    @app.main("/")
+    def BMS_home():
 
-    # 1. Jika belum ada user sama sekali → langsung ke Register ROOT
-    if not BMS_auth_has_users():
-        return redirect("/auth/register")
+        if "user_id" not in session:
+            return render_template("BMS_welcome.html")
 
-    # 2. Jika user sudah login → arahkan sesuai role
-    if BMS_auth_is_login():
+        role = session.get("role", "user")
 
-        # ROOT → Dash Admin
-        if BMS_auth_is_root() or BMS_auth_is_admin():
-            return redirect("/admin/dashboard")
+        if role in ("root", "admin"):
+            return redirect("/admin/home")
 
-        # USER → Dashboard User
         return redirect("/user/home")
-
-    # 3. Jika belum login → arahkan ke Login
-    return redirect("/auth/login")
