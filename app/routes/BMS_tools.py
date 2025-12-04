@@ -43,12 +43,64 @@ def BMS_tools_run(command):
 
 @tools.route("/restart")
 def BMS_tools_restart():
+
+    # 1. ROOT CHECK
     if not BMS_tools_is_root():
         return "Akses ditolak!"
 
-    BMS_tools_write_log("SERVER RESTARTED")
-    return "Server restart (simulasi)"
+    BMS_tools_write_log("SERVER RESTART DIPANGGIL")
 
+    results = {}
+
+    # ---------------------------------------------------
+    # 2. STOP GUNICORN
+    # ---------------------------------------------------
+    ok, msg = stop_gunicorn()
+    results["gunicorn_stop"] = msg
+
+    # ---------------------------------------------------
+    # 3. STOP NGINX (OPSIONAL)
+    # ---------------------------------------------------
+    ok2, msg2 = stop_nginx()
+    results["nginx_stop"] = msg2
+
+    # ---------------------------------------------------
+    # 4. START NGINX
+    # ---------------------------------------------------
+    code_nginx = os.system("sudo systemctl start nginx")
+    if code_nginx == 0:
+        results["nginx_start"] = "NGINX berhasil dijalankan."
+    else:
+        results["nginx_start"] = "Gagal menjalankan NGINX!"
+
+    # ---------------------------------------------------
+    # 5. START GUNICORN (DAEMON MODE)
+    # ---------------------------------------------------
+    # Lokasi virtualenv (otomatis)
+    VENV_PY = os.path.join(os.path.expanduser("~"), "BMS-BagusMediaServer/venv/bin/python3")
+    GUNICORN_CMD = (
+        f"{VENV_PY} -m gunicorn "
+        "-w 3 --threads 3 -b 127.0.0.1:5000 "
+        "--daemon --pid /tmp/gunicorn.pid "
+        "--access-logfile /tmp/gunicorn_access.log "
+        "--error-logfile /tmp/gunicorn_error.log "
+        "wsgi:application"
+    )
+
+    code_guni = os.system(GUNICORN_CMD)
+
+    if code_guni == 0:
+        results["gunicorn_start"] = "Gunicorn berhasil dijalankan (daemon mode)."
+    else:
+        results["gunicorn_start"] = "Gagal menjalankan Gunicorn!"
+
+    # ---------------------------------------------------
+    # 6. RESPONSE JSON
+    # ---------------------------------------------------
+    return jsonify({
+        "status": "restart_selesai",
+        "detail": results
+    })
 
 # =====================================
 #  STOP GUNICORN
