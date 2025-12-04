@@ -1,10 +1,8 @@
 import os
 import signal
-from flask import jsonify
-from app.routes.BMS_auth import BMS_auth_is_root
-from app.routes.BMS_logger import BMS_write_log
+import subprocess
 from flask import Blueprint, request, jsonify, session
-import subprocess, os
+from app.routes.BMS_logger import BMS_write_log
 
 tools = Blueprint("tools", __name__, url_prefix="/tools")
 
@@ -21,13 +19,13 @@ def BMS_tools_is_root():
 
 
 def BMS_tools_write_log(message):
-    """Simpan log ke file"""
+    """Simpan log ke file tools"""
     with open(LOG_FILE, "a") as f:
         f.write(message + "\n")
 
 
 def BMS_tools_run(command):
-    """Menjalankan perintah shell"""
+    """Menjalankan perintah shell dan menyimpan log"""
     try:
         output = subprocess.check_output(command, stderr=subprocess.STDOUT, shell=True)
         result = output.decode()
@@ -38,8 +36,9 @@ def BMS_tools_run(command):
         BMS_tools_write_log("ERROR: " + error_msg)
         return error_msg
 
+
 # =====================================
-#  RESTART SERVER
+#  RESTART SERVER (AKAN DI-UPGRADE)
 # =====================================
 
 @tools.route("/restart")
@@ -47,13 +46,12 @@ def BMS_tools_restart():
     if not BMS_tools_is_root():
         return "Akses ditolak!"
 
-    # Catatan: restart flask dev server hanya simulasi
     BMS_tools_write_log("SERVER RESTARTED")
     return "Server restart (simulasi)"
 
 
 # =====================================
-#  SHUTDOWN SERVER
+#  STOP GUNICORN
 # =====================================
 
 def stop_gunicorn():
@@ -67,23 +65,31 @@ def stop_gunicorn():
         with open(pid_file, "r") as f:
             pid = int(f.read().strip())
 
-        os.kill(pid, signal.SIGTERM)  # sama seperti CTRL+C
+        os.kill(pid, signal.SIGTERM)  # soft shutdown
         return True, f"Gunicorn dimatikan (PID {pid})."
 
     except Exception as e:
         return False, f"Gagal menghentikan Gunicorn: {e}"
 
 
+# =====================================
+#  STOP NGINX
+# =====================================
+
 def stop_nginx():
     """Stop nginx jika tersedia."""
     code = os.system("sudo systemctl stop nginx")
     if code == 0:
         return True, "NGINX berhasil dihentikan."
-    return False, "Gagal menghentikan NGINX (mungkin tidak sedang aktif)."
+    return False, "Gagal menghentikan NGINX."
 
+
+# =====================================
+#  STOP FLASK DEV SERVER
+# =====================================
 
 def stop_flask_dev():
-    """Stop Flask dev server (hanya untuk debugging mode)."""
+    """Stop Flask dev server (hanya untuk debugging)."""
     try:
         func = request.environ.get("werkzeug.server.shutdown")
         if func:
@@ -94,30 +100,30 @@ def stop_flask_dev():
         return False, f"Gagal menghentikan Flask dev server: {e}"
 
 
-# ==============================================================
-#   ENDPOINT SHUTDOWN SERVER (FLEKSIBEL)
-# ==============================================================
+# =====================================
+#  SHUTDOWN SERVER (WINNER FUNCTION)
+# =====================================
 
 @tools.route("/shutdown")
 def BMS_tools_shutdown():
 
-    # 1) Cek apakah ROOT
-    if not BMS_auth_is_root():
+    # ROOT check
+    if not BMS_tools_is_root():
         return "Akses ditolak!"
 
-    BMS_write_log("SERVER SHUTDOWN DIPANGGIL")
+    BMS_tools_write_log("SERVER SHUTDOWN DIPANGGIL")
 
     results = {}
 
-    # 2) Matikan Gunicorn
+    # Stop Gunicorn
     ok, msg = stop_gunicorn()
     results["gunicorn"] = msg
 
-    # 3) Matikan NGINX (jika ada)
+    # Stop NGINX
     ok2, msg2 = stop_nginx()
     results["nginx"] = msg2
 
-    # 4) Matikan Flask dev server (jika sedang dipakai)
+    # Stop Flask (optional)
     ok3, msg3 = stop_flask_dev()
     results["flask_dev"] = msg3
 
