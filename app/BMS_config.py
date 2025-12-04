@@ -111,7 +111,7 @@ print("[BMS CONFIG] BASE Detected:", BASE)
 DB_FOLDER       = os.path.join(BASE, "database")
 LOG_FOLDER      = os.path.join(BASE, "logs")
 PROFILE_FOLDER  = os.path.join(BASE, "profile")
-MP3_FOLDER      = os.path.join(BASE, "music")
+MUSIC_FOLDER      = os.path.join(BASE, "music")
 VIDEO_FOLDER    = os.path.join(BASE, "video")
 UPLOAD_FOLDER   = os.path.join(BASE, "upload")
 
