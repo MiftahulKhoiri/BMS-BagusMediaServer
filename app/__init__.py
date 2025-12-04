@@ -71,13 +71,6 @@ def create_app():
         if "user_id" not in session:
             return render_template("BMS_welcome.html")
 
-        role = session.get("role", "user")
-
-        if role in ("root", "admin"):
-            return redirect("/admin/home")
-
-        return redirect("/user/home")
-
     return app
 
 
