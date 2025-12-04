@@ -17,7 +17,7 @@ def setup_supervisor(env: dict, project_dir: str, venv_python: str):
     config = f"""
 [program:BMS]
 directory={project_dir}
-command={venv_python} -m gunicorn -w 3 --threads 3 -b 127.0.0.1:5000 BMS:create_app()
+command={venv_python} -m gunicorn -w 3 --threads 3 -b 127.0.0.1:5000 app:create_app()
 autostart=true
 autorestart=true
 stderr_logfile={LOG_DIR}/gunicorn_err.log
