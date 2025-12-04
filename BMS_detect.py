@@ -79,7 +79,7 @@ def detect():
         info["recommended_prod"] = "gunicorn"
 
     elif info["is_rpi"]:
-        info["recommended_prod"] = "gunicorn"
+        info["recommended_prod"] = "waitress"
 
     elif info["os"] == "termux":
         info["recommended_prod"] = "waitress"   # wajib di Termux
