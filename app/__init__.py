@@ -7,7 +7,13 @@ from flask_sock import Sock    # <-- WAJIB ADA
 from app.BMS_config import BASE
 
 # Auto repair DB
-from app.database.BMS_auto_repair import ensure_users_table, ensure_root_user, ensure_videos_table, ensure_folders_table, ensure_mp3_tables
+from app.database.BMS_auto_repair import (
+    ensure_users_table,
+    ensure_root_user,
+    ensure_videos_table,
+    ensure_folders_table,
+    ensure_mp3_tables
+)
 
 # Import Blueprint register
 from app.routes import register_blueprints
@@ -54,13 +60,13 @@ def create_app():
     register_blueprints(app)
 
     # ==================================================================
-    # REGISTER WEBSOCKET (Hal terpenting agar tombol UPDATE jalan)
+    # REGISTER WEBSOCKET (Agar tombol UPDATE berjalan)
     # ==================================================================
     sock = Sock(app)
     register_ws(sock)
 
     print(">> BMS Flask App berhasil dibuat!")
-    print(f">> BASE Folder: {BASE}")
+    print(f">> BASE Folder : {BASE}")
 
     # ==================================================================
     # HOME
@@ -68,8 +74,16 @@ def create_app():
     @app.route("/")
     def BMS_home():
 
+        # Jika belum login → tampilkan halaman welcome
         if "user_id" not in session:
             return render_template("BMS_welcome.html")
+
+        # Jika login sebagai ROOT
+        if session.get("role") == "root":
+            return render_template("BMSadmin_home.html")
+
+        # Jika login sebagai USER biasa
+        return render_template("BMSuser_home.html")
 
     return app
 
