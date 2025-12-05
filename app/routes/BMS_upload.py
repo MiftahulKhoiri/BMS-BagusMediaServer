@@ -306,3 +306,13 @@ def cleanup_stale_uploads():
                 try: os.remove(temp)
                 except: pass
             del upload_sessions[sid]
+
+# ROUTES ui upload 
+
+@fm_premium.route("/upload")
+def fm_upload_ui():
+    check = fm_auth()
+    if check: 
+        return check
+
+    return render_template("BMS_upload.html")
