@@ -15,6 +15,7 @@ from .BMS_media_video import media_video
 from .BMS_update import update
 from .BMS_profile import profile
 from .BMS_filemanager_premium import fm_premium
+from .BMS_upload import upload
 from .BMS_systeminfo import systeminfo
 from .BMS_terminal import terminal
 from app.routes.BMS_power import BMS_power
@@ -43,6 +44,7 @@ def register_blueprints(app):
 
     # FileManager Premium
     app.register_blueprint(fm_premium)
+    app.register_blueprint(upload)
 
     app.register_blueprint(systeminfo)
     app.register_blueprint(terminal)
