@@ -2,19 +2,27 @@
 import os
 import subprocess
 import shutil
+import shlex
 
-def run(cmd: str, check: bool = False):
+def run(cmd: str):
     """
-    Jalankan perintah shell dan tampilkan output.
-    Jika check=True, raise CalledProcessError saat gagal.
+    Menjalankan perintah dan menampilkan output log secara real-time.
     """
-    print(f"[cmd] {cmd}")
-    result = subprocess.run(cmd, shell=True)
-    if result.returncode != 0:
-        print(f"[!] Command error (code {result.returncode}): {cmd}")
-        if check:
-            raise subprocess.CalledProcessError(result.returncode, cmd)
-    return result.returncode
+    print(f"[RUN] {cmd}\n")
+
+    process = subprocess.Popen(
+        shlex.split(cmd),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.STDOUT,
+        bufsize=1,
+        universal_newlines=True
+    )
+
+    # STREAM REAL-TIME
+    for line in process.stdout:
+        print(line, end="")  # langsung tampil ke terminal
+
+    process.wait()
 
 
 def fix_permissions(path: str):
