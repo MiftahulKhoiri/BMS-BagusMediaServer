@@ -1,4 +1,7 @@
 
+
+
+upload = Blueprint("uplad", __name__, url_prefix="/upload")
 # ===================================================================
 #  PREMIUM CHUNK UPLOAD (FINAL OPTIMAL VERSION)
 # ===================================================================
@@ -24,7 +27,7 @@ def safe_internal(*paths):
 # ===================================================================
 # START UPLOAD
 # ===================================================================
-@fm_premium.route("/upload_chunk/start", methods=["POST"])
+@upload.route("/upload_chunk/start", methods=["POST"])
 def fm_chunk_start():
     check = fm_auth()
     if check: return check
@@ -75,7 +78,7 @@ def fm_chunk_start():
 # ===================================================================
 # APPEND CHUNK
 # ===================================================================
-@fm_premium.route("/upload_chunk/append", methods=["POST"])
+@upload.route("/upload_chunk/append", methods=["POST"])
 def fm_chunk_append():
     check = fm_auth()
     if check: return check
@@ -137,7 +140,7 @@ def fm_chunk_append():
 # ===================================================================
 # FINISH UPLOAD
 # ===================================================================
-@fm_premium.route("/upload_chunk/finish", methods=["POST"])
+@upload.route("/upload_chunk/finish", methods=["POST"])
 def fm_chunk_finish():
     check = fm_auth()
     if check: return check
@@ -241,7 +244,7 @@ def fm_chunk_finish():
 # ===================================================================
 # CANCEL UPLOAD
 # ===================================================================
-@fm_premium.route("/upload_chunk/cancel", methods=["POST"])
+@upload.route("/upload_chunk/cancel", methods=["POST"])
 def fm_chunk_cancel():
     check = fm_auth()
     if check: return check
@@ -265,7 +268,7 @@ def fm_chunk_cancel():
 # ===================================================================
 # STATUS UPLOAD
 # ===================================================================
-@fm_premium.route("/upload_chunk/status")
+@upload.route("/upload_chunk/status")
 def fm_chunk_status():
     check = fm_auth()
     if check: return check
@@ -309,7 +312,7 @@ def cleanup_stale_uploads():
 
 # ROUTES ui upload 
 
-@fm_premium.route("/upload")
+@upload.route("/upload/ui")
 def fm_upload_ui():
     check = fm_auth()
     if check: 
