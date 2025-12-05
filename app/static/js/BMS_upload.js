@@ -1,147 +1,132 @@
-let uploads = {}; // session per file
+let isPaused = false;
+let isRestart = false;
 
-function startMultiUpload() {
-    let files = document.getElementById("fileInput").files;
-    if (!files.length) return alert("Pilih file dulu!");
+// ===============================
+// START UPLOAD
+// ===============================
+function startUpload() {
+    isPaused = false;
+    isRestart = false;
 
-    document.getElementById("upload-list").innerHTML = "";
+    let mode = document.getElementById("mode").value;
+    let files = document.getElementById("file-input").files;
 
-    [...files].forEach(file => {
-        createUploadCard(file);
-        startUpload(file);
-    });
-}
-
-function createUploadCard(file) {
-    let html = `
-        <div class="file-item" id="file-${file.name}">
-            <strong>${file.name}</strong>
-            <div class="progress-bar">
-                <div class="progress-inner" id="progress-${file.name}"></div>
-            </div>
-            <p id="status-${file.name}">Menunggu...</p>
-            <button onclick="cancelUpload('${file.name}')">Batalkan</button>
-        </div>
-    `;
-    document.getElementById("upload-list").innerHTML += html;
-}
-
-async function startUpload(file) {
-    document.getElementById(`status-${file.name}`).innerText = "Inisialisasi...";
-
-    // ==== START SESSION ====
-    let form = new FormData();
-    form.append("name", file.name);
-    form.append("total_size", file.size);
-    form.append("file_md5", "");
-
-    let startRes = await fetch("/filemanager/upload_chunk/start", {
-        method: "POST",
-        body: form
-    });
-
-    let startData = await startRes.json();
-
-    if (!startData.session_id) {
-        document.getElementById(`status-${file.name}`).innerText = "Gagal start!";
+    if (files.length === 0) {
+        alert("Pilih file dulu!");
         return;
     }
 
-    uploads[file.name] = {
-        session_id: startData.session_id,
-        chunk_size: startData.recommended_chunk_size,
-        index: 0,
-        uploading: true
-    };
-
-    uploadChunks(file);
+    if (mode === "single") {
+        uploadSingle(files[0]);
+    } else {
+        uploadMulti(files);
+    }
 }
 
-async function uploadChunks(file) {
-    let up = uploads[file.name];
-    let chunkSize = up.chunk_size;
+// ===============================
+// PAUSE / RESUME / RESTART
+// ===============================
+function pauseUpload() {
+    isPaused = true;
+    document.getElementById("status").innerText = "Upload dijeda...";
+}
 
-    while (up.uploading) {
-        let start = up.index * chunkSize;
-        let end = Math.min(start + chunkSize, file.size);
+function resumeUpload() {
+    isPaused = false;
+    document.getElementById("status").innerText = "Upload dilanjutkan...";
+}
 
-        let chunk = file.slice(start, end);
+function restartUpload() {
+    isRestart = true;
+    document.getElementById("status").innerText = "Upload diulang...";
+}
+
+
+// ===============================
+// MULTI UPLOAD — Sequential
+// ===============================
+async function uploadMulti(files) {
+    for (let i = 0; i < files.length; i++) {
+        if (isRestart) break;
+
+        document.getElementById("status").innerText =
+            `Upload file ${i + 1} dari ${files.length}: ${files[i].name}`;
+
+        await uploadSingle(files[i]);
+    }
+
+    if (!isRestart)
+        document.getElementById("status").innerText = "SEMUA FILE SELESAI!";
+}
+
+
+// ===============================
+// UPLOAD SINGLE FILE (Chunk)
+// ===============================
+async function uploadSingle(file) {
+    updateProgress(0);
+
+    let startForm = new FormData();
+    startForm.append("name", file.name);
+    startForm.append("total_size", file.size);
+
+    let startRes = await fetch("/upload/upload_chunk/start", {
+        method: "POST",
+        body: startForm
+    });
+
+    let startData = await startRes.json();
+    let session_id = startData.session_id;
+
+    let chunkSize = 1024 * 1024;
+    let chunkIndex = 0;
+
+    for (let start = 0; start < file.size; start += chunkSize) {
+
+        while (isPaused) {
+            await wait(200);
+        }
+        if (isRestart) return;
+
+        let chunk = file.slice(start, start + chunkSize);
 
         let form = new FormData();
-        form.append("session_id", up.session_id);
-        form.append("chunk_index", up.index);
-        form.append("total_chunks", Math.ceil(file.size / chunkSize));
+        form.append("session_id", session_id);
+        form.append("chunk_index", chunkIndex);
         form.append("chunk", chunk);
 
-        let res = await fetch("/filemanager/upload_chunk/append", {
+        let res = await fetch("/upload/upload_chunk/append", {
             method: "POST",
             body: form
         });
 
-        let json = await res.json();
+        let data = await res.json();
+        updateProgress(data.progress);
 
-        if (json.error) {
-            document.getElementById(`status-${file.name}`).innerText =
-                "Error: " + json.error;
-            up.uploading = false;
-            return;
-        }
-
-        // Progress update
-        document.getElementById(`progress-${file.name}`).style.width =
-            json.progress + "%";
-
-        document.getElementById(`status-${file.name}`).innerText =
-            "Uploaded: " + json.progress + "%";
-
-        up.index++;
-
-        if (end >= file.size) break;
-
-        await new Promise(r => setTimeout(r, 30));
+        chunkIndex++;
+        await wait(50);
     }
 
-    finishUpload(file);
-}
+    let finishForm = new FormData();
+    finishForm.append("session_id", session_id);
+    finishForm.append("final_filename", file.name);
 
-async function finishUpload(file) {
-    let up = uploads[file.name];
-
-    let form = new FormData();
-    form.append("session_id", up.session_id);
-    form.append("final_filename", file.name);
-
-    let res = await fetch("/filemanager/upload_chunk/finish", {
+    await fetch("/upload/upload_chunk/finish", {
         method: "POST",
-        body: form
+        body: finishForm
     });
 
-    let json = await res.json();
-
-    if (json.status === "finished") {
-        document.getElementById(`progress-${file.name}`).style.width = "100%";
-        document.getElementById(`status-${file.name}`).innerText = "Selesai ✓";
-    } else {
-        document.getElementById(`status-${file.name}`).innerText = "Gagal finish!";
-    }
-
-    up.uploading = false;
+    document.getElementById("status").innerText = `${file.name} selesai!`;
 }
 
-async function cancelUpload(filename) {
-    let up = uploads[filename];
-    if (!up) return;
 
-    up.uploading = false;
+// ===============================
+// UTIL
+// ===============================
+function updateProgress(p) {
+    document.getElementById("progress-bar").style.width = p + "%";
+}
 
-    let form = new FormData();
-    form.append("session_id", up.session_id);
-
-    await fetch("/filemanager/upload_chunk/cancel", {
-        method: "POST",
-        body: form
-    });
-
-    document.getElementById(`status-${filename}`).innerText = "Dibatalkan!";
-    document.getElementById(`progress-${filename}`).style.width = "0%";
+function wait(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
