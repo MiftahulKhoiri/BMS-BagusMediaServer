@@ -1,47 +1,55 @@
 body {
-    background: #0d1117;
-    color: #e6edf3;
-    font-family: Arial;
+    background: #0f172a;
+    color: white;
+    font-family: Arial, sans-serif;
     padding: 20px;
 }
 
-#upload-box {
-    padding: 20px;
-    background: #161b22;
-    border: 1px solid #30363d;
-    width: 400px;
+h2 {
+    margin-bottom: 10px;
 }
 
-input, button {
+.card {
+    background: #1e293b;
+    padding: 20px;
+    border-radius: 10px;
+    max-width: 600px;
+    margin-bottom: 20px;
+}
+
+button {
     margin-top: 10px;
-    padding: 10px;
-    width: 100%;
-    background: #21262d;
-    border: 1px solid #30363d;
-    color: #fff;
+    padding: 10px 18px;
+    background: #38bdf8;
+    border: none;
+    border-radius: 6px;
+    color: black;
+    cursor: pointer;
+    font-size: 14px;
 }
 
-#upload-list {
+button:hover {
+    background: #0ea5e9;
+}
+
+.progress-box {
     margin-top: 20px;
-}
-
-.file-item {
-    background: #161b22;
-    padding: 15px;
-    border: 1px solid #30363d;
-    margin-bottom: 15px;
+    background: #334155;
+    border-radius: 5px;
+    height: 22px;
+    width: 100%;
+    overflow: hidden;
 }
 
 .progress-bar {
-    background: #30363d;
-    height: 20px;
-    width: 100%;
-    margin-top: 10px;
-}
-
-.progress-inner {
     height: 100%;
     width: 0%;
-    background: #00ffae;
-    transition: width 0.2s;
+    background: #38bdf8;
+    transition: width .2s;
+}
+
+.status-box {
+    margin-top: 10px;
+    font-size: 14px;
+    color: #a5f3fc;
 }
