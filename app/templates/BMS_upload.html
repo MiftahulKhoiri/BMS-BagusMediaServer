@@ -1,20 +1,40 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>BMS Upload Premium</title>
+    <title>BMS Premium Upload</title>
+
     <link rel="stylesheet" href="/static/css/BMS_upload.css">
 </head>
 <body>
 
-<h2>⚡ BMS Premium Upload (Multi File)</h2>
+<h2>BMS Premium Upload Manager</h2>
 
-<div id="upload-box">
-    <input type="file" id="fileInput" multiple>
-    <button onclick="startMultiUpload()">Unggah Semua</button>
+<div class="card">
+    <label>Pilih Mode Upload:</label><br>
+
+    <select id="mode">
+        <option value="single">Upload Satu File</option>
+        <option value="multi">Upload Banyak File</option>
+    </select>
+
+    <br><br>
+
+    <input type="file" id="file-input" multiple>
+
+    <br><br>
+
+    <button onclick="startUpload()">Mulai Upload</button>
+    <button onclick="pauseUpload()">⏸ Pause</button>
+    <button onclick="resumeUpload()">▶ Resume</button>
+    <button onclick="restartUpload()">↺ Restart</button>
+
+    <div id="status" class="status-box"></div>
+
+    <div class="progress-box">
+        <div class="progress-bar" id="progress-bar"></div>
+    </div>
 </div>
-
-<div id="upload-list"></div>
 
 <script src="/static/js/BMS_upload.js"></script>
 
