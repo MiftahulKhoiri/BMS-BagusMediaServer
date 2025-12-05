@@ -1,11 +1,6 @@
 from core.system_tools import run
 
 def run_development(env: dict, venv_python: str):
-    """
-    Jalankan server development dengan log error tampil di terminal.
-    - Gunicorn → pakai debug log + stdio inheritance
-    - Waitress → show exceptions
-    """
     print("=== DEVELOPMENT MODE ===")
 
     if env.get("os") == "linux" and env.get("has_gunicorn"):
@@ -18,15 +13,13 @@ def run_development(env: dict, venv_python: str):
             "--enable-stdio-inheritance "
             "wsgi:application"
         )
-        print("[i] Menjalankan Gunicorn (development dengan FULL LOG).")
-
+        print("[i] Menjalankan Gunicorn dengan real-time log.")
     else:
         cmd = (
             f"{venv_python} -m waitress "
             "--listen=0.0.0.0:5000 "
-            "--asyncore-use-poll "
             "wsgi:application"
         )
-        print("[i] Menjalankan Waitress (development fallback dengan log).")
+        print("[i] Menjalankan Waitress dengan real-time log.")
 
-    run(cmd)
+    run(cmd)  # << REAL-TIME OUTPUT
