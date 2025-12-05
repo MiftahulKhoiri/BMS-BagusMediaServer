@@ -1,37 +1,59 @@
+/* =======================
+   GLOBAL
+======================= */
 body {
     background: #0f172a;
     color: white;
     font-family: Arial, sans-serif;
-    padding: 20px;
+    padding: 15px;
+    margin: 0;
 }
 
+/* Header */
 h2 {
-    margin-bottom: 10px;
+    margin-bottom: 12px;
+    text-align: center;
+    font-size: 1.6rem;
 }
 
+/* =======================
+   CARD / CONTAINER
+======================= */
 .card {
     background: #1e293b;
     padding: 20px;
-    border-radius: 10px;
+    border-radius: 15px;
+
     max-width: 600px;
-    margin-bottom: 20px;
+    width: 100%;
+    margin: 0 auto;
+    box-shadow: 0 4px 10px rgba(0,0,0,.4);
 }
 
+/* =======================
+   BUTTON
+======================= */
 button {
     margin-top: 10px;
-    padding: 10px 18px;
+    padding: 10px 16px;
     background: #38bdf8;
     border: none;
     border-radius: 6px;
-    color: black;
+    color: #000;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 1rem;
+    width: 100%; /* FULL WIDTH ON MOBILE */
+    display: block;
+    margin-bottom: 8px;
 }
 
 button:hover {
     background: #0ea5e9;
 }
 
+/* =======================
+   PROGRESS BAR
+======================= */
 .progress-box {
     margin-top: 20px;
     background: #334155;
@@ -45,11 +67,65 @@ button:hover {
     height: 100%;
     width: 0%;
     background: #38bdf8;
-    transition: width .2s;
+    transition: width .3s;
 }
 
 .status-box {
-    margin-top: 10px;
-    font-size: 14px;
+    margin-top: 15px;
+    text-align: center;
+    font-size: 1rem;
     color: #a5f3fc;
+}
+
+/* =======================
+   RESPONSIVE RULES
+======================= */
+
+/* HP & MOBILE SCREEN */
+@media (max-width: 480px) {
+    h2 {
+        font-size: 1.3rem;
+    }
+
+    .card {
+        padding: 15px;
+        border-radius: 12px;
+    }
+
+    button {
+        font-size: 0.95rem;
+        padding: 10px;
+    }
+
+    .progress-box {
+        height: 20px;
+    }
+}
+
+/* TABLET */
+@media (min-width: 481px) and (max-width: 900px) {
+    h2 {
+        font-size: 1.5rem;
+    }
+
+    .card {
+        max-width: 500px;
+    }
+
+    button {
+        font-size: 1rem;
+    }
+}
+
+/* PC / DESKTOP */
+@media (min-width: 901px) {
+    .card {
+        max-width: 600px;
+    }
+
+    button {
+        width: auto;        /* On PC buttons tidak full width */
+        display: inline-block;
+        margin-right: 8px;
+    }
 }
