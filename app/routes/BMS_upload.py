@@ -335,7 +335,7 @@ def fm_chunk_status():
 # ===============================================================
 # UI ROUTE
 # ===============================================================
-@upload.route("/upload/ui")
+@upload.route("/ui")
 def fm_upload_ui():
     check = fm_auth()
     if check:
