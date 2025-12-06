@@ -138,4 +138,4 @@ def admin_stats():
     users = conn.execute("SELECT role, COUNT(*) as jumlah FROM users GROUP BY role").fetchall()
     conn.close()
 
-    return render_template("BMS_admin_stats.html", users=users)
+    return render_template("BMS_admin_home.html", users=users)
