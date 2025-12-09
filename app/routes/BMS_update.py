@@ -15,9 +15,6 @@ from app.routes.BMS_logger import BMS_write_log
 from app.BMS_config import BASE, BMS_load_version, BMS_save_version
 
 
-# =========================================================
-#  SETUP BLUEPRINT & PATHS
-# =========================================================
 update = Blueprint("update", __name__, url_prefix="/update")
 
 UPDATE_PATH = os.path.join(BASE, "UPDATE")
@@ -28,17 +25,16 @@ os.makedirs(BACKUP_PATH, exist_ok=True)
 
 
 # =========================================================
-#  HELPER: CEK HAK AKSES UPDATE
+#  HELPER: Validasi Hak Akses Update
 # =========================================================
-def BMS_update_required_simple():
-    """Cek apakah user boleh update (admin/root)."""
+def BMS_update_required():
     if not BMS_auth_is_login():
         return False
     return BMS_auth_is_admin() or BMS_auth_is_root()
 
 
 # =========================================================
-#  CEK UPDATE via GitHub API
+#  CHECK UPDATE ONLINE via GitHub API
 # =========================================================
 GITHUB_API_COMMITS = (
     "https://api.github.com/repos/MiftahulKhoiri/"
@@ -46,30 +42,23 @@ GITHUB_API_COMMITS = (
 )
 
 def BMS_check_update():
-    """Cek commit terbaru GitHub & bandingkan dengan versi lokal."""
     local_info = BMS_load_version()
-    local_commit = local_info.get("commit", "local")
+    local_commit = local_info.get("commit", None)
     local_version = local_info.get("version", "1.0.0")
 
     try:
-        response = requests.get(GITHUB_API_COMMITS, timeout=5)
-        response.raise_for_status()
+        r = requests.get(GITHUB_API_COMMITS, timeout=5)
+        r.raise_for_status()
 
-        data = response.json()[0]
+        data = r.json()[0]
         remote_commit = data["sha"]
-        remote_message = data["commit"]["message"]
-        remote_date = data["commit"]["author"]["date"]
-
-        update_available = (remote_commit != local_commit)
 
         return {
             "success": True,
-            "local_version": local_version,
             "local_commit": local_commit,
+            "local_version": local_version,
             "remote_commit": remote_commit,
-            "remote_message": remote_message,
-            "remote_date": remote_date,
-            "update_available": update_available
+            "update_available": (remote_commit != local_commit)
         }
 
     except Exception as e:
@@ -78,13 +67,13 @@ def BMS_check_update():
 
 @update.route("/check-api")
 def check_update_api():
-    if not BMS_update_required_simple():
+    if not BMS_update_required():
         return jsonify({"error": "Akses ditolak"}), 403
     return jsonify(BMS_check_update())
 
 
 # =========================================================
-#  DOWNLOAD ZIP UPDATE TERBARU
+#  DOWNLOAD ZIP UPDATE
 # =========================================================
 GITHUB_ZIP_URL = (
     "https://github.com/MiftahulKhoiri/"
@@ -93,31 +82,48 @@ GITHUB_ZIP_URL = (
 
 @update.route("/start-download")
 def start_download():
-    if not BMS_update_required_simple():
-        return jsonify({"error": "Akses ditolak"}), 403
+    if not BMS_update_required():
+        return jsonify({"error": "Tidak ada izin"}), 403
 
     zip_path = os.path.join(UPDATE_PATH, "update_latest.zip")
 
     try:
-        r = requests.get(GITHUB_ZIP_URL, stream=True)
+        r = requests.get(GITHUB_ZIP_URL, stream=True, timeout=10)
         r.raise_for_status()
 
         with open(zip_path, "wb") as f:
             shutil.copyfileobj(r.raw, f)
 
-        return jsonify({
-            "success": True,
-            "zip_path": zip_path,
-            "message": "Download ZIP update berhasil"
-        })
+        BMS_write_log("Download update ZIP sukses", session.get("username"))
+        return jsonify({"success": True, "zip_path": zip_path})
 
     except Exception as e:
+        BMS_write_log(f"Download update gagal: {e}", "SYSTEM")
         return jsonify({"success": False, "error": str(e)}), 500
 
 
 # =========================================================
-#  EXTRACT ZIP KE FOLDER TEMP
+#  ZIP EXTRACTION (ANTI ZIP-SLIP)
 # =========================================================
+def safe_extract(zip_path, extract_to):
+    """
+    Anti ZIP SLIP — memastikan tidak keluar folder tujuan.
+    """
+    with zipfile.ZipFile(zip_path, 'r') as z:
+        for member in z.infolist():
+
+            # skip version.json (config kamu tetap digunakan)
+            if member.filename.endswith("version.json"):
+                continue
+
+            # normalize path
+            target = os.path.realpath(os.path.join(extract_to, member.filename))
+            if not target.startswith(os.path.realpath(extract_to)):
+                raise Exception("ZIP Slip attempt blocked")
+
+            z.extract(member, extract_to)
+
+
 def extract_update_zip():
     zip_path = os.path.join(UPDATE_PATH, "update_latest.zip")
     temp_extract = os.path.join(UPDATE_PATH, "TEMP_EXTRACT")
@@ -128,101 +134,95 @@ def extract_update_zip():
     os.makedirs(temp_extract, exist_ok=True)
 
     try:
-        with zipfile.ZipFile(zip_path, 'r') as z:
-            for member in z.infolist():
+        safe_extract(zip_path, temp_extract)
 
-                # Hindari error Termux FUSE → file ini tidak boleh di-extract
-                if member.filename.endswith("version.json"):
-                    print("[SKIP] version.json dilewati")
-                    continue
+        # cari folder root hasil extract
+        dirs = [os.path.join(temp_extract, d) for d in os.listdir(temp_extract)]
+        dirs = [d for d in dirs if os.path.isdir(d)]
+        if not dirs:
+            return False, "Gagal mendeteksi folder extract"
 
-                z.extract(member, temp_extract)
-
-        extracted_root = None
-        for name in os.listdir(temp_extract):
-            full = os.path.join(temp_extract, name)
-            if os.path.isdir(full):
-                extracted_root = full
-                break
-
-        return True, extracted_root
+        return True, dirs[0]
 
     except Exception as e:
         return False, str(e)
 
 
 # =========================================================
-#  BACKUP VERSI LAMA
+#  BACKUP CURRENT VERSION (AMAN)
 # =========================================================
+PROTECTED_FOLDERS = {
+    "database",
+    "uploads",
+    "upload",
+    "music",
+    "video",
+    "profile",
+    "logs",
+}
+
+PROTECTED_FILES = {
+    "version.json",
+    ".env",
+    "config.json",
+}
+
 def backup_current_version():
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    backup_file = os.path.join(BACKUP_PATH, f"BMS_backup_{timestamp}.zip")
+    backup_file = os.path.join(BACKUP_PATH, f"backup_{timestamp}.zip")
 
     try:
-        with zipfile.ZipFile(backup_file, 'w', zipfile.ZIP_DEFLATED) as backup_zip:
-            for root, dirs, files in os.walk(BASE):
+        with zipfile.ZipFile(backup_file, 'w', zipfile.ZIP_DEFLATED) as z:
 
-                if "UPDATE" in root or "BACKUP" in root:
-                    continue  # Hindari backup folder update/backup
+            for root, dirs, files in os.walk(BASE):
+                rel = os.path.relpath(root, BASE)
+
+                # skip folder besar/user data
+                if rel.split(os.sep)[0] in PROTECTED_FOLDERS:
+                    continue
 
                 for file in files:
-                    filepath = os.path.join(root, file)
-                    arcname = os.path.relpath(filepath, BASE)
-                    backup_zip.write(filepath, arcname)
+                    if file in PROTECTED_FILES:
+                        continue
+                    z.write(os.path.join(root, file),
+                            arcname=os.path.join(rel, file))
 
         return True, backup_file
 
     except Exception as e:
         return False, str(e)
 
-PROTECTED_FOLDERS = [
-    "database",
-    "uploads",
-    "uploads/mp3",
-    "uploads/video",
-    "instance"
-]
-PROTECTED_FILES = [
-    "config.json",
-    "version.json",
-    ".env"
-]
-# =========================================================
-#  REPLACE FILE PROJECT DENGAN FILE BARU
-# =========================================================
-def replace_with_new_version(extracted_root):
-    """Smart replace: aman, melewati folder & file penting."""
 
+# =========================================================
+#  SAFE REPLACE FILES
+# =========================================================
+def replace_with_new(extracted_root):
     try:
         for root, dirs, files in os.walk(extracted_root):
 
-            rel_path = os.path.relpath(root, extracted_root)
-
-            # PROTEKSI: Lewati folder penting
-            if any(rel_path.startswith(pf) for pf in PROTECTED_FOLDERS):
+            rel = os.path.relpath(root, extracted_root)
+            if rel.split(os.sep)[0] in PROTECTED_FOLDERS:
                 continue
 
-            target_dir = os.path.join(BASE, rel_path)
-            os.makedirs(target_dir, exist_ok=True)
+            dst_dir = os.path.join(BASE, rel)
+            os.makedirs(dst_dir, exist_ok=True)
 
             for file in files:
-                # PROTEKSI: Lewati file penting
                 if file in PROTECTED_FILES:
                     continue
-
                 src = os.path.join(root, file)
-                dst = os.path.join(target_dir, file)
-
+                dst = os.path.join(dst_dir, file)
                 shutil.copy2(src, dst)
 
-        return True, "Replace aman selesai"
-
+        return True, "Replace completed"
     except Exception as e:
         return False, str(e)
 
-def rollback_from_backup(backup_zip):
-    """Restore project dari backup jika update gagal."""
 
+# =========================================================
+#  ROLLBACK jika update gagal
+# =========================================================
+def rollback(backup_zip):
     try:
         temp_restore = os.path.join(UPDATE_PATH, "TEMP_RESTORE")
 
@@ -231,20 +231,20 @@ def rollback_from_backup(backup_zip):
 
         os.makedirs(temp_restore, exist_ok=True)
 
-        # Extract backup
         with zipfile.ZipFile(backup_zip, 'r') as z:
             z.extractall(temp_restore)
 
-        # Replace semua file lama
+        # overwrite kembali
         for root, dirs, files in os.walk(temp_restore):
-            rel_path = os.path.relpath(root, temp_restore)
-            target_dir = os.path.join(BASE, rel_path)
-            os.makedirs(target_dir, exist_ok=True)
+            rel = os.path.relpath(root, temp_restore)
+            dst = os.path.join(BASE, rel)
+            os.makedirs(dst, exist_ok=True)
 
-            for file in files:
-                src = os.path.join(root, file)
-                dst = os.path.join(target_dir, file)
-                shutil.copy2(src, dst)
+            for f in files:
+                if f in PROTECTED_FILES:
+                    continue
+                shutil.copy2(os.path.join(root, f),
+                             os.path.join(dst, f))
 
         return True, "Rollback berhasil"
 
@@ -253,181 +253,46 @@ def rollback_from_backup(backup_zip):
 
 
 # =========================================================
-#  APPLY UPDATE (EXTRACT → BACKUP → REPLACE → UPDATE VERSION)
+#  APPLY UPDATE
 # =========================================================
 @update.route("/apply-update")
 def apply_update():
-    if not BMS_update_required_simple():
-        return jsonify({"error": "Akses ditolak"}), 403
+    if not BMS_update_required():
+        return jsonify({"error": "Tidak ada izin"}), 403
 
-    # Extract
+    # extract
     ok, result = extract_update_zip()
     if not ok:
         return jsonify({"success": False, "step": "extract", "error": result})
+
     extracted_root = result
 
-    # Backup
+    # backup lama
     ok, backup_file = backup_current_version()
     if not ok:
         return jsonify({"success": False, "step": "backup", "error": backup_file})
 
-    # Replace
-    ok, msg = replace_with_new_version(extracted_root)
+    # replace
+    ok, msg = replace_with_new(extracted_root)
     if not ok:
-        rollback_from_backup(backup_file)
+        rollback(backup_file)
         return jsonify({
             "success": False,
             "step": "replace",
             "error": msg,
-            "rollback": "Rollback otomatis dilakukan"
+            "rollback": "Rollback berhasil"
         })
 
-    # Update version.json
-    remote_commit = BMS_check_update()["remote_commit"]
-    BMS_save_version("1.0.0", remote_commit)
+    # update versi.json
+    update_info = BMS_check_update()
+    if update_info["success"]:
+        BMS_save_version("1.0.0", update_info["remote_commit"])
 
-    return jsonify({
-        "success": True,
-        "message": "Update berhasil diterapkan!",
-        "backup_file": backup_file,
-        "new_commit": remote_commit
-    })
+    return jsonify({"success": True, "message": "Update berhasil!"})
 
-# =========================================================
-#  TAMBAHAN: UI Route, Git Updater Lama, Log Commit Lama
-# =========================================================
+
 @update.route("/ui")
-def BMS_update_ui():
-    if not BMS_update_required_simple():
-        return jsonify({"error": "Akses ditolak"}), 403
+def update_ui():
+    if not BMS_update_required():
+        return jsonify({"error": "Tidak ada izin"}), 403
     return render_template("BMS_update.html")
-
-
-@update.route("/check-update")
-def check_update():
-    """Mode lama: cek via git local (git pull)."""
-    try:
-        base_dir = current_app.config.get("PROJECT_ROOT", None)
-        if not base_dir or not os.path.isdir(base_dir):
-            return jsonify({
-                "update_available": False,
-                "error": "PROJECT_ROOT tidak disetting atau tidak ada"
-            }), 500
-
-        subprocess.run(["git", "fetch"], cwd=base_dir)
-        status = subprocess.run(
-            ["git", "status", "-uno"],
-            cwd=base_dir,
-            capture_output=True,
-            text=True
-        )
-
-        update_available = "behind" in status.stdout.lower()
-
-        return jsonify({
-            "update_available": update_available,
-            "output": status.stdout
-        })
-
-    except Exception as e:
-        return jsonify({"update_available": False, "error": str(e)}), 500
-
-
-def safe_reset_before_pull(base_dir):
-    try:
-        subprocess.run(["git", "restore", "."], cwd=base_dir, check=False)
-        subprocess.run(["git", "clean", "-fd"], cwd=base_dir, check=False)
-        return True, "Reset lokal selesai"
-    except Exception as e:
-        return False, str(e)
-
-
-def register_ws(sock):
-
-    @sock.route("/ws/update")
-    def ws_update(ws):
-
-        if not BMS_update_required_simple():
-            ws.send("[ERROR] Tidak punya izin update (admin/root saja)")
-            return
-
-        base_dir = current_app.config.get("PROJECT_ROOT", None)
-        if not base_dir or not os.path.isdir(base_dir):
-            ws.send("[ERROR] PROJECT_ROOT tidak valid")
-            return
-
-        ok, msg = safe_reset_before_pull(base_dir)
-        ws.send(f"[RESET] {msg}")
-        if not ok:
-            ws.send("[ERROR] Reset gagal, update dibatalkan")
-            return
-
-        ws.send("[INFO] Memulai git pull...\n")
-
-        try:
-            proc = subprocess.Popen(
-                ["git", "pull", "--no-edit"],
-                cwd=base_dir,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.STDOUT,
-                text=True,
-                bufsize=1
-            )
-
-            for raw_line in proc.stdout:
-                line = raw_line.strip()
-                if line:
-                    ws.send(line)
-
-            proc.wait()
-            code = proc.returncode
-            username = session.get("username")
-
-            if code == 0:
-                ws.send("[DONE] git pull selesai (exit 0)")
-                BMS_write_log(f"Git pull sukses oleh {username}", username)
-            else:
-                ws.send(f"[ERROR] git pull gagal (exit {code})")
-                BMS_write_log(f"Git pull gagal exit {code}", username)
-
-        except Exception as e:
-            ws.send(f"[ERROR] Exception saat git pull: {e}")
-            BMS_write_log(f"Exception git pull: {e}", username)
-
-        ws.send("[END]")
-
-
-@update.route("/latest-commits")
-def latest_commits():
-    try:
-        base_dir = current_app.config.get("PROJECT_ROOT", None)
-        if not base_dir or not os.path.isdir(base_dir):
-            return jsonify({"error": "PROJECT_ROOT tidak valid"}), 500
-
-        log_cmd = [
-            "git", "log", "-10",
-            "--pretty=format:%h|%an|%ar|%s"
-        ]
-
-        result = subprocess.run(
-            log_cmd,
-            cwd=base_dir,
-            capture_output=True,
-            text=True
-        )
-
-        commits = []
-        for line in result.stdout.splitlines():
-            if "|" in line:
-                short, author, time, msg = line.split("|", 3)
-                commits.append({
-                    "hash": short,
-                    "author": author,
-                    "time": time,
-                    "message": msg
-                })
-
-        return jsonify({"commits": commits})
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
