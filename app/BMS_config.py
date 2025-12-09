@@ -4,23 +4,16 @@ import platform
 import json
 
 # ============================================================
-#  BMS CONFIG — Versi Universal
-#  Otomatis mendeteksi lokasi BASE di:
-#  - Raspberry Pi / Linux Server
-#  - Termux (HP Android)
-#  - Android non-Termux
-#  - Windows
-#  - macOS
+#  BMS CONFIG — Versi Universal (Dirapikan)
+#  Tetap 100% kompatibel Termux & Android
 # ============================================================
 
 VERSION_FILE = os.path.join(os.path.dirname(__file__), "version.json")
 
-
 # ============================================================
-# 1. Fungsi Load & Save Versi Sistem
+# 1. Load & Save Version
 # ============================================================
 def BMS_load_version():
-    """Load versi dan commit dari version.json"""
     try:
         with open(VERSION_FILE, "r") as f:
             return json.load(f)
@@ -29,101 +22,78 @@ def BMS_load_version():
 
 
 def BMS_save_version(version, commit):
-    """Simpan versi ke version.json"""
     data = {"version": version, "commit": commit}
     with open(VERSION_FILE, "w") as f:
         json.dump(data, f, indent=4)
 
 
 # ============================================================
-# 2. Deteksi Apakah Sedang Berjalan di Termux
+# 2. Deteksi TERMUX
 # ============================================================
 def is_termux():
-    """
-    Termux memiliki pola PATH Python yang unik.
-    Jika Python berada di /data/data/com.termux → pasti Termux.
-    """
     exe = sys.executable
     home = os.path.expanduser("~")
 
-    if exe.startswith("/data/data/com.termux/"):
-        return True
-
-    if home.startswith("/data/data/com.termux/"):
-        return True
-
-    return False
+    return (
+        exe.startswith("/data/data/com.termux/") or
+        home.startswith("/data/data/com.termux/")
+    )
 
 
 # ============================================================
-# 3. Deteksi BASE Path (SUPER AKURAT)
+# 3. Deteksi BASE Folder
 # ============================================================
 def detect_bms_base():
 
-    # -------------------------------------------------------
-    # 🟢 1. TERMUX (Android Terminal)
-    # -------------------------------------------------------
+    # 1. TERMUX
     if is_termux():
         return "/data/data/com.termux/files/home/storage/downloads/BMS"
 
-    # -------------------------------------------------------
-    # 🟡 2. ANDROID NON-TERMUX
-    # -------------------------------------------------------
-    if os.path.exists("/storage/emulated/0/Download"):
-        return "/storage/emulated/0/Download/BMS"
+    # 2. ANDROID (non-Termux)
+    possible_android_paths = [
+        "/storage/emulated/0/Download/BMS",
+        "/sdcard/Download/BMS"
+    ]
+    for p in possible_android_paths:
+        if os.path.exists(os.path.dirname(p)):
+            return p
 
-    if os.path.exists("/sdcard/Download"):
-        return "/sdcard/Download/BMS"
-
-    # -------------------------------------------------------
-    # 🔵 3. WINDOWS
-    # -------------------------------------------------------
+    # 3. WINDOWS
     if platform.system().lower() == "windows":
         return os.path.join(os.path.expanduser("~"), "BMS")
 
-    # -------------------------------------------------------
-    # 🟣 4. macOS
-    # -------------------------------------------------------
+    # 4. macOS
     if platform.system().lower() == "darwin":
         return os.path.join(os.path.expanduser("~"), "BMS")
 
-    # -------------------------------------------------------
-    # 🔴 5. SERVER MODE (LINUX / RASPBERRY PI)
-    # -------------------------------------------------------
-    # Ini bagian PALING PENTING untuk server!
-    # BASE otomatis diset ke folder project sebenarnya,
-    # yaitu folder di mana file ini berada.
-    PROJECT_BASE = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-    return PROJECT_BASE
+    # 5. LINUX SERVER
+    project_base = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+    return project_base
 
 
 # ============================================================
 # 4. BASE PATH AKHIR
 # ============================================================
 BASE = detect_bms_base()
-
 print("[BMS CONFIG] BASE Detected:", BASE)
 
 
 # ============================================================
-# 5. DEFINISI FOLDER SISTEM BMS
+# 5. DEFINISI FOLDER
 # ============================================================
 DB_FOLDER       = os.path.join(BASE, "database")
 LOG_FOLDER      = os.path.join(BASE, "logs")
 PROFILE_FOLDER  = os.path.join(BASE, "profile")
-MUSIC_FOLDER      = os.path.join(BASE, "music")
+MUSIC_FOLDER    = os.path.join(BASE, "music")
 VIDEO_FOLDER    = os.path.join(BASE, "video")
 UPLOAD_FOLDER   = os.path.join(BASE, "upload")
 
-# File database utama
 DB_PATH = os.path.join(DB_FOLDER, "users.db")
-
-# File log sistem
 LOG_PATH = os.path.join(LOG_FOLDER, "system.log")
 
 
 # ============================================================
-# 6. BUAT FOLDER-FOLDER JIKA BELUM ADA
+# 6. BUAT FOLDER OTOMATIS
 # ============================================================
 for folder in [
     BASE, DB_FOLDER, LOG_FOLDER,
