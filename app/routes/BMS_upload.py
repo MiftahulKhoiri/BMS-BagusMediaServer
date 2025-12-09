@@ -2,7 +2,6 @@ import os
 import zipfile
 import shutil
 import hashlib
-import tarfile
 import time
 import base64
 import uuid
@@ -13,13 +12,11 @@ from flask import (
     jsonify,
     session,
     send_file,
-    send_from_directory,
     Response,
     render_template
 )
 from werkzeug.utils import secure_filename
 
-# ROOT dan Auth
 from app.BMS_config import BASE
 from app.routes.BMS_auth import (
     BMS_auth_is_login,
@@ -29,29 +26,41 @@ from app.routes.BMS_auth import (
 from app.routes.BMS_logger import BMS_write_log
 
 
-# ===============================================================
-# FIX: BLUEPRINT NAME
-# ===============================================================
 upload = Blueprint("upload", __name__, url_prefix="/upload")
 
-# ROOT folder BMS
-ROOT = BASE
+ROOT = os.path.realpath(BASE)
+UPLOAD_INTERNAL = ".uploads"
+BACKUP_INTERNAL = ".backups"
+
+upload_lock = Lock()
+upload_sessions = {}   # { session_id : {...} }
 
 
-# ===============================================================
-# SAFETY FUNCTION
-# ===============================================================
-def safe(p):
-    """Memastikan path tetap aman dalam ROOT directory."""
-    if not p:
+# ================================================================
+# SAFE PATH VALIDATION
+# ================================================================
+def safe_path(path):
+    """ Pastikan path selalu di bawah ROOT directory. """
+    if not path:
         return ROOT
-    real = os.path.abspath(p)
+    real = os.path.realpath(path)
     if not real.startswith(ROOT):
         return ROOT
     return real
 
 
-# Auth middleware
+def internal_path(*paths):
+    """ Path internal aman (tidak bisa ditraversal) """
+    base = os.path.join(ROOT, *paths)
+    real = os.path.realpath(base)
+    if not real.startswith(ROOT):
+        raise Exception("Blocked path traversal attempt")
+    return real
+
+
+# ================================================================
+# AUTH MIDDLEWARE
+# ================================================================
 def fm_auth():
     if not BMS_auth_is_login():
         return jsonify({"error": "Belum login"}), 403
@@ -60,285 +69,254 @@ def fm_auth():
     return None
 
 
-# ===============================================================
-# INTERNAL STORAGE
-# ===============================================================
-UPLOAD_INTERNAL = ".uploads"
-BACKUP_INTERNAL = ".backups"
-
-upload_sessions = {}
-upload_lock = Lock()
-
-
-def safe_internal(*paths):
-    base = os.path.join(ROOT, *paths)
-    real = os.path.abspath(base)
-    if not real.startswith(ROOT):
-        real = ROOT
-    return real
+# ================================================================
+# DISK SPACE PROTECTION
+# ================================================================
+def check_disk_space(required):
+    """ Pastikan tersedia ruang minimal 2× ukuran file. """
+    stat = shutil.disk_usage(ROOT)
+    free = stat.free
+    return free > (required * 2)  # aman jika ada dua kali kapasitas
 
 
-# ===============================================================
-# START UPLOAD
-# ===============================================================
+# ================================================================
+# START CHUNK SESSION
+# ================================================================
 @upload.route("/upload_chunk/start", methods=["POST"])
-def fm_chunk_start():
-    check = fm_auth()
-    if check:
-        return check
+def upload_start():
+    cek = fm_auth()
+    if cek:
+        return cek
 
-    filename = secure_filename(request.form.get("name"))
-    file_size = int(request.form.get("total_size", 0))
-    file_md5 = request.form.get("file_md5", "")
+    filename = secure_filename(request.form.get("name", "file"))
+    total_size = int(request.form.get("total_size", 0))
+    md5 = request.form.get("file_md5", "")
 
-    # Batas 1GB
-    MAX_SIZE = 1 * 1024 * 1024 * 1024
-    if file_size > MAX_SIZE:
-        return jsonify({"error": "Max file size 1GB"}), 400
+    MAX_SIZE = 2 * 1024 * 1024 * 1024  # 2 GB limit
+    if total_size > MAX_SIZE:
+        return jsonify({"error": "File terlalu besar (maks 2GB)"}), 400
+
+    if not check_disk_space(total_size):
+        return jsonify({"error": "Ruang penyimpanan tidak cukup"}), 507
 
     session_id = str(uuid.uuid4())
-    temp_filename = f"{session_id}_{filename}.part"
-    temp_path = safe_internal(UPLOAD_INTERNAL, temp_filename)
+    temp_name = f"{session_id}_{filename}.part"
+    temp_path = internal_path(UPLOAD_INTERNAL, temp_name)
 
-    os.makedirs(safe_internal(UPLOAD_INTERNAL), exist_ok=True)
+    os.makedirs(internal_path(UPLOAD_INTERNAL), exist_ok=True)
+    open(temp_path, "wb").close()
 
     with upload_lock:
         upload_sessions[session_id] = {
             "filename": filename,
             "temp_path": temp_path,
-            "file_size": file_size,
+            "file_size": total_size,
             "uploaded_size": 0,
             "chunk_count": 0,
-            "file_md5": file_md5,
+            "file_md5": md5,
             "start_time": time.time(),
-            "last_update": time.time(),
-            "user_id": session.get("user_id", "unknown")
+            "user_id": session.get("user_id")
         }
-
-    open(temp_path, "wb").close()
 
     return jsonify({
         "session_id": session_id,
-        "temp": temp_filename,
-        "recommended_chunk_size": 1024 * 1024
+        "temp": temp_name,
+        "recommended_chunk": 1024 * 1024
     })
 
 
-# ===============================================================
+# ================================================================
 # APPEND CHUNK
-# ===============================================================
+# ================================================================
 @upload.route("/upload_chunk/append", methods=["POST"])
-def fm_chunk_append():
-    check = fm_auth()
-    if check:
-        return check
+def upload_append():
+    cek = fm_auth()
+    if cek:
+        return cek
 
     session_id = request.form.get("session_id")
-    chunk_index = int(request.form.get("chunk_index", 0))
+    index = int(request.form.get("chunk_index", 0))
 
     if session_id not in upload_sessions:
-        return jsonify({"error": "Session invalid"}), 400
+        return jsonify({"error": "Session tidak valid"}), 404
 
-    session_data = upload_sessions[session_id]
-    temp_path = session_data["temp_path"]
+    data = upload_sessions[session_id]
+    temp_path = data["temp_path"]
 
     chunk = request.files.get("chunk")
     if not chunk:
-        return jsonify({"error": "Chunk missing"}), 400
+        return jsonify({"error": "Chunk kosong"}), 400
 
-    chunk_data = chunk.read()
+    chunk_bytes = chunk.read()
 
-    expected_index = session_data["chunk_count"]
-    if chunk_index != expected_index:
+    # VALIDASI INDEX
+    if index != data["chunk_count"]:
         return jsonify({
-            "error": "Chunk index mismatch",
-            "expected": expected_index,
-            "got": chunk_index
+            "error": "Index mismatch",
+            "expected": data["chunk_count"],
+            "got": index,
         }), 409
 
-    new_total_size = session_data["uploaded_size"] + len(chunk_data)
-    if new_total_size > session_data["file_size"]:
-        return jsonify({"error": "File size exceeded"}), 400
+    # VALIDASI UKURAN
+    new_size = data["uploaded_size"] + len(chunk_bytes)
+    if new_size > data["file_size"]:
+        return jsonify({"error": "Ukuran file berlebih"}), 400
 
+    # TULIS CHUNK
     try:
         with open(temp_path, "ab", buffering=1048576) as f:
-            f.write(chunk_data)
+            f.write(chunk_bytes)
     except Exception as e:
-        return jsonify({"error": f"Write error: {str(e)}"}), 500
+        return jsonify({"error": str(e)}), 500
 
+    # UPDATE STATUS
     with upload_lock:
-        session_data["uploaded_size"] = new_total_size
-        session_data["chunk_count"] += 1
-        session_data["last_update"] = time.time()
+        data["uploaded_size"] = new_size
+        data["chunk_count"] += 1
 
-    progress = (new_total_size / session_data["file_size"]) * 100
+    progress = (new_size / data["file_size"]) * 100
 
     return jsonify({
         "status": "ok",
         "progress": round(progress, 2),
-        "uploaded_size": new_total_size,
-        "chunk_index": chunk_index
+        "uploaded": new_size,
+        "chunk_index": index
     })
 
 
-# ===============================================================
-# FINISH UPLOAD (AUTO SORT)
-# ===============================================================
+# ================================================================
+# FINISH UPLOAD
+# ================================================================
+CATEGORIES = {
+    "music": [".mp3", ".wav", ".flac", ".aac", ".ogg"],
+    "video": [".mp4", ".mkv", ".mov", ".avi", ".webm", ".flv"],
+    "image": [".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"],
+    "docs":  [".pdf", ".txt", ".docx", ".xlsx", ".csv"],
+    "archive": [".zip", ".rar", ".7z", ".tar", ".gz"],
+}
+
 @upload.route("/upload_chunk/finish", methods=["POST"])
-def fm_chunk_finish():
-    check = fm_auth()
-    if check:
-        return check
+def upload_finish():
+    cek = fm_auth()
+    if cek:
+        return cek
 
     session_id = request.form.get("session_id")
-    final_filename = secure_filename(request.form.get("final_filename"))
+    finalname = secure_filename(request.form.get("final_filename", ""))
 
     if session_id not in upload_sessions:
         return jsonify({"error": "Session invalid"}), 400
 
-    session_data = upload_sessions[session_id]
-    temp_path = session_data["temp_path"]
+    data = upload_sessions[session_id]
+    temp_path = data["temp_path"]
 
-    try:
-        # Verifikasi ukuran
-        actual_size = os.path.getsize(temp_path)
-        if actual_size != session_data["file_size"]:
-            return jsonify({"error": "File size mismatch"}), 400
+    # VALIDASI AKHIR
+    if os.path.getsize(temp_path) != data["file_size"]:
+        return jsonify({"error": "Size mismatch"}), 409
 
-        # Verifikasi MD5
-        if session_data["file_md5"]:
-            file_hash = hashlib.md5()
-            with open(temp_path, "rb") as f:
-                for chunk in iter(lambda: f.read(8192), b""):
-                    file_hash.update(chunk)
-            if file_hash.hexdigest() != session_data["file_md5"]:
-                return jsonify({"error": "MD5 mismatch"}), 400
+    # VALIDASI MD5 (jika diberikan)
+    if data["file_md5"]:
+        h = hashlib.md5()
+        with open(temp_path, "rb") as f:
+            for c in iter(lambda: f.read(8192), b""):
+                h.update(c)
+        if h.hexdigest() != data["file_md5"]:
+            return jsonify({"error": "MD5 tidak cocok"}), 400
 
-        # ----------------------------------------------------------
-        # AUTO SORT
-        # ----------------------------------------------------------
-        ext = os.path.splitext(final_filename)[1].lower()
+    # -------------------------------
+    # SORT KATEGORI FILE
+    # -------------------------------
+    ext = os.path.splitext(finalname)[1].lower()
+    target_dir = "others"
 
-        CATEGORY_MAP = {
-            "music": [".mp3", ".wav", ".flac", ".aac", ".ogg"],
-            "video": [".mp4", ".mkv", ".mov", ".avi", ".flv"],
-            "photo": [".jpg", ".jpeg", ".png", ".gif", ".webp", ".bmp"],
-            "docs": [".pdf", ".txt", ".docx", ".xlsx", ".csv"],
-            "archive": [".zip", ".rar", ".7z", ".tar", ".gz"],
-            "apps": [".apk", ".exe", ".iso"],
-        }
+    for folder, exts in CATEGORIES.items():
+        if ext in exts:
+            target_dir = folder
+            break
 
-        target_folder = "others"
-        for folder, exts in CATEGORY_MAP.items():
-            if ext in exts:
-                target_folder = folder
-                break
+    final_folder = safe_path(os.path.join(ROOT, target_dir))
+    os.makedirs(final_folder, exist_ok=True)
 
-        final_dir = safe(os.path.join(ROOT, target_folder))
-        os.makedirs(final_dir, exist_ok=True)
+    final_path = safe_path(os.path.join(final_folder, finalname))
 
-        final_path = safe(os.path.join(final_dir, final_filename))
+    # BACKUP jika file sudah ada
+    bdir = internal_path(BACKUP_INTERNAL)
+    os.makedirs(bdir, exist_ok=True)
 
-        # ----------------------------------------------------------
-        # BACKUP jika file sudah ada
-        # ----------------------------------------------------------
-        os.makedirs(safe_internal(BACKUP_INTERNAL), exist_ok=True)
+    if os.path.exists(final_path):
+        backup_name = f"{finalname}.bak.{int(time.time())}"
+        shutil.move(final_path, os.path.join(bdir, backup_name))
 
-        if os.path.exists(final_path):
-            backup_path = safe_internal(
-                BACKUP_INTERNAL,
-                f"{final_filename}.backup.{int(time.time())}"
-            )
-            shutil.move(final_path, backup_path)
+    # Move final file
+    shutil.move(temp_path, final_path)
 
-        # Move file final
-        os.rename(temp_path, final_path)
+    # Hitung waktu dan kecepatan
+    duration = max(0.001, time.time() - data["start_time"])
+    speed = data["file_size"] / duration
 
-        # Statistik upload
-        upload_time = time.time() - session_data["start_time"]
-        speed = session_data["file_size"] / upload_time
+    del upload_sessions[session_id]
 
-        with upload_lock:
-            del upload_sessions[session_id]
-
-        return jsonify({
-            "status": "finished",
-            "sorted_folder": target_folder,
-            "final_path": final_path,
-            "file_size": actual_size,
-            "upload_time": round(upload_time, 2),
-            "speed_bytes": round(speed, 2),
-            "chunks_processed": session_data["chunk_count"]
-        })
-
-    finally:
-        if os.path.exists(temp_path):
-            try:
-                os.remove(temp_path)
-            except:
-                pass
+    return jsonify({
+        "status": "finished",
+        "folder": target_dir,
+        "filepath": final_path,
+        "size": data["file_size"],
+        "duration_sec": round(duration, 2),
+        "speed_bps": round(speed, 2)
+    })
 
 
-# ===============================================================
-# CANCEL UPLOAD
-# ===============================================================
+# ================================================================
+# CANCEL
+# ================================================================
 @upload.route("/upload_chunk/cancel", methods=["POST"])
-def fm_chunk_cancel():
-    check = fm_auth()
-    if check:
-        return check
+def upload_cancel():
+    cek = fm_auth()
+    if cek:
+        return cek
 
     session_id = request.form.get("session_id")
 
     if session_id in upload_sessions:
         temp = upload_sessions[session_id]["temp_path"]
-
         if os.path.exists(temp):
-            try:
-                os.remove(temp)
-            except:
-                pass
-
-        with upload_lock:
-            del upload_sessions[session_id]
+            os.remove(temp)
+        del upload_sessions[session_id]
 
     return jsonify({"status": "cancelled"})
 
 
-# ===============================================================
-# STATUS UPLOAD
-# ===============================================================
+# ================================================================
+# STATUS
+# ================================================================
 @upload.route("/upload_chunk/status")
-def fm_chunk_status():
-    check = fm_auth()
-    if check:
-        return check
+def upload_status():
+    cek = fm_auth()
+    if cek:
+        return cek
 
-    session_id = request.args.get("session_id")
+    sid = request.args.get("session_id")
+    if sid not in upload_sessions:
+        return jsonify({"error": "Session tidak ditemukan"}), 404
 
-    if session_id not in upload_sessions:
-        return jsonify({"error": "Session not found"}), 404
-
-    d = upload_sessions[session_id]
-
+    d = upload_sessions[sid]
     return jsonify({
         "filename": d["filename"],
-        "uploaded_size": d["uploaded_size"],
-        "total_size": d["file_size"],
+        "uploaded": d["uploaded_size"],
+        "total": d["file_size"],
         "progress": round((d["uploaded_size"] / d["file_size"]) * 100, 2),
-        "chunk_count": d["chunk_count"],
+        "chunks": d["chunk_count"],
         "user_id": d["user_id"],
-        "last_update": d["last_update"]
+        "started_at": d["start_time"],
     })
 
 
-# ===============================================================
-# UI ROUTE
-# ===============================================================
+# ================================================================
+# UPLOAD UI
+# ================================================================
 @upload.route("/ui")
-def fm_upload_ui():
-    check = fm_auth()
-    if check:
-        return check
-
+def upload_ui():
+    cek = fm_auth()
+    if cek:
+        return cek
     return render_template("BMS_upload.html")
