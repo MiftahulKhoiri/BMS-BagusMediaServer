@@ -1,55 +1,66 @@
 # =======================================================
 #   BMS ROUTES INITIALIZER
-#   Modul ini mengatur semua Blueprint ke dalam Flask App
+#   Modul ini mendaftarkan seluruh Blueprint ke Flask App
+#   dengan keamanan & debugging yang lebih baik.
 # =======================================================
 
+from flask import Blueprint
+
+# Core
 from .BMS_auth import auth
 from .BMS_logger import logger
 
+# User / Admin Panel
 from .BMS_user import user
 from .BMS_admin import admin
 
+# Media Modules
 from .BMS_media_mp3 import media_mp3
 from .BMS_media_video import media_video
 
+# System & Tools
 from .BMS_update import update
 from .BMS_profile import profile
 from .BMS_filemanager_premium import fm_premium
 from .BMS_upload import upload
 from .BMS_systeminfo import systeminfo
 from .BMS_terminal import terminal
-from app.routes.BMS_power import BMS_power
+from .BMS_power import BMS_power   # gunakan relative import agar konsisten
 
 
 # =======================================================
-#   REGISTER SEMUA BLUEPRINT
+#   REGISTER BLUEPRINTS SAFELY
 # =======================================================
 def register_blueprints(app):
 
-    # --- Core Auth ---
-    app.register_blueprint(auth)
-    app.register_blueprint(logger)
+    BLUEPRINTS = [
+        auth,
+        logger,
+        user,
+        admin,
+        media_mp3,
+        media_video,
+        update,
+        profile,
+        fm_premium,
+        upload,
+        systeminfo,
+        terminal,
+        BMS_power
+    ]
 
-    # --- User & Admin Panel ---
-    app.register_blueprint(user)
-    app.register_blueprint(admin)
+    print("\n>> ===============================")
+    print(">>   REGISTERING BMS BLUEPRINTS")
+    print(">> ===============================")
 
-    # --- Media ---
-    app.register_blueprint(media_mp3)
-    app.register_blueprint(media_video)
+    for bp in BLUEPRINTS:
+        try:
+            app.register_blueprint(bp)
+            print(f"✔ Blueprint registered: /{bp.url_prefix or ''}  ({bp.name})")
 
-    # --- Tools / System ---
-    app.register_blueprint(update)
-    app.register_blueprint(profile)
+        except Exception as e:
+            print(f"✖ ERROR loading blueprint '{bp.name}': {e}")
 
-    # FileManager Premium
-    app.register_blueprint(fm_premium)
-    app.register_blueprint(upload)
-
-    app.register_blueprint(systeminfo)
-    app.register_blueprint(terminal)
-    app.register_blueprint(BMS_power)
-
-    print(">> Semua Blueprint BMS berhasil terdaftar!")
+    print(">> Semua Blueprint BMS berhasil terdaftar!\n")
 
     return app
