@@ -296,3 +296,15 @@ def update_ui():
     if not BMS_update_required():
         return jsonify({"error": "Tidak ada izin"}), 403
     return render_template("BMS_update.html")
+
+
+# =========================================================
+#  FIX: TAMBAHKAN register_ws() AGAR IMPORT TIDAK ERROR
+# =========================================================
+def register_ws(app):
+    """
+    Function dummy agar Flask App bisa meng-import tanpa error.
+    Jika nanti kamu ingin membuat fitur WebSocket, tinggal isi.
+    """
+    print("[BMS UPDATE] register_ws dipanggil (dummy)")
+    return True
