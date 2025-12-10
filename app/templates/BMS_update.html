@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BMS – Update System</title>
 
+    <!-- External CSS -->
     <link rel="stylesheet" href="/static/css/BMS_update.css">
 </head>
 <body>
@@ -40,11 +41,22 @@
             Download & Apply Update
         </button>
 
+        <!-- Progress bar -->
+        <div id="progressBar"><div></div></div>
+
+        <!-- Status -->
         <div id="updateStatus" class="status-box"></div>
+
+        <!-- WebSocket Status -->
+        <div class="ws-live">
+            Real-time status: <span id="wsStatus" style="color:#ff4444">Not connected</span>
+        </div>
     </div>
 
 </div>
 
+<!-- External JS -->
 <script src="/static/js/BMS_update.js"></script>
+
 </body>
 </html>
