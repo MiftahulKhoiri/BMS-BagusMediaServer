@@ -10,63 +10,65 @@
 </head>
 <body>
 
-<!-- ============================
-     TOP BAR
-============================ -->
-<div class="topbar">
-    <h2 class="home-btn" onclick="goHome()">🎵 MP3 Player</h2>
+<div class="page-wrapper">
 
-    <button class="btn back-btn" onclick="goBack()">⬅ Kembali</button>
-</div>
-
-<!-- ============================
-     AUDIO PLAYER
-============================ -->
-<div class="player-box">
-
-    <!-- Judul Track -->
-    <h3 id="trackTitle" class="track-title fade-title">Memuat...</h3>
-
-    <!-- Player HTML5 -->
-    <audio id="audioPlayer" controls class="audio-core">
-        Browser kamu tidak mendukung audio.
-    </audio>
-
-    <!-- Kontrol Utama -->
-    <div class="control-row">
-
-        <!-- Prev -->
-        <button class="ctrl-btn" onclick="prevTrack()" id="prevBtn">⏮</button>
-
-        <!-- Next -->
-        <button class="ctrl-btn" onclick="nextTrack()" id="nextBtn">⏭</button>
-
-        <!-- Shuffle -->
-        <button class="ctrl-btn" id="shuffleBtn" onclick="toggleShuffle()">🔀</button>
-
-        <!-- Repeat -->
-        <button class="ctrl-btn" id="repeatBtn" onclick="toggleRepeat()">🔁</button>
-
-        <!-- Reload -->
-        <button class="ctrl-btn" onclick="reloadTrack()" id="reloadBtn">🔄</button>
-    </div>
-
-    <!-- Volume -->
-    <div class="volume-box">
-        <span id="volumeIcon">🔊</span>
-        <input type="range" id="volumeSlider" min="0" max="100" value="100">
-    </div>
-
-</div>
+    <!-- ============================
+         TOP BAR
+    ============================ -->
+    <header class="topbar shadow">
+        <h2 class="home-btn" onclick="goHome()">🎵 BMS MP3 Player</h2>
+        <button class="btn back-btn" onclick="goBack()">⬅ Kembali</button>
+    </header>
 
 
-<!-- ============================
-     PLAYLIST
-============================ -->
-<div class="playlist-container">
-    <h3 class="playlist-title">Playlist Folder</h3>
-    <div id="playlist" class="playlist"></div>
-</div>
+    <!-- ============================
+         MAIN PLAYER AREA
+    ============================ -->
+    <main class="player-section">
+
+        <div class="player-box glass-card">
+
+            <!-- Judul Track -->
+            <h3 id="trackTitle" class="track-title fade-text">Memuat...</h3>
+
+            <!-- AUDIO -->
+            <audio id="audioPlayer" controls class="audio-core">
+                Browser kamu tidak mendukung audio.
+            </audio>
+
+            <!-- Kontrol -->
+            <div class="control-row">
+
+                <button class="ctrl-btn" id="prevBtn" onclick="prevTrack()">⏮</button>
+                <button class="ctrl-btn" id="nextBtn" onclick="nextTrack()">⏭</button>
+
+                <button class="ctrl-btn" id="shuffleBtn" onclick="toggleShuffle()">🔀</button>
+                <button class="ctrl-btn" id="repeatBtn" onclick="toggleRepeat()">🔁</button>
+
+                <button class="ctrl-btn" id="reloadBtn" onclick="reloadTrack()">🔄</button>
+
+            </div>
+
+            <!-- Volume -->
+            <div class="volume-box">
+                <span id="volumeIcon">🔊</span>
+                <input type="range" id="volumeSlider" min="0" max="100" value="100">
+            </div>
+
+        </div>
+
+
+        <!-- ============================
+             PLAYLIST
+        ============================ -->
+        <aside class="playlist-container glass-card">
+            <h3 class="playlist-title">Playlist Folder</h3>
+            <div id="playlist" class="playlist"></div>
+        </aside>
+
+    </main>
+
+</div> <!-- wrapper end -->
 
 
 <!-- JS -->
