@@ -45,7 +45,6 @@ def register_blueprints(app):
         logger,
         user,
         admin,
-        media_video,
         update,
         profile,
         fm_premium,
