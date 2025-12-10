@@ -37,15 +37,20 @@
             </audio>
 
             <!-- Kontrol -->
-            <div class="control-row">
+            <div class="control-row" id="controlRow">
 
-                <button class="ctrl-btn" id="prevBtn" onclick="prevTrack()">⏮</button>
-                <button class="ctrl-btn" id="nextBtn" onclick="nextTrack()">⏭</button>
+                <!-- Prev / Next -->
+                <button class="ctrl-btn" id="prevBtn">⏮</button>
+                <button class="ctrl-btn" id="nextBtn">⏭</button>
 
-                <button class="ctrl-btn" id="shuffleBtn" onclick="toggleShuffle()">🔀</button>
-                <button class="ctrl-btn" id="repeatBtn" onclick="toggleRepeat()">🔁</button>
+                <!-- Shuffle / Repeat -->
+                <button class="ctrl-btn" id="shuffleBtn">🔀</button>
+                <button class="ctrl-btn" id="repeatBtn">🔁</button>
 
-                <button class="ctrl-btn" id="reloadBtn" onclick="reloadTrack()">🔄</button>
+                <!-- Reload -->
+                <button class="ctrl-btn" id="reloadBtn">🔄</button>
+
+                <!-- ❤️ Favorite akan disisipkan otomatis oleh JS -->
 
             </div>
 
@@ -75,12 +80,10 @@
 <script src="/static/js/BMS_mp3_play.js"></script>
 
 <script>
-    /* Ambil parameter dari URL */
     const params = new URLSearchParams(window.location.search);
     const mp3Id   = params.get("id") || window.location.pathname.split("/").pop();
     const folderId = params.get("folder");
 
-    /* Jalankan player */
     initPlayer(mp3Id, folderId);
 </script>
 
