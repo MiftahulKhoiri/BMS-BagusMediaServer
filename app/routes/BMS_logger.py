@@ -10,19 +10,38 @@ logger = Blueprint("logger", __name__, url_prefix="/logger")
 # Pastikan folder log tersedia
 os.makedirs(LOG_FOLDER, exist_ok=True)
 
-# Lock untuk mencegah race-condition
+# Path untuk error log
+ERROR_LOG_PATH = os.path.join(LOG_FOLDER, "error.log")
+
+# Lock supaya thread aman
 _log_lock = Lock()
 
-# Batas ukuran log (5MB)
+# Batas log (5MB)
 MAX_LOG_SIZE = 5 * 1024 * 1024
 
 
 # ======================================================
-#   📝 FUNGSI INTERNAL — DIGUNAKAN MODUL LAIN
+#   📝 UTILS — LOG NORMAL
 # ======================================================
 def BMS_write_log(text, username="SYSTEM"):
+    """Menulis log umum dengan aman + rotasi ukuran."""
+    return _write_to_file(LOG_PATH, text, username)
+
+
+# ======================================================
+#   🧨 UTILS — LOG ERROR (FILE TERPISAH)
+# ======================================================
+def BMS_write_error(text, username="SYSTEM"):
+    """Menulis log error ke file error.log."""
+    return _write_to_file(ERROR_LOG_PATH, f"ERROR: {text}", username)
+
+
+# ======================================================
+#   🔧 CORE WRITER (DIPAKAI LOG BIASA & ERROR)
+# ======================================================
+def _write_to_file(path, text, username):
     """
-    Menulis log aman (thread-safe) + auto-clean bila ukuran besar.
+    Fungsi inti penulisan log (dipakai untuk log normal & log error).
     """
     time_now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     formatted = f"[{time_now}] [{username}] {text}"
@@ -30,37 +49,34 @@ def BMS_write_log(text, username="SYSTEM"):
     try:
         with _log_lock:
 
-            # Jika ukuran terlalu besar → reset file
-            if os.path.exists(LOG_PATH) and os.path.getsize(LOG_PATH) > MAX_LOG_SIZE:
-                open(LOG_PATH, "w").close()
+            # Rotasi log jika terlalu besar
+            if os.path.exists(path) and os.path.getsize(path) > MAX_LOG_SIZE:
+                open(path, "w").close()
 
-            # Tuliskan log
-            with open(LOG_PATH, "a", encoding="utf-8") as f:
+            with open(path, "a", encoding="utf-8") as f:
                 f.write(formatted + "\n")
 
     except Exception as e:
-        print(f"[WARN] Gagal menulis log: {e}")
+        print(f"[WARN] Gagal menulis log ke {path}: {e}")
 
     return formatted
 
 
 # ======================================================
-#   🔐 MIDDLEWARE PROTEKSI ADMIN/ROOT
+#   🔐 PROTEKSI (KHUSUS ADMIN/ROOT)
 # ======================================================
 def BMS_log_required():
-    """Cek login & role. Hanya admin dan root yang boleh baca/clear/write log."""
     if not session.get("user_id"):
         return jsonify({"error": "Belum login!"}), 403
 
-    role = session.get("role", "user")
-    if role not in ("admin", "root"):
+    if session.get("role") not in ("admin", "root"):
         return jsonify({"error": "Akses khusus admin / root!"}), 403
 
     return None
 
 
 # ======================================================
-#   📄 READ LOG
+#   📄 READ LOG UTAMA
 # ======================================================
 @logger.route("/read")
 def BMS_logger_read():
@@ -75,13 +91,35 @@ def BMS_logger_read():
         with open(LOG_PATH, "r", encoding="utf-8") as f:
             content = f.read()
     except Exception as e:
-        return jsonify({"error": f"Gagal membaca log: {e}"}), 500
+        BMS_write_error(f"Gagal membaca log utama: {e}")
+        return jsonify({"error": "Gagal membaca log!"}), 500
 
     return jsonify({"log": content}), 200
 
 
 # ======================================================
-#   🧹 CLEAR LOG
+#   🔥 READ ERROR LOG
+# ======================================================
+@logger.route("/read_error")
+def BMS_logger_read_error():
+    check = BMS_log_required()
+    if check:
+        return check
+
+    if not os.path.exists(ERROR_LOG_PATH):
+        return jsonify({"log": ""}), 200
+
+    try:
+        with open(ERROR_LOG_PATH, "r", encoding="utf-8") as f:
+            content = f.read()
+    except Exception as e:
+        return jsonify({"error": f"Gagal membaca error log: {e}"}), 500
+
+    return jsonify({"log": content}), 200
+
+
+# ======================================================
+#   🧹 CLEAR BOTH LOG
 # ======================================================
 @logger.route("/clear", methods=["POST"])
 def BMS_logger_clear():
@@ -92,15 +130,17 @@ def BMS_logger_clear():
     try:
         with _log_lock:
             open(LOG_PATH, "w").close()
+            open(ERROR_LOG_PATH, "w").close()
 
         return jsonify({"status": "cleared"}), 200
 
     except Exception as e:
-        return jsonify({"error": f"Gagal clear log: {e}"}), 500
+        BMS_write_error(f"Gagal clear log: {e}")
+        return jsonify({"error": "Gagal clear log"}), 500
 
 
 # ======================================================
-#   ✍ MANUAL WRITE LOG
+#   ✍ MANUAL WRITE LOG NORMAL
 # ======================================================
 @logger.route("/write", methods=["POST"])
 def BMS_logger_manual():
@@ -115,5 +155,34 @@ def BMS_logger_manual():
         return jsonify({"error": "Pesan log kosong!"}), 400
 
     BMS_write_log(text, username)
-
     return jsonify({"status": "ok"}), 200
+
+
+# ======================================================
+#   🔎 FILTER LOG BERDASARKAN USER
+# ======================================================
+@logger.route("/filter")
+def BMS_logger_filter_user():
+    check = BMS_log_required()
+    if check:
+        return check
+
+    username = request.args.get("user", "").strip()
+    if not username:
+        return jsonify({"error": "Parameter user kosong!"}), 400
+
+    if not os.path.exists(LOG_PATH):
+        return jsonify({"log": []}), 200
+
+    try:
+        with open(LOG_PATH, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+
+        # Cari baris log yang mengandung user
+        filtered = [line for line in lines if f"[{username}]" in line]
+
+    except Exception as e:
+        BMS_write_error(f"Gagal filter log user '{username}': {e}")
+        return jsonify({"error": "Gagal filter log!"}), 500
+
+    return jsonify({"log": filtered}), 200
