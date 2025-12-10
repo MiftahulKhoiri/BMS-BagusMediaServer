@@ -7,22 +7,22 @@ from app.BMS_config import LOG_FOLDER, LOG_PATH
 
 logger = Blueprint("logger", __name__, url_prefix="/logger")
 
-# Pastikan folder log ada
+# Pastikan folder log tersedia
 os.makedirs(LOG_FOLDER, exist_ok=True)
 
-# Lock untuk mencegah race condition
+# Lock untuk mencegah race-condition
 _log_lock = Lock()
 
-# Maksimal ukuran log (opsional, 5MB)
+# Batas ukuran log (5MB)
 MAX_LOG_SIZE = 5 * 1024 * 1024
 
 
 # ======================================================
-#   📝 Fungsi internal untuk modul lain
+#   📝 FUNGSI INTERNAL — DIGUNAKAN MODUL LAIN
 # ======================================================
 def BMS_write_log(text, username="SYSTEM"):
     """
-    Menulis log secara aman (thread-safe)
+    Menulis log aman (thread-safe) + auto-clean bila ukuran besar.
     """
     time_now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     formatted = f"[{time_now}] [{username}] {text}"
@@ -30,23 +30,25 @@ def BMS_write_log(text, username="SYSTEM"):
     try:
         with _log_lock:
 
-            # Jika file terlalu besar → auto clear
+            # Jika ukuran terlalu besar → reset file
             if os.path.exists(LOG_PATH) and os.path.getsize(LOG_PATH) > MAX_LOG_SIZE:
                 open(LOG_PATH, "w").close()
 
-            with open(LOG_PATH, "a") as f:
+            # Tuliskan log
+            with open(LOG_PATH, "a", encoding="utf-8") as f:
                 f.write(formatted + "\n")
 
     except Exception as e:
-        print(f"[WARN] Tidak bisa menulis log: {e}")
+        print(f"[WARN] Gagal menulis log: {e}")
 
     return formatted
 
 
 # ======================================================
-#   🔐 Middleware proteksi admin / root
+#   🔐 MIDDLEWARE PROTEKSI ADMIN/ROOT
 # ======================================================
 def BMS_log_required():
+    """Cek login & role. Hanya admin dan root yang boleh baca/clear/write log."""
     if not session.get("user_id"):
         return jsonify({"error": "Belum login!"}), 403
 
@@ -70,7 +72,7 @@ def BMS_logger_read():
         return jsonify({"log": ""}), 200
 
     try:
-        with open(LOG_PATH, "r") as f:
+        with open(LOG_PATH, "r", encoding="utf-8") as f:
             content = f.read()
     except Exception as e:
         return jsonify({"error": f"Gagal membaca log: {e}"}), 500
@@ -90,6 +92,7 @@ def BMS_logger_clear():
     try:
         with _log_lock:
             open(LOG_PATH, "w").close()
+
         return jsonify({"status": "cleared"}), 200
 
     except Exception as e:
@@ -97,7 +100,7 @@ def BMS_logger_clear():
 
 
 # ======================================================
-#   ✍ WRITE LOG MANUAL
+#   ✍ MANUAL WRITE LOG
 # ======================================================
 @logger.route("/write", methods=["POST"])
 def BMS_logger_manual():
@@ -108,8 +111,9 @@ def BMS_logger_manual():
     text = request.form.get("msg", "")
     username = session.get("username", "UNKNOWN")
 
-    if not text:
+    if not text.strip():
         return jsonify({"error": "Pesan log kosong!"}), 400
 
     BMS_write_log(text, username)
+
     return jsonify({"status": "ok"}), 200
