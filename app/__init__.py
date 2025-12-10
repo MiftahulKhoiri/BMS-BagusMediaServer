@@ -52,7 +52,9 @@ def create_app():
     )
 
     # PROJECT ROOT
-    app.config["PROJECT_ROOT"] = "/data/data/com.termux/files/home/BMS-BagusMediaServer"
+    app.config["PROJECT_ROOT"] = (
+        "/data/data/com.termux/files/home/BMS-BagusMediaServer"
+    )
 
     # Inisialisasi Database
     init_database()
@@ -75,30 +77,32 @@ def create_app():
     print(f">> BASE Folder : {BASE}")
 
     # ==================================================
-    #   HOME ROUTE (DIREKOMENDASIKAN PINDAH KE BLUEPRINT)
+    #   HOME ROUTE
     # ==================================================
     @app.route("/")
     def BMS_home():
 
-        # Jika belum login → tampilkan halaman welcome
+        # Jika belum login → welcome
         if "user_id" not in session:
             return render_template("BMS_welcome.html")
 
-        # Jika login sebagai ROOT
+        # ROOT
         if session.get("role") == "root":
             return render_template("BMSadmin_home.html")
 
-        # Jika login sebagai USER biasa
+        # USER
         return render_template("BMSuser_home.html")
 
-@app.errorhandler(403)
-def forbidden(e):
-    return render_template("error_403.html"), 403
+    # ==================================================
+    #   ERROR HANDLER
+    # ==================================================
+    @app.errorhandler(403)
+    def forbidden(e):
+        return render_template("error_403.html"), 403
 
-@app.errorhandler(500)
-def server_error(e):
-    return render_template("error_500.html"), 500
-
+    @app.errorhandler(500)
+    def server_error(e):
+        return render_template("error_500.html"), 500
 
     return app
 
