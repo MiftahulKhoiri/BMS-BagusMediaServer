@@ -1,28 +1,38 @@
 /* ==========================================================
-   BMS MP3 PLAYER - PRO VERSION (REFINED)
-   - Single-page track change (no full reload)
-   - Defensive checks
-   - Button listeners instead of inline onclick
-   - Volume persisted to localStorage
-   - Smooth scroll active playlist into view
-   - Prevent rapid double-changes
+   BMS MP3 PLAYER - FINAL (FAVORITE IN CONTROL BAR)
+   - Favorite toggle (control bar)
+   - Resume last position (localStorage)
+   - Single-page track change (no reload)
+   - Volume persisted
+   - Smooth scroll active item
+   - Defensive checks + no-inline onclick
 ========================================================== */
 
 let currentFolderId = null;
 let currentTrackId = null;
 let playlistData = [];
 let shuffleMode = false;
-let repeatMode = 0; // 0=off, 1=one, 2=all
+let repeatMode = 0; // 0=off,1=one,2=all
 let isChanging = false;
-const CHANGE_LOCK_MS = 350; // block repeated changes for this ms
+const CHANGE_LOCK_MS = 350;
 
-/* ----------------------------------------------------------
-   Helper GET JSON
----------------------------------------------------------- */
-async function api(path) {
+// LocalStorage keys
+const LS_TRACK_ID  = "bms_last_track_id";
+const LS_TRACK_POS = "bms_last_track_position";
+const LS_FOLDER_ID = "bms_last_folder_id";
+const LS_VOLUME    = "bms_volume";
+
+/* ---------------------------
+   Helper fetch JSON
+---------------------------- */
+async function api(path, opts = {}) {
     try {
-        let r = await fetch(path, {cache: "no-store"});
-        if (!r.ok) throw new Error(`HTTP ${r.status}`);
+        const r = await fetch(path, Object.assign({cache: "no-store"}, opts));
+        if (!r.ok) {
+            // try to parse error json
+            let txt = await r.text().catch(()=>"");
+            throw new Error(`HTTP ${r.status} ${txt}`);
+        }
         return await r.json();
     } catch (e) {
         console.error("API Error:", e);
@@ -30,10 +40,10 @@ async function api(path) {
     }
 }
 
-/* ----------------------------------------------------------
-   HOME / BACK (keperluan navigasi)
----------------------------------------------------------- */
-function goHome() {
+/* ---------------------------
+   NAVIGATION
+---------------------------- */
+function goHome(){
     fetch("/auth/role")
         .then(r => r.json())
         .then(d => {
@@ -42,77 +52,88 @@ function goHome() {
                     ? "/admin/home"
                     : "/user/home";
         })
-        .catch(() => window.location.href = "/user/home");
+        .catch(()=> window.location.href = "/user/home");
 }
 
-function goBack() {
-    if (currentFolderId) {
-        window.location.href = `/mp3/?folder=${encodeURIComponent(currentFolderId)}`;
-    } else {
-        window.location.href = "/mp3/";
+function goBack(){
+    if (currentFolderId) window.location.href = `/mp3/?folder=${encodeURIComponent(currentFolderId)}`;
+    else window.location.href = "/mp3/";
+}
+
+/* ---------------------------
+   INIT PLAYER (with resume)
+   mp3Id may be string/number
+---------------------------- */
+async function initPlayer(mp3Id, folderId){
+    // try resume if mp3Id not provided
+    const resumeId = localStorage.getItem(LS_TRACK_ID);
+    const resumePos = Number(localStorage.getItem(LS_TRACK_POS)) || 0;
+    const resumeFolder = localStorage.getItem(LS_FOLDER_ID);
+
+    if (!mp3Id && resumeId) {
+        mp3Id = resumeId;
+        folderId = folderId || resumeFolder;
     }
-}
 
-/* ----------------------------------------------------------
-   INIT PLAYER
-   mp3Id may be string or number. folderId may be null.
----------------------------------------------------------- */
-async function initPlayer(mp3Id, folderId) {
-    // defensive
     if (!mp3Id) {
-        document.getElementById("trackTitle").textContent = "Tidak ada lagu yang dipilih";
+        const titleEl = document.getElementById("trackTitle");
+        if (titleEl) titleEl.textContent = "Tidak ada lagu yang dipilih";
         return;
     }
 
-    currentTrackId = Number(mp3Id) || null;
+    currentTrackId = Number(mp3Id);
     currentFolderId = folderId || null;
 
-    // attach button listeners (if present)
-    attachControlListeners();
+    attachControlListeners(); // will also create favorite button if needed
 
-    // fetch single track info (if endpoint exists)
+    // fetch track info
     const trackInfo = await api(`/mp3/info/${currentTrackId}`);
     if (!trackInfo) {
-        document.getElementById("trackTitle").textContent = "Error memuat lagu";
+        const titleEl = document.getElementById("trackTitle");
+        if (titleEl) titleEl.textContent = "Error memuat lagu";
     } else {
-        fadeTitle(trackInfo.filename || trackInfo.title || `Track #${currentTrackId}`);
+        fadeTitle(trackInfo.filename || trackInfo.title || `Track ${currentTrackId}`);
     }
 
-    // set up audio
     const audio = document.getElementById("audioPlayer");
     if (!audio) return;
 
     audio.src = `/mp3/play/${currentTrackId}`;
     audio.currentTime = 0;
-    audio.play().catch(()=>{ /* ignore autoplay block */ });
 
-    // load playlist for folder (if folderId provided)
+    // resume position if matches
+    if (resumeId && Number(resumeId) === Number(currentTrackId) && resumePos > 1) {
+        audio.currentTime = resumePos;
+        console.log(`Resuming ${currentTrackId} at ${resumePos}s`);
+    }
+
+    // load playlist
     if (currentFolderId) {
         playlistData = await api(`/mp3/folder/${encodeURIComponent(currentFolderId)}/tracks`) || [];
     } else {
-        // try a generic list endpoint or single track list
         playlistData = await api(`/mp3/list`) || [];
     }
-
-    // ensure playlistData is array
     if (!Array.isArray(playlistData)) playlistData = [];
 
+    // render playlist & update favorite state on control
     loadPlaylist();
+    updateFavoriteButtonFromInfo(trackInfo);
 
-    // audio events
+    // events
     audio.onended = handleTrackEnd;
-    audio.onplay = () => { /* could add play analytics here */ };
+    audio.onplay = () => { /* could increment analytics here */ };
 
-    // restore volume if present in localStorage
+    // periodically save last position
+    setupPositionSaver();
+
     restoreVolume();
-
     updateRepeatButton();
     updateShuffleButton();
 }
 
-/* ----------------------------------------------------------
-   Attach listeners to buttons (avoid inline onclick)
----------------------------------------------------------- */
+/* ---------------------------
+   Create/attach control listeners and favorite button
+---------------------------- */
 function attachControlListeners() {
     const nextBtn = document.getElementById("nextBtn");
     const prevBtn = document.getElementById("prevBtn");
@@ -126,7 +147,10 @@ function attachControlListeners() {
     if (repeatBtn) repeatBtn.onclick = () => toggleRepeat();
     if (reloadBtn) reloadBtn.onclick = () => reloadTrack();
 
-    // keyboard shortcut: space = toggle play/pause
+    // create favorite button in control row if not exists
+    ensureFavoriteButton();
+
+    // keyboard space toggles play/pause (unless input focused)
     document.addEventListener("keydown", (e) => {
         if (e.code === "Space" && document.activeElement.tagName !== "INPUT") {
             e.preventDefault();
@@ -138,15 +162,102 @@ function attachControlListeners() {
     });
 }
 
-/* ----------------------------------------------------------
-   HANDLE AUTO NEXT / SHUFFLE / REPEAT
----------------------------------------------------------- */
-function handleTrackEnd() {
+/* ---------------------------
+   Ensure Favorite Button exists in control row (and attach handler)
+---------------------------- */
+function ensureFavoriteButton(){
+    const controlRow = document.querySelector(".control-row");
+    if (!controlRow) return;
+
+    // check if favorite button already exists by id
+    let favBtn = document.getElementById("favBtn");
+    if (!favBtn) {
+        favBtn = document.createElement("button");
+        favBtn.id = "favBtn";
+        favBtn.className = "ctrl-btn";
+        favBtn.title = "Favorite";
+        favBtn.innerHTML = "🤍"; // default empty heart
+        // append to control row (put before reload if present)
+        const reload = document.getElementById("reloadBtn");
+        if (reload) controlRow.insertBefore(favBtn, reload);
+        else controlRow.appendChild(favBtn);
+    }
+
+    favBtn.onclick = async () => {
+        if (!currentTrackId) return;
+        // optimistic toggle UI lock
+        favBtn.disabled = true;
+        const res = await api(`/mp3/favorite/${encodeURIComponent(currentTrackId)}`, { method: "POST" });
+        favBtn.disabled = false;
+        if (!res) {
+            console.warn("Gagal toggle favorite");
+            return;
+        }
+        // backend returns {status:"ok", is_favorite: 0|1}
+        const state = Number(res.is_favorite || 0);
+        updateFavBtnVisual(state);
+        // also update playlist item if present
+        syncPlaylistFavorite(currentTrackId, state);
+    };
+}
+
+/* ---------------------------
+   Update favorite button from track info
+---------------------------- */
+function updateFavoriteButtonFromInfo(trackInfo) {
+    const favBtn = document.getElementById("favBtn");
+    if (!favBtn) return;
+    if (!trackInfo) {
+        favBtn.innerHTML = "🤍";
+        favBtn.classList.remove("active");
+        return;
+    }
+    const isFav = Number(trackInfo.is_favorite || 0);
+    updateFavBtnVisual(isFav);
+}
+
+/* ---------------------------
+   Visual update of fav button
+---------------------------- */
+function updateFavBtnVisual(state) {
+    const favBtn = document.getElementById("favBtn");
+    if (!favBtn) return;
+    if (Number(state) === 1) {
+        favBtn.innerHTML = "❤️";
+        favBtn.classList.add("active");
+    } else {
+        favBtn.innerHTML = "🤍";
+        favBtn.classList.remove("active");
+    }
+}
+
+/* ---------------------------
+   Sync playlist item favorite (optional small badge)
+---------------------------- */
+function syncPlaylistFavorite(trackId, state) {
+    const item = document.querySelector(`.playlist-item[data-id='${trackId}']`);
+    if (!item) return;
+    // add small heart at end of item (or update)
+    let badge = item.querySelector(".fav-badge");
+    if (!badge && Number(state) === 1) {
+        badge = document.createElement("span");
+        badge.className = "fav-badge";
+        badge.style.marginLeft = "8px";
+        badge.textContent = "♥";
+        item.appendChild(badge);
+    } else if (badge && Number(state) === 0) {
+        badge.remove();
+    }
+}
+
+/* ---------------------------
+   Handle End / Next logic
+---------------------------- */
+function handleTrackEnd(){
     if (isChanging) return;
     lockChange();
 
     if (repeatMode === 1) {
-        // repeat single
         playTrackById(currentTrackId);
         return;
     }
@@ -154,62 +265,50 @@ function handleTrackEnd() {
     const index = playlistData.findIndex(t => Number(t.id) === Number(currentTrackId));
 
     if (shuffleMode && playlistData.length > 1) {
-        // pick a different random track (try few times)
         let r;
-        if (playlistData.length === 2) {
-            r = playlistData[(index === 0) ? 1 : 0];
-        } else {
-            do {
-                r = playlistData[Math.floor(Math.random() * playlistData.length)];
-            } while (r && Number(r.id) === Number(currentTrackId));
+        if (playlistData.length === 2) r = playlistData[(index === 0) ? 1 : 0];
+        else {
+            do { r = playlistData[Math.floor(Math.random() * playlistData.length)]; }
+            while (r && Number(r.id) === Number(currentTrackId));
         }
         if (r) changeTrack(r.id);
         return;
     }
 
     if (repeatMode === 2 && playlistData.length > 0) {
-        // loop all
-        if (index === playlistData.length - 1) {
-            changeTrack(playlistData[0].id);
-        } else {
-            changeTrack(playlistData[index + 1].id);
-        }
+        if (index === playlistData.length - 1) changeTrack(playlistData[0].id);
+        else changeTrack(playlistData[index + 1].id);
         return;
     }
 
-    if (index < playlistData.length - 1 && index !== -1) {
-        changeTrack(playlistData[index + 1].id);
-    } else {
-        // end of list — stop or do nothing
-    }
+    if (index < playlistData.length - 1 && index !== -1) changeTrack(playlistData[index + 1].id);
 }
 
-/* ----------------------------------------------------------
-   LOAD PLAYLIST
----------------------------------------------------------- */
-function loadPlaylist() {
+/* ---------------------------
+   Load playlist into DOM
+---------------------------- */
+function loadPlaylist(){
     const box = document.getElementById("playlist");
     if (!box) return;
-
     box.innerHTML = "";
 
     playlistData.forEach(mp3 => {
         const item = document.createElement("div");
         item.className = "playlist-item";
         item.dataset.id = mp3.id;
+        item.dataset.title = mp3.filename || mp3.title || `Track ${mp3.id}`;
 
-        const titleText = mp3.filename || mp3.title || `Track ${mp3.id}`;
+        const titleText = item.dataset.title;
 
-        if (Number(mp3.id) === Number(currentTrackId)) {
-            item.classList.add("active");
-            item.innerHTML = `▶ ${escapeHtml(titleText)}`;
+        // show heart badge if is_favorite present
+        if (Number(mp3.is_favorite || 0) === 1) {
+            item.innerHTML = `▶ ${escapeHtml(titleText)} <span class="fav-badge">♥</span>`;
         } else {
-            item.innerHTML = escapeHtml(titleText);
+            if (Number(mp3.id) === Number(currentTrackId)) item.innerHTML = `▶ ${escapeHtml(titleText)}`;
+            else item.innerHTML = escapeHtml(titleText);
         }
 
-        // click handler
         item.addEventListener("click", () => {
-            // simple click animation
             item.style.transform = "scale(0.97)";
             setTimeout(() => item.style.transform = "", 140);
             changeTrack(mp3.id);
@@ -218,173 +317,131 @@ function loadPlaylist() {
         box.appendChild(item);
     });
 
-    // scroll active into view
     scrollActiveIntoView();
 }
 
-/* ----------------------------------------------------------
-   SAFE CHANGE TRACK (single-page: update audio src, title, URL)
----------------------------------------------------------- */
-function changeTrack(id) {
+/* ---------------------------
+   changeTrack (single-page)
+---------------------------- */
+function changeTrack(id){
     if (!id) return;
     if (isChanging) return;
     lockChange();
 
-    // If requested track is already current -> just play/pause
     if (Number(id) === Number(currentTrackId)) {
         playTrackById(id);
         return;
     }
 
-    // update audio src and UI
     playTrackById(id);
 
-    // update browser URL (pushState) so refresh keeps current track
     try {
         const newUrl = `/mp3/watch/${encodeURIComponent(id)}${currentFolderId ? `?folder=${encodeURIComponent(currentFolderId)}` : ''}`;
         history.pushState({track: id}, '', newUrl);
-    } catch (e) {
-        // ignore pushState errors on some environments
-    }
+    } catch {}
 }
 
-/* ----------------------------------------------------------
-   Play track by ID: set audio.src, update title, playlist highlight
----------------------------------------------------------- */
-async function playTrackById(id) {
+/* ---------------------------
+   playTrackById: update src, title, UI
+---------------------------- */
+async function playTrackById(id){
     const audio = document.getElementById("audioPlayer");
     if (!audio) return;
 
-    // set src to stream endpoint
     audio.pause();
     audio.currentTime = 0;
     audio.src = `/mp3/play/${encodeURIComponent(id)}`;
 
-    // optimistic title update: try to find in playlistData
+    // optimistic title from playlist
     const found = playlistData.find(t => Number(t.id) === Number(id));
-    if (found) {
-        fadeTitle(found.filename || found.title || `Track ${found.id}`);
-    } else {
-        // try to fetch info
+    if (found) fadeTitle(found.filename || found.title || `Track ${found.id}`);
+    else {
         const info = await api(`/mp3/info/${id}`);
-        if (info && (info.filename || info.title)) fadeTitle(info.filename || info.title);
-        else fadeTitle(`Track ${id}`);
+        fadeTitle(info?.filename || info?.title || `Track ${id}`);
+        // update favorite button if info present
+        updateFavoriteButtonFromInfo(info);
     }
 
     currentTrackId = Number(id);
+    // update saved last track id and reset last pos
+    localStorage.setItem(LS_TRACK_ID, currentTrackId);
+    localStorage.setItem(LS_TRACK_POS, 0);
 
-    // update playlist highlight
     updatePlaylistActive();
-
-    // start playing (catch autoplay block)
     audio.play().catch(()=>{});
-
-    // ensure active item visible
     scrollActiveIntoView();
 }
 
-/* ----------------------------------------------------------
-   NEXT / PREV
----------------------------------------------------------- */
-function nextTrack() {
+/* ---------------------------
+   Next / Prev
+---------------------------- */
+function nextTrack(){
     if (isChanging) return;
     lockChange();
-
     const idx = playlistData.findIndex(t => Number(t.id) === Number(currentTrackId));
     if (idx === -1 || idx >= playlistData.length - 1) {
-        // if repeat all active, go to first
-        if (repeatMode === 2 && playlistData.length > 0) {
-            changeTrack(playlistData[0].id);
-        }
+        if (repeatMode === 2 && playlistData.length > 0) changeTrack(playlistData[0].id);
         return;
     }
     changeTrack(playlistData[idx + 1].id);
 }
 
-function prevTrack() {
+function prevTrack(){
     if (isChanging) return;
     lockChange();
-
     const idx = playlistData.findIndex(t => Number(t.id) === Number(currentTrackId));
     if (idx > 0) changeTrack(playlistData[idx - 1].id);
 }
 
-/* ----------------------------------------------------------
-   SHUFFLE
----------------------------------------------------------- */
-function toggleShuffle() {
-    shuffleMode = !shuffleMode;
-    updateShuffleButton();
-}
-
-function updateShuffleButton() {
+/* ---------------------------
+   Shuffle / Repeat buttons
+---------------------------- */
+function toggleShuffle(){ shuffleMode = !shuffleMode; updateShuffleButton(); }
+function updateShuffleButton(){
     const btn = document.getElementById("shuffleBtn");
     if (!btn) return;
     btn.classList.toggle("active", shuffleMode);
     btn.innerHTML = "🔀";
 }
 
-/* ----------------------------------------------------------
-   REPEAT
----------------------------------------------------------- */
-function toggleRepeat() {
-    repeatMode++;
-    if (repeatMode > 2) repeatMode = 0;
-    updateRepeatButton();
-}
-
-function updateRepeatButton() {
+function toggleRepeat(){ repeatMode = (repeatMode + 1) % 3; updateRepeatButton(); }
+function updateRepeatButton(){
     const btn = document.getElementById("repeatBtn");
     if (!btn) return;
-
     btn.classList.remove("active");
-    if (repeatMode === 0) {
-        btn.innerHTML = "🔁";
-        btn.classList.remove("active");
-    } else if (repeatMode === 1) {
-        btn.innerHTML = "🔂"; // repeat one
-        btn.classList.add("active");
-    } else if (repeatMode === 2) {
-        btn.innerHTML = "🔁"; // repeat all (active)
-        btn.classList.add("active");
-    }
+    if (repeatMode === 0) { btn.innerHTML = "🔁"; btn.classList.remove("active"); }
+    else if (repeatMode === 1) { btn.innerHTML = "🔂"; btn.classList.add("active"); }
+    else if (repeatMode === 2) { btn.innerHTML = "🔁"; btn.classList.add("active"); }
 }
 
-/* ----------------------------------------------------------
-   RELOAD
----------------------------------------------------------- */
-function reloadTrack() {
-    if (!currentTrackId) return;
-    playTrackById(currentTrackId);
-}
+/* ---------------------------
+   Reload current track
+---------------------------- */
+function reloadTrack(){ if (currentTrackId) playTrackById(currentTrackId); }
 
-/* ----------------------------------------------------------
-   VOLUME
----------------------------------------------------------- */
-document.addEventListener("DOMContentLoaded", () => {
+/* ---------------------------
+   Volume restore/save
+---------------------------- */
+function restoreVolume(){
     const audio = document.getElementById("audioPlayer");
     const slider = document.getElementById("volumeSlider");
     const icon = document.getElementById("volumeIcon");
-
     if (!audio || !slider) return;
 
-    // load saved volume
-    const saved = localStorage.getItem("bms_volume");
-    const vol = (saved !== null) ? Number(saved) : (slider.value ? Number(slider.value) : 100);
-    slider.value = vol;
-    audio.volume = Math.max(0, Math.min(1, vol / 100));
-
+    let saved = localStorage.getItem(LS_VOLUME);
+    if (saved === null) saved = 100;
+    slider.value = saved;
+    audio.volume = Math.max(0, Math.min(1, Number(saved)/100));
     updateVolumeIcon(audio.volume, icon);
 
     slider.addEventListener("input", () => {
         const v = slider.value / 100;
         audio.volume = v;
-        localStorage.setItem("bms_volume", slider.value);
+        localStorage.setItem(LS_VOLUME, slider.value);
         updateVolumeIcon(v, icon);
     });
-});
-
-function updateVolumeIcon(v, iconEl) {
+}
+function updateVolumeIcon(v, iconEl){
     if (!iconEl) return;
     iconEl.textContent =
         v === 0 ? "🔇" :
@@ -393,63 +450,92 @@ function updateVolumeIcon(v, iconEl) {
                   "🔊";
 }
 
-/* ----------------------------------------------------------
-   FADE TITLE
----------------------------------------------------------- */
-function fadeTitle(text) {
+/* ---------------------------
+   Position saver (resume)
+   saves every 1s only when playing
+---------------------------- */
+function setupPositionSaver(){
+    const audio = document.getElementById("audioPlayer");
+    if (!audio) return;
+    // clear any previous interval by resetting property
+    if (setupPositionSaver._interval) clearInterval(setupPositionSaver._interval);
+
+    setupPositionSaver._interval = setInterval(() => {
+        try {
+            if (!audio || audio.paused) return;
+            if (!currentTrackId) return;
+            // save every 1s (floor seconds)
+            localStorage.setItem(LS_TRACK_ID, currentTrackId);
+            localStorage.setItem(LS_TRACK_POS, Math.floor(audio.currentTime));
+            if (currentFolderId) localStorage.setItem(LS_FOLDER_ID, currentFolderId);
+        } catch(e){}
+    }, 1000);
+}
+
+/* ---------------------------
+   Fade title
+---------------------------- */
+function fadeTitle(text){
     const title = document.getElementById("trackTitle");
     if (!title) return;
-
     title.classList.add("fade-out");
-
     setTimeout(() => {
         title.textContent = text;
         title.classList.remove("fade-out");
     }, 260);
 }
 
-/* ----------------------------------------------------------
-   UPDATE PLAYLIST HIGHLIGHT & SCROLL
----------------------------------------------------------- */
-function updatePlaylistActive() {
+/* ---------------------------
+   Update playlist highlight & fav badges
+---------------------------- */
+function updatePlaylistActive(){
     const items = document.querySelectorAll(".playlist-item");
     items.forEach(it => {
-        if (Number(it.dataset.id) === Number(currentTrackId)) {
+        const id = Number(it.dataset.id);
+        if (id === Number(currentTrackId)) {
             it.classList.add("active");
-            it.innerHTML = `▶ ${escapeHtml(it.textContent.replace(/^▶\s*/, '').trim())}`;
+            // ensure leading arrow
+            if (!it.textContent.trim().startsWith("▶")) {
+                it.innerHTML = `▶ ${escapeHtml(it.dataset.title || it.textContent)}`;
+            }
         } else {
             it.classList.remove("active");
-            // restore plain text (avoid multiple ▶)
-            const original = it.dataset.title || it.textContent;
-            // keep existing content but ensure no leading "▶"
-            it.innerHTML = escapeHtml((original || it.textContent).toString().replace(/^▶\s*/, '').trim());
+            // restore plain text and keep fav-badge if present
+            const hasBadge = !!it.querySelector(".fav-badge");
+            it.textContent = it.dataset.title || it.textContent;
+            if (hasBadge) {
+                const badge = document.createElement("span");
+                badge.className = "fav-badge";
+                badge.style.marginLeft = "8px";
+                badge.textContent = "♥";
+                it.appendChild(badge);
+            }
         }
     });
 }
 
-/* Scroll active playlist item into view (smooth) */
-function scrollActiveIntoView() {
+/* ---------------------------
+   Scroll active into view
+---------------------------- */
+function scrollActiveIntoView(){
     const active = document.querySelector(".playlist-item.active");
-    if (active) {
-        // prefer closest scrollable parent (#playlist)
-        const scroller = document.getElementById("playlist");
-        if (scroller) {
-            const top = active.offsetTop - scroller.offsetTop - (scroller.clientHeight / 2) + (active.clientHeight / 2);
-            scroller.scrollTo({ top, behavior: "smooth" });
-        } else {
-            active.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
-    }
+    if (!active) return;
+    const scroller = document.getElementById("playlist") || document.documentElement;
+    const top = active.offsetTop - (scroller.clientHeight / 2) + (active.clientHeight / 2);
+    scroller.scrollTo({ top, behavior: "smooth" });
 }
 
-/* ----------------------------------------------------------
-   UTILS
----------------------------------------------------------- */
-function lockChange() {
+/* ---------------------------
+   Lock change to prevent rapid double-change
+---------------------------- */
+function lockChange(){
     isChanging = true;
     setTimeout(() => { isChanging = false; }, CHANGE_LOCK_MS);
 }
 
+/* ---------------------------
+   Utility escape
+---------------------------- */
 function escapeHtml(unsafe) {
     if (unsafe === null || unsafe === undefined) return '';
     return String(unsafe)
@@ -459,3 +545,8 @@ function escapeHtml(unsafe) {
         .replace(/"/g, "&quot;")
         .replace(/'/g, "&#039;");
 }
+
+/* ---------------------------
+   Expose initPlayer globally (used by HTML)
+---------------------------- */
+window.initPlayer = initPlayer;
