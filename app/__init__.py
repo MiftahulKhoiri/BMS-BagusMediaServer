@@ -91,16 +91,16 @@ def create_app():
         # Jika login sebagai USER biasa
         return render_template("BMSuser_home.html")
 
-    # ==================================================
-    #   ERROR HANDLER (OPTIONAL)
-    # ==================================================
-    @app.errorhandler(404)
-    def not_found(e):
-        return render_template("error_404.html"), 404
+from flask import render_template
 
-    @app.errorhandler(500)
-    def internal_error(e):
-        return render_template("error_500.html"), 500
+@app.errorhandler(403)
+def forbidden(e):
+    return render_template("error_403.html"), 403
+
+@app.errorhandler(500)
+def server_error(e):
+    return render_template("error_500.html"), 500
+
 
     return app
 
