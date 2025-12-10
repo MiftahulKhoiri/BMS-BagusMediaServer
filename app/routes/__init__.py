@@ -18,7 +18,7 @@ from .BMS_admin import admin
 #   Media Modules (BARU)
 # ============================
 # Blueprint video tetap sama
-from .BMS_media_video import media_video
+from .BMS_video import blueprints as video_blueprints
 
 # Blueprint MP3 sekarang modular → impor dari folder BMS_mp3
 from .BMS_mp3 import blueprints as mp3_blueprints
@@ -57,6 +57,7 @@ def register_blueprints(app):
 
     # Tambahkan BLUEPRINT MP3 hasil pemecahan modul
     # blueprints = [media_mp3, mp3_scan]
+    BLUEPRINTS += video_blueprints
     BLUEPRINTS += mp3_blueprints
 
     print("\n>> ===============================")
