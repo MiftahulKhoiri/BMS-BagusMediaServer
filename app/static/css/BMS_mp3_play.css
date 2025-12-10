@@ -84,26 +84,31 @@ body {
 .control-row {
     display: flex;
     justify-content: center;
+    align-items: center;
+    gap: 10px;
     flex-wrap: wrap;
-    gap: 12px;
     margin-top: 15px;
 }
 
+/* Tombol lebih kecil & lebih rapi */
 .ctrl-btn {
-    width: 48px;
-    height: 48px;
-    border-radius: 12px;
+    width: 40px;          /* dulu 48px → sekarang lebih pas */
+    height: 40px;
+    border-radius: 10px;
     border: 1px solid #00ff8c;
-    background: rgba(0,255,120,0.1);
-    font-size: 22px;
+    background: rgba(0,255,120,0.12);
+    font-size: 18px;      /* ikon pas proporsinya */
     color: #bbffe5;
     cursor: pointer;
     transition: 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .ctrl-btn:hover {
     background: rgba(0,255,120,0.25);
-    transform: scale(1.12);
+    transform: scale(1.08);
 }
 
 .ctrl-btn.active {
@@ -111,7 +116,18 @@ body {
     border-color: #44ffbd;
 }
 
+/* Tombol Favorite (warna khusus) */
+#favBtn {
+    border-color: #ff6db0 !important;
+    color: #ff6db0 !important;
+    width: 40px;
+    height: 40px;
+}
 
+#favBtn.active {
+    background: rgba(255, 70, 160, 0.35) !important;
+    color: #ffd2ea !important;
+}
 /* ============================
    FAVORITE BUTTON SPECIAL
 ============================ */
