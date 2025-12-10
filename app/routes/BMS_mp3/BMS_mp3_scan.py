@@ -13,7 +13,7 @@ from flask import Blueprint, jsonify, session
 from app.routes.BMS_logger import BMS_write_log
 from .BMS_mp3_db import get_db, current_user_identifier, is_mp3
 
-mp3_scan = Blueprint("mp3_scan", __name__)
+mp3_scan = Blueprint("mp3_scan", __name__, url_prefix="/mp3")
 
 
 # ============================================================================
