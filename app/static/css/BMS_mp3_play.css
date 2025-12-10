@@ -1,230 +1,183 @@
 /* ==========================================================
-   BMS MP3 PLAYER — DARK NEON GREEN PREMIUM
+   BMS MP3 PLAYER — PREMIUM DARK NEON UI
 ========================================================== */
 
 body {
-    font-family: Arial, Helvetica, sans-serif;
-    background: #060606;
+    font-family: "Inter", Arial, sans-serif;
+    background: #020303;
     color: #d6ffe8;
     margin: 0;
-    padding: 0;
-}
-
-/* Wrapper utama */
-.page-wrapper {
     padding: 15px;
-    max-width: 1200px;
-    margin: auto;
 }
 
 /* ============================
-   TOPBAR
+   TOP BAR
 ============================ */
 .topbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding-bottom: 10px;
-    margin-bottom: 10px;
+    padding: 12px;
+    margin-bottom: 15px;
 }
 
 .home-btn {
     cursor: pointer;
-    transition: 0.15s;
+    font-size: 22px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    gap: 5px;
 }
 .home-btn:hover {
     color: #00ff99;
 }
 
 .btn {
-    padding: 7px 12px;
+    padding: 9px 15px;
     background: #000;
     border: 1px solid #00ff7f;
     color: #00ff7f;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
-    transition: 0.25s;
+    font-size: 15px;
 }
 .btn:hover {
     background-color: #003319;
-    box-shadow: 0 0 6px #00ff88;
-}
-
-/* Topbar shadow */
-.shadow {
-    border-bottom: 1px solid rgba(0,255,120,0.2);
-    padding-bottom: 10px;
 }
 
 
 /* ============================
-   PLAYER + PLAYLIST LAYOUT
+   MAIN PLAYER BOX
 ============================ */
-.player-section {
-    display: flex;
-    gap: 25px;
-    flex-wrap: wrap;
-}
-
-/* Kartu khas neon-glass */
-.glass-card {
-    background: rgba(0, 0, 0, 0.45);
-    border: 1px solid rgba(0,255,120,0.12);
-    border-radius: 14px;
-    padding: 20px;
-    backdrop-filter: blur(5px);
-    box-shadow: 0 0 12px rgba(0,255,120,0.08);
-}
-
-/* PLAYER BOX */
 .player-box {
-    flex: 1;
-    min-width: 280px;
+    padding: 22px;
+    background: rgba(0,0,0,0.65);
+    border: 1px solid rgba(0,255,120,0.2);
+    border-radius: 18px;
+    margin-bottom: 20px;
+    box-shadow: 0 0 12px rgba(0,255,120,0.1);
 }
 
-/* Judul Track */
 .track-title {
-    margin-bottom: 10px;
     font-size: 20px;
     font-weight: bold;
-    color: #c6ffe0;
     text-align: center;
-    transition: opacity 0.25s;
+    margin-bottom: 12px;
+    color: #c6ffe0;
 }
 
-/* Audio Player */
-.audio-core {
-    width: 100%;
-    margin-top: 10px;
-    border-radius: 10px;
-    outline: none;
-}
 
 /* ============================
-   CONTROL BUTTONS
+   AUDIO ELEMENT STYLING
+============================ */
+.audio-core {
+    width: 100%;
+    border-radius: 14px;
+    margin-top: 10px;
+}
+
+
+/* ============================
+   CONTROL BUTTON ROW
 ============================ */
 .control-row {
     display: flex;
     justify-content: center;
-    align-items: center;
-    gap: 14px;
+    flex-wrap: wrap;
+    gap: 12px;
     margin-top: 15px;
-    margin-bottom: 12px;
 }
 
 .ctrl-btn {
-    background: rgba(0, 255, 120, 0.08);
-    border: 1px solid #00ff99;
-    padding: 10px 14px;
+    width: 48px;
+    height: 48px;
     border-radius: 12px;
-    font-size: 20px;
-    color: #00ffb3;
+    border: 1px solid #00ff8c;
+    background: rgba(0,255,120,0.1);
+    font-size: 22px;
+    color: #bbffe5;
     cursor: pointer;
-    transition: 0.25s ease;
+    transition: 0.2s ease;
 }
 
 .ctrl-btn:hover {
-    background: rgba(0, 255, 120, 0.2);
-    transform: scale(1.14);
-    box-shadow: 0 0 12px rgba(0,255,120,0.4);
+    background: rgba(0,255,120,0.25);
+    transform: scale(1.12);
 }
 
-/* Aktif (shuffle/repeat) */
 .ctrl-btn.active {
-    background: rgba(0, 255, 120, 0.35);
-    border-color: #47ffa9;
-    color: #aaffee;
-    box-shadow: 0 0 12px rgba(0,255,120,0.5);
+    background: rgba(0,255,120,0.35);
+    border-color: #44ffbd;
 }
 
 
 /* ============================
-   VOLUME CONTROL
+   FAVORITE BUTTON SPECIAL
+============================ */
+#favBtn {
+    border-color: #ff6db0 !important;
+    color: #ff6db0 !important;
+}
+
+#favBtn.active {
+    background: rgba(255, 70, 160, 0.3) !important;
+    color: #ffb2d9 !important;
+}
+
+
+/* ============================
+   VOLUME SLIDER
 ============================ */
 .volume-box {
-    margin-top: 12px;
+    margin-top: 15px;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     justify-content: center;
 }
 
 #volumeSlider {
-    width: 150px;
+    width: 160px;
     height: 6px;
+    background: #003d22;
     border-radius: 4px;
-    background: #002d18;
-    outline: none;
-    -webkit-appearance: none;
 }
 
 #volumeSlider::-webkit-slider-thumb {
     -webkit-appearance: none;
-    width: 15px;
-    height: 15px;
+    width: 16px;
+    height: 16px;
     background: #22ff99;
     border-radius: 50%;
-    cursor: pointer;
-    box-shadow: 0 0 8px #00ff99;
 }
 
 
 /* ============================
-   PLAYLIST
+   PLAYLIST BOX
 ============================ */
 .playlist-container {
-    width: 320px;
-    min-width: 250px;
+    background: rgba(0,0,0,0.55);
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid rgba(0,255,120,0.15);
+    box-shadow: 0 0 12px rgba(0,255,120,0.1);
 }
 
 .playlist-title {
-    font-size: 17px;
+    font-size: 18px;
     font-weight: bold;
-    color: #b8ffd8;
-    margin-bottom: 12px;
-    text-align: center;
+    margin-bottom: 10px;
 }
 
-/* LIST SCROLL */
+/* SCROLL AREA */
 .playlist {
-    max-height: 420px;
+    max-height: 380px;
     overflow-y: auto;
-    padding-right: 5px;
+    padding-right: 8px;
 }
 
-/* ITEM */
-.playlist-item {
-    padding: 12px;
-    background: rgba(0,0,0,0.45);
-    border: 1px solid rgba(0,255,120,0.12);
-    border-radius: 10px;
-    margin-bottom: 9px;
-    cursor: pointer;
-    transition: 0.25s ease;
-}
-
-.playlist-item:hover {
-    border-color: #00ff88;
-    background: rgba(0,255,120,0.12);
-}
-
-/* TRACK YANG SEDANG DIPUTAR */
-.playlist-item.active {
-    background: rgba(0,255,120,0.20);
-    border-color: #00ff88;
-    font-weight: bold;
-    color: #caffec;
-    animation: pulse 1.4s infinite ease-in-out;
-}
-
-/* Pulse Neon */
-@keyframes pulse {
-    0%   { box-shadow: 0 0 4px #00ff99; }
-    50%  { box-shadow: 0 0 13px #00ffcc; }
-    100% { box-shadow: 0 0 4px #00ff99; }
-}
-
-/* Custom Scroll */
+/* Scrollbar */
 .playlist::-webkit-scrollbar {
     width: 6px;
 }
@@ -233,28 +186,44 @@ body {
     border-radius: 10px;
 }
 .playlist::-webkit-scrollbar-track {
-    background: #003318;
+    background: rgba(0,255,120,0.08);
 }
 
-
-/* Fade Text */
-.fade-out {
-    opacity: 0;
+/* Track Card */
+.playlist-item {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid rgba(0,255,120,0.15);
+    padding: 12px;
+    border-radius: 12px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: 0.2s ease;
+    font-size: 15px;
 }
-.fade-title {
-    opacity: 1;
+
+.playlist-item:hover {
+    border-color: #00ff99;
+    background: rgba(0,255,120,0.12);
 }
 
+.playlist-item.active {
+    background: rgba(0,255,120,0.2);
+    border-color: #00ffcc;
+    font-weight: bold;
+    color: #caffec;
+    animation: pulse 1.6s infinite ease-in-out;
+}
 
-/* ============================
-   RESPONSIVE
-============================ */
-@media (max-width: 768px) {
-    .player-section {
-        flex-direction: column;
-    }
+/* Smooth Neon Pulse */
+@keyframes pulse {
+    0%   { box-shadow: 0 0 5px #00ff99; }
+    50%  { box-shadow: 0 0 15px #00ffe5; }
+    100% { box-shadow: 0 0 5px #00ff99; }
+}
 
-    .playlist-container {
-        width: 100%;
-    }
+/* Favorite icon in playlist */
+.fav-badge {
+    color: #ff66b3;
+    font-size: 14px;
+    margin-left: 6px;
 }
