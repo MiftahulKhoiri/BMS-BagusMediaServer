@@ -205,9 +205,9 @@ def scan_db():
 
             # guard: hanya import jika folder berada di MUSIC_FOLDER
             # jika kamu ingin import dari seluruh storage, ubah sesuai kebutuhan
-            if not is_inside_music(folder_path):
+            # if not is_inside_music(folder_path):
                 # skip folder di luar MUSIC_FOLDER
-                continue
+                # continue
 
             # masukkan folder jika belum ada
             cur.execute("SELECT id FROM mp3_folders WHERE folder_path=?", (folder_path,))
