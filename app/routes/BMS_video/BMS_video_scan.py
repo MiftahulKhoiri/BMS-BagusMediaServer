@@ -1,5 +1,5 @@
 # ============================================================================
-#   BMS VIDEO MODULE — SCAN & IMPORT STORAGE
+#   BMS VIDEO MODULE — SCAN & IMPORT STORAGE (FINAL FIXED)
 # ============================================================================
 
 import os
@@ -7,9 +7,14 @@ from datetime import datetime
 from flask import Blueprint, jsonify, session
 
 from app.routes.BMS_logger import BMS_write_log
-from .BMS_video_db import get_db, is_video_file, video_login_required
+from .BMS_video_db import (
+    get_db,
+    is_video_file,
+    video_login_required
+)
 
-video_scan = Blueprint("video_scan", __name__)
+# Penting! Prefix harus "/video"
+video_scan = Blueprint("video_scan", __name__, url_prefix="/video")
 
 
 # ============================================================================
@@ -49,7 +54,7 @@ def scan_storage_for_video():
 # ============================================================================
 #   ROUTE: SCAN + IMPORT
 # ============================================================================
-@video_scan.route("/video/scan-db", methods=["POST"])
+@video_scan.route("/scan-db", methods=["POST"])
 def scan_db():
     if not video_login_required():
         return jsonify({"error": "Belum login"}), 403
