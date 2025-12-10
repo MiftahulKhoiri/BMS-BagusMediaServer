@@ -66,7 +66,7 @@ def register_blueprints(app):
     for bp in BLUEPRINTS:
         try:
             app.register_blueprint(bp)
-            print(f"✔ Blueprint registered: /{bp.url_prefix or ''}  ({bp.name})")
+            print(f"✔ Blueprint registered: /{bp.url_prefix or '/'}  ({bp.name})")
         except Exception as e:
             print(f"✖ ERROR loading blueprint '{bp.name}': {e}")
 
