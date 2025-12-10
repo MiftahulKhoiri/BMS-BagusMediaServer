@@ -21,9 +21,10 @@ _db_initialized = False
 def get_db():
     """
     Kembalikan koneksi DB. Jika tabel mp3 tidak ada, buat sekali.
+    Juga cek/migrasi kolom tambahan (user_id, is_favorite, play_count).
     """
     global _db_initialized
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     conn.row_factory = sqlite3.Row
 
     if not _db_initialized:
@@ -45,10 +46,32 @@ def get_db():
                     filepath TEXT UNIQUE,
                     size INTEGER,
                     added_at TEXT,
+                    user_id TEXT,
+                    is_favorite INTEGER DEFAULT 0,
+                    play_count INTEGER DEFAULT 0,
                     FOREIGN KEY(folder_id) REFERENCES mp3_folders(id) ON DELETE CASCADE
                 )
             """)
             conn.commit()
+
+            # If table existed earlier without new columns, try to add missing columns safely
+            # (SQLite doesn't have DROP COLUMN; we only ADD if missing)
+            existing_cols = [r['name'] for r in cur.execute("PRAGMA table_info(mp3_tracks)").fetchall()]
+            adds = []
+            if 'user_id' not in existing_cols:
+                adds.append("ALTER TABLE mp3_tracks ADD COLUMN user_id TEXT;")
+            if 'is_favorite' not in existing_cols:
+                adds.append("ALTER TABLE mp3_tracks ADD COLUMN is_favorite INTEGER DEFAULT 0;")
+            if 'play_count' not in existing_cols:
+                adds.append("ALTER TABLE mp3_tracks ADD COLUMN play_count INTEGER DEFAULT 0;")
+            for a in adds:
+                try:
+                    cur.execute(a)
+                except Exception:
+                    # jika gagal (mis. kolom sudah ada), ignore
+                    pass
+            conn.commit()
+
             _db_initialized = True
         except Exception as e:
             # log tetapi lanjutkan — operasi lain akan menampilkan error jika DB benar-benar bermasalah
@@ -66,6 +89,24 @@ def mp3_required():
     if not BMS_auth_is_login():
         return jsonify({"error": "Belum login"}), 403
     return None
+
+
+# -------------------------
+#  Helper user identifier
+# -------------------------
+def current_user_identifier():
+    """
+    Gunakan session['user_id'] jika ada, jika tidak gunakan username.
+    Simpan sebagai string untuk fleksibilitas.
+    """
+    uid = session.get("user_id")
+    if uid is not None:
+        return str(uid)
+    uname = session.get("username")
+    if uname is not None:
+        return str(uname)
+    # fallback
+    return "anonymous"
 
 
 # -------------------------
@@ -122,8 +163,6 @@ def scan_storage_for_mp3(limit_folders=200, max_files_per_folder=500):
                 if root in seen:
                     continue
 
-                # pastikan folder benar-benar berada di MUSIC_FOLDER atau dalam allowed roots
-                # (jika kamu ingin strict hanya MUSIC_FOLDER, gunakan is_inside_music)
                 seen.add(root)
                 found.append({
                     "folder_path": root,
@@ -152,6 +191,7 @@ def scan_db():
         return cek
 
     username = session.get("username", "UNKNOWN")
+    owner = current_user_identifier()
 
     folders = scan_storage_for_mp3()
     conn = get_db()
@@ -164,7 +204,7 @@ def scan_db():
             folder_name = f["folder_name"]
 
             # guard: hanya import jika folder berada di MUSIC_FOLDER
-            # jika kamu mau import dari seluruh storage, hapus baris berikut
+            # jika kamu ingin import dari seluruh storage, ubah sesuai kebutuhan
             if not is_inside_music(folder_path):
                 # skip folder di luar MUSIC_FOLDER
                 continue
@@ -181,7 +221,7 @@ def scan_db():
                 )
                 folder_id = cur.lastrowid
 
-            # simpan file mp3
+            # simpan file mp3 (ikat pada user saat ini)
             for file_name in f["files"]:
                 fp = os.path.join(folder_path, file_name)
                 try:
@@ -191,14 +231,14 @@ def scan_db():
                 except:
                     continue
 
-                cur.execute("SELECT id FROM mp3_tracks WHERE filepath=?", (fp,))
+                cur.execute("SELECT id FROM mp3_tracks WHERE filepath=? AND user_id=?", (fp, owner))
                 if cur.fetchone():
                     continue
 
                 cur.execute("""
-                    INSERT INTO mp3_tracks (folder_id, filename, filepath, size, added_at)
-                    VALUES (?,?,?,?,?)
-                """, (folder_id, file_name, fp, size, datetime.utcnow().isoformat()))
+                    INSERT INTO mp3_tracks (folder_id, filename, filepath, size, added_at, user_id, is_favorite, play_count)
+                    VALUES (?,?,?,?,?,?,?,?)
+                """, (folder_id, file_name, fp, size, datetime.utcnow().isoformat(), owner, 0, 0))
 
                 imported += 1
                 try:
@@ -225,7 +265,7 @@ def scan_db():
 
 
 # ======================================================
-#  LIST FOLDERS
+#  LIST FOLDERS (hanya folder yang punya track untuk user ini)
 # ======================================================
 @media_mp3.route("/folders")
 def list_folders():
@@ -233,14 +273,17 @@ def list_folders():
     if cek:
         return cek
 
+    owner = current_user_identifier()
+
     try:
         conn = get_db()
         rows = conn.execute("""
-            SELECT id, folder_name,
-                   (SELECT COUNT(*) FROM mp3_tracks WHERE folder_id = mp3_folders.id) AS total_mp3
-            FROM mp3_folders
-            ORDER BY folder_name ASC
-        """).fetchall()
+            SELECT f.id, f.folder_name,
+                   (SELECT COUNT(*) FROM mp3_tracks t WHERE t.folder_id = f.id AND t.user_id = ?) AS total_mp3
+            FROM mp3_folders f
+            WHERE (SELECT COUNT(*) FROM mp3_tracks t WHERE t.folder_id = f.id AND t.user_id = ?) > 0
+            ORDER BY f.folder_name ASC
+        """, (owner, owner)).fetchall()
         conn.close()
         return jsonify([dict(r) for r in rows]), 200
     except Exception as e:
@@ -248,7 +291,7 @@ def list_folders():
 
 
 # ======================================================
-#  LIST TRACKS IN FOLDER
+#  LIST TRACKS IN FOLDER (filtered by user)
 # ======================================================
 @media_mp3.route("/folder/<int:folder_id>/tracks")
 def folder_tracks(folder_id):
@@ -256,14 +299,16 @@ def folder_tracks(folder_id):
     if cek:
         return cek
 
+    owner = current_user_identifier()
+
     try:
         conn = get_db()
         rows = conn.execute("""
-            SELECT id, filename, filepath, size
+            SELECT id, filename, filepath, size, is_favorite, play_count
             FROM mp3_tracks
-            WHERE folder_id=?
+            WHERE folder_id=? AND user_id=?
             ORDER BY filename ASC
-        """, (folder_id,)).fetchall()
+        """, (folder_id, owner)).fetchall()
         conn.close()
         return jsonify([dict(r) for r in rows]), 200
     except Exception as e:
@@ -271,7 +316,67 @@ def folder_tracks(folder_id):
 
 
 # ======================================================
-#  TRACK INFO
+#  FAVORITES: list & toggle
+# ======================================================
+@media_mp3.route("/favorites")
+def list_favorites():
+    cek = mp3_required()
+    if cek:
+        return cek
+
+    owner = current_user_identifier()
+    try:
+        conn = get_db()
+        rows = conn.execute("""
+            SELECT id, filename, filepath, size, play_count
+            FROM mp3_tracks
+            WHERE user_id=? AND is_favorite=1
+            ORDER BY filename ASC
+        """, (owner,)).fetchall()
+        conn.close()
+        return jsonify([dict(r) for r in rows]), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+@media_mp3.route("/favorite/<int:track_id>", methods=["POST"])
+def toggle_favorite(track_id):
+    cek = mp3_required()
+    if cek:
+        return cek
+
+    owner = current_user_identifier()
+    username = session.get("username", "UNKNOWN")
+
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        row = cur.execute("SELECT is_favorite FROM mp3_tracks WHERE id=? AND user_id=?", (track_id, owner)).fetchone()
+        if not row:
+            conn.close()
+            return jsonify({"error": "Track tidak ditemukan atau bukan milik Anda"}), 404
+
+        new_state = 0 if row["is_favorite"] else 1
+        cur.execute("UPDATE mp3_tracks SET is_favorite=? WHERE id=? AND user_id=?", (new_state, track_id, owner))
+        conn.commit()
+        conn.close()
+
+        try:
+            BMS_write_log(f"Favorite toggled → {track_id} = {new_state}", username)
+        except:
+            pass
+
+        return jsonify({"status": "ok", "is_favorite": new_state}), 200
+    except Exception as e:
+        try:
+            BMS_write_log(f"[FAV ERROR] {e}", username)
+        except:
+            pass
+        return jsonify({"error": str(e)}), 500
+
+
+# ======================================================
+#  TRACK INFO (filtered by user)
 # ======================================================
 @media_mp3.route("/info/<int:track_id>")
 def track_info(track_id):
@@ -279,9 +384,14 @@ def track_info(track_id):
     if cek:
         return cek
 
+    owner = current_user_identifier()
     try:
         conn = get_db()
-        row = conn.execute("SELECT * FROM mp3_tracks WHERE id=?", (track_id,)).fetchone()
+        row = conn.execute("""
+            SELECT id, filename, filepath, size, is_favorite, play_count
+            FROM mp3_tracks
+            WHERE id=? AND user_id=?
+        """, (track_id, owner)).fetchone()
         conn.close()
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -293,7 +403,7 @@ def track_info(track_id):
 
 
 # ======================================================
-#  STREAM MP3 (support Range header)
+#  STREAM MP3 (support Range header) + increment play_count
 # ======================================================
 def range_request(file_path):
     """
@@ -323,15 +433,22 @@ def play_mp3(track_id):
     if cek:
         return cek
 
+    owner = current_user_identifier()
+    username = session.get("username", "UNKNOWN")
+
     try:
         conn = get_db()
-        row = conn.execute("SELECT filepath FROM mp3_tracks WHERE id=?", (track_id,)).fetchone()
+        row = conn.execute("SELECT filepath, user_id FROM mp3_tracks WHERE id=?", (track_id,)).fetchone()
         conn.close()
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
     if not row:
         return jsonify({"error": "Track tidak ditemukan"}), 404
+
+    # Pastikan track milik user saat ini
+    if str(row["user_id"]) != str(owner):
+        return jsonify({"error": "Track tidak ditemukan atau bukan milik Anda"}), 404
 
     fp = row["filepath"]
     if not os.path.exists(fp):
@@ -340,6 +457,16 @@ def play_mp3(track_id):
     # pastikan file berada di folder musik yang diizinkan
     if not is_inside_music(fp):
         return jsonify({"error": "Akses file tidak diizinkan"}), 403
+
+    # Increment play_count (lokal kepada row ini)
+    try:
+        conn = get_db()
+        cur = conn.cursor()
+        cur.execute("UPDATE mp3_tracks SET play_count = COALESCE(play_count,0) + 1 WHERE id=? AND user_id=?", (track_id, owner))
+        conn.commit()
+        conn.close()
+    except Exception:
+        pass
 
     # dukung Range header supaya player bisa seek
     r = range_request(fp)
