@@ -11,40 +11,59 @@
     <link rel="stylesheet" href="/static/css/BMS_login.css">
 </head>
 <body>
+
+    <!-- BACKGROUND -->
     <canvas id="jellyCanvas"></canvas>
 
     <div class="welcome-card">
+
         <div class="card-header">
             <h2>[ 🔐 LOGIN ]</h2>
-            <p class="card-subtitle">Masuk ke sistem BMS</p>
+            <p class="card-subtitle">Masuk ke Sistem BMS</p>
         </div>
 
-        <!-- ALERT NOTIFICATION -->
-        <div id="alertContainer"></div>
+        <!-- FLASH MESSAGE DARI BACKEND -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-container">
+                    {% for category, message in messages %}
+                        <div class="flash flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
 
-        <form id="loginForm" action="/auth/login" method="POST">
+        <!-- LOGIN FORM -->
+        <form id="loginForm" action="/auth/login" method="POST" autocomplete="on">
+
+            <!-- CSRF TOKEN -->
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 
             <div class="form-group">
                 <label for="username">Username:</label>
-                <input 
-                    type="text" 
-                    id="username" 
-                    name="username" 
-                    class="input-text" 
-                    placeholder="Masukkan username Anda"
+                <input
+                    type="text"
+                    id="username"
+                    name="username"
+                    class="input-text"
+                    placeholder="Masukkan username"
+                    minlength="3"
+                    maxlength="32"
                     required>
                 <div class="error-message" id="usernameError"></div>
             </div>
 
             <div class="form-group">
                 <label for="password">Password:</label>
-                <input 
-                    type="password" 
-                    id="password" 
-                    name="password" 
-                    class="input-text" 
-                    placeholder="Masukkan password Anda"
-                    required>
+                <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    class="input-text"
+                    placeholder="Masukkan password"
+                    minlength="8"
+                    required
+                    autocomplete="new-password">
                 <div class="error-message" id="passwordError"></div>
             </div>
 
@@ -65,7 +84,7 @@
     <!-- BACKGROUND ANIMATION -->
     <script src="/static/js/begron/BMS_jellyfish_begron.js"></script>
 
-    <!-- LOGIN VALIDATION JS -->
+    <!-- LOGIN VALIDATION (Jika masih digunakan) -->
     <script src="/static/js/BMS_login.js"></script>
 
 </body>
