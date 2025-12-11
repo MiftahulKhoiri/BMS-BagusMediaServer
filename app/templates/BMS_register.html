@@ -4,58 +4,87 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Daftar - BMS</title>
+
+    <!-- CSS -->
     <link rel="stylesheet" href="/static/css/BMS_welcome.css">
     <link rel="stylesheet" href="/static/css/begron/BMS_jellyfish_begron.css">
     <link rel="stylesheet" href="/static/css/BMS_register.css">
 </head>
 <body>
+
+    <!-- BACKGROUND -->
     <canvas id="jellyCanvas"></canvas>
 
     <div class="welcome-card">
+
         <div class="card-header">
             <h2>[ 📝 DAFTAR ]</h2>
-            <p class="card-subtitle">Buat akun BMS baru</p>
+            <p class="card-subtitle">Buat akun baru untuk mengakses BMS</p>
         </div>
 
-        <div id="alertContainer"></div>
+        <!-- FLASH MESSAGE BACKEND -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="flash-container">
+                    {% for category, message in messages %}
+                        <div class="flash flash-{{ category }}">{{ message }}</div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
 
-        <form id="registerForm" method="POST" action="/auth/register">
-            <!-- CSRF Token -->
-            <input type="hidden" name="csrf_token" id="csrf_token">
+        <!-- REGISTER FORM -->
+        <form id="registerForm" method="POST" action="/auth/register" autocomplete="off">
 
+            <!-- CSRF TOKEN -->
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+
+            <!-- USERNAME -->
             <div class="form-group">
                 <label for="username">Username:</label>
-                <input type="text" id="username" name="username" class="input-text" required 
-                       placeholder="Pilih username unik">
+                <input 
+                    type="text"
+                    id="username"
+                    name="username"
+                    class="input-text"
+                    minlength="3"
+                    maxlength="32"
+                    placeholder="Pilih username unik"
+                    required>
                 <div class="error-message" id="usernameError"></div>
             </div>
 
+            <!-- PASSWORD -->
             <div class="form-group">
                 <label for="password">Password:</label>
-                <input type="password" id="password" name="password" class="input-text" required 
-                       placeholder="Buat password yang kuat">
+                <input 
+                    type="password"
+                    id="password"
+                    name="password"
+                    class="input-text"
+                    minlength="8"
+                    placeholder="Buat password yang kuat"
+                    required
+                    autocomplete="new-password">
                 <div class="error-message" id="passwordError"></div>
             </div>
 
+            <!-- CONFIRM PASSWORD -->
             <div class="form-group">
-                <label for="confirmPassword">Konfirmasi Password:</label>
-                <input type="password" id="confirmPassword" name="confirmPassword" class="input-text" required 
-                       placeholder="Ulangi password Anda">
+                <label for="confirm_password">Konfirmasi Password:</label>
+                <input 
+                    type="password"
+                    id="confirm_password"
+                    name="confirm_password"
+                    class="input-text"
+                    minlength="8"
+                    placeholder="Ulangi password Anda"
+                    required
+                    autocomplete="new-password">
                 <div class="error-message" id="confirmPasswordError"></div>
             </div>
 
-            <!-- ROLE DIHAPUS (FIX KEAMANAN)
-            <div class="form-group">
-                <label for="role">Pilih Role:</label>
-                <select id="role" name="role" class="input-select" required>
-                    <option value="">-- Pilih Role --</option>
-                    <option value="user">User</option>
-                    <option value="admin">Admin</option>
-                </select>
-                <div class="error-message" id="roleError"></div>
-            </div>
-            -->
-
+            <!-- BUTTON -->
             <div class="form-actions">
                 <button type="submit" id="submitBtn" class="submit-btn">
                     <span id="btnText">Daftar</span>
@@ -65,13 +94,15 @@
                     <a href="/auth/login" class="back-link">Sudah punya akun? Login</a>
                 </div>
             </div>
+
         </form>
     </div>
 
-    <!-- JELLYFISH ANIMATION -->
+    <!-- ANIMATION -->
     <script src="/static/js/begron/BMS_jellyfish_begron.js"></script>
 
-    <!-- JavaScript untuk validasi dan interaksi -->
+    <!-- JS FORM VALIDATION -->
     <script src="/static/js/BMS_register.js"></script>
+
 </body>
 </html>
