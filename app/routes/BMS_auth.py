@@ -274,11 +274,10 @@ def login():
 
     flash("Login berhasil!", "success")
 
-    return redirect(
-        url_for("/user/home")
-        if session.get("role") != "admin"
-        else url_for("/admin/home")
-    )
+    return {
+        "success": True,
+        "redirect": "/admin/home" if user["role"] in ("admin", "root") else "/user/home"
+    }
 
 # ======================================================
 #   🔍 LOGOUT
