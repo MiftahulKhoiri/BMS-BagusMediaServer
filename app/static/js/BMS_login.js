@@ -7,35 +7,60 @@ document.addEventListener("DOMContentLoaded", function () {
     const alertContainer = document.getElementById("alertContainer");
 
     // ============================================================
-    //  FRONT-END VALIDATION
+    //  HANDLE SUBMIT (VALIDASI + AJAX LOGIN)
     // ============================================================
-    loginForm.addEventListener("submit", function (e) {
-        // Jangan auto-submit, biarkan browser submit normal
-        // tapi tetap validasi dulu
+    loginForm.addEventListener("submit", async function (e) {
+        e.preventDefault(); // Stop submit normal
+
         let isValid = true;
         resetErrors();
 
         const username = usernameInput.value.trim();
         const password = passwordInput.value.trim();
 
+        // --- VALIDASI USERNAME ---
         if (username.length < 3) {
             showError(usernameInput, "usernameError", "Username minimal 3 karakter");
             isValid = false;
         }
 
+        // --- VALIDASI PASSWORD ---
         if (password.length < 8) {
             showError(passwordInput, "passwordError", "Password minimal 8 karakter");
             isValid = false;
         }
 
-        if (!isValid) {
-            e.preventDefault();
-            return;
-        }
+        if (!isValid) return;
 
-        // Disable tombol agar tidak double-submit
+        // Tombol loading
         submitBtn.disabled = true;
         btnText.innerHTML = '<span class="loading"></span> Memproses...';
+
+        // --- AJAX SEND TO BACKEND ---
+        const formData = new FormData(loginForm);
+
+        try {
+            const res = await fetch("/auth/login", {
+                method: "POST",
+                body: formData
+            });
+
+            const data = await res.json();
+
+            if (data.success) {
+                // Redirect sesuai role
+                window.location.href = data.redirect;
+            } else {
+                showAlert("Login gagal. Periksa username / password.", "error");
+            }
+
+        } catch (err) {
+            showAlert("Koneksi gagal. Coba lagi.", "error");
+        }
+
+        // Reset tombol
+        submitBtn.disabled = false;
+        btnText.textContent = "Masuk";
     });
 
     // ============================================================
@@ -63,7 +88,12 @@ document.addEventListener("DOMContentLoaded", function () {
         errorElement.style.display = "none";
     }
 
+    // ============================================================
+    //  ALERT NOTIFICATION (FLASH FRONTEND)
+    // ============================================================
     function showAlert(message, type) {
+        if (!alertContainer) return;
+
         alertContainer.innerHTML = `
             <div class="alert alert-${type}">
                 ${escapeHTML(message)}
@@ -83,7 +113,7 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // ============================================================
-    //  REAL-TIME CHECK
+    //  REAL-TIME INPUT CHECK
     // ============================================================
     usernameInput.addEventListener("input", function () {
         if (this.value.length >= 3) resetError(this, "usernameError");
