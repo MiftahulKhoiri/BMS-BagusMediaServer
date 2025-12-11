@@ -15,13 +15,13 @@ from app.BMS_config import DB_PATH
 
 
 # ================================================================================
-# 1. USERS TABLE
+# 1. USERS TABLE + AUTO MIGRASI password → password_hash
 # ================================================================================
 def ensure_users_table():
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
 
-    # Tabel dasar
+    # Tabel dasar jika belum ada
     cur.execute("""
         CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -31,7 +31,9 @@ def ensure_users_table():
         )
     """)
 
-    # Kolom tambahan untuk profil lengkap (mirip sosial media)
+    # ===============================
+    # Tambahkan kolom profil tambahan
+    # ===============================
     required_columns = {
         "nama": "TEXT",
         "umur": "TEXT",
@@ -49,14 +51,28 @@ def ensure_users_table():
         if col not in existing_cols:
             try:
                 cur.execute(f"ALTER TABLE users ADD COLUMN {col} {tipe}")
-                print(f"[DB FIX] Kolom 'users.{col}' ditambahkan.")
+                print(f"[DB FIX] Kolom users.{col} ditambahkan.")
             except Exception as e:
-                print(f"[DB FIX] Gagal menambah kolom users.{col}: {e}")
+                print(f"[DB FIX] ERROR tambah kolom users.{col}: {e}")
+
+    # =============================================
+    # 🔥 AUTO MIGRASI password → password_hash
+    # =============================================
+    if "password_hash" not in existing_cols:
+        try:
+            print("[DB FIX] Menambahkan kolom password_hash...")
+            cur.execute("ALTER TABLE users ADD COLUMN password_hash TEXT")
+
+            print("[DB FIX] Menyalin password lama ke password_hash...")
+            cur.execute("UPDATE users SET password_hash = password")
+
+            print("[DB FIX] Migrasi password_hash selesai.")
+        except Exception as e:
+            print(f"[DB FIX] ERROR migrasi password_hash: {e}")
 
     conn.commit()
     conn.close()
     print("[DB FIX] Users table repair complete.")
-
 
 # ================================================================================
 # 2. CREATE ROOT USER (jika tidak ada)
