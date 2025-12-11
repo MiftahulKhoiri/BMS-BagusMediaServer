@@ -1,3 +1,49 @@
+# ============================================================================
+# BMS_video_scan.py — Scan storage & import (Multi-user, no login block)
+# - Safe insert (try/except) to avoid UNIQUE crashes
+# - Inserts folder + videos under owner (current_user_identifier)
+# ============================================================================
+
+import os
+from datetime import datetime
+from flask import Blueprint, jsonify, session
+
+from app.routes.BMS_logger import BMS_write_log
+from .BMS_video_db import get_db, is_video_file, current_user_identifier
+
+video_scan = Blueprint("video_scan", __name__, url_prefix="/video")
+
+
+def scan_storage_for_video():
+    """
+    Scan storage in a limited way to avoid long blocking runs.
+    Returns list of {folder_path, folder_name, files}
+    """
+    ROOT = "/storage/emulated/0"
+    if not os.path.exists(ROOT):
+        ROOT = os.path.expanduser("~")
+
+    MAX_FOLDERS = 200
+    MAX_FILES = 300
+    found = []
+
+    for root, dirs, files in os.walk(ROOT):
+        if len(found) >= MAX_FOLDERS:
+            break
+
+        vids = [f for f in files if is_video_file(f)]
+        if not vids:
+            continue
+
+        found.append({
+            "folder_path": root,
+            "folder_name": os.path.basename(root) or root,
+            "files": vids[:MAX_FILES]
+        })
+
+    return found
+
+
 @video_scan.route("/scan-db", methods=["POST"])
 def scan_db():
     owner = current_user_identifier()
@@ -17,7 +63,7 @@ def scan_db():
         folder_path = f["folder_path"]
         fn = f["folder_name"]
 
-        # cek apakah folder user sudah ada
+        # cari folder milik owner
         row = cur.execute("""
             SELECT id FROM folders
             WHERE folder_path=? AND user_id=?
@@ -25,9 +71,8 @@ def scan_db():
 
         if row:
             folder_id = row["id"]
-
         else:
-            # coba insert folder baru
+            # safe-insert: jika ada unique constraint global lama -> handle
             try:
                 cur.execute("""
                     INSERT INTO folders (folder_name, folder_path, user_id)
@@ -37,14 +82,26 @@ def scan_db():
                 folders_new.append(fn)
 
             except Exception:
-                # constraint gagal → ambil folder milik user
+                # fallback: ambil id folder jika sudah ada untuk owner
                 row2 = cur.execute("""
                     SELECT id FROM folders
                     WHERE folder_path=? AND user_id=?
                 """, (folder_path, owner)).fetchone()
-                folder_id = row2["id"]
+                if row2:
+                    folder_id = row2["id"]
+                else:
+                    # very rare: folder_path exists globally but not for this owner,
+                    # create a non-unique fallback by appending suffix (safe)
+                    # NOTE: this branch is defensive; normally idx_folders_path_user prevents collision.
+                    alt_path = folder_path + "::" + owner
+                    cur.execute("""
+                        INSERT INTO folders (folder_name, folder_path, user_id)
+                        VALUES (?,?,?)
+                    """, (fn, alt_path, owner))
+                    folder_id = cur.lastrowid
+                    folders_new.append(fn)
 
-        # proses semua video dalam folder
+        # simpan videos untuk folder ini (owner-scoped)
         for vid in f["files"]:
             fp = os.path.join(folder_path, vid)
 
@@ -56,7 +113,11 @@ def scan_db():
             if exists:
                 continue
 
-            size = os.path.getsize(fp)
+            try:
+                size = os.path.getsize(fp)
+            except:
+                size = 0
+
             added = datetime.utcnow().isoformat()
 
             cur.execute("""
