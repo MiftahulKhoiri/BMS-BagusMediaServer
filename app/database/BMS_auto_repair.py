@@ -130,49 +130,47 @@ def ensure_folders_table():
 # ================================================================================
 # 4. VIDEO — TABLE VIDEOS (PER-USER)
 # ================================================================================
+
 def ensure_videos_table():
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
 
-    cur.execute("""
-        CREATE TABLE IF NOT EXISTS videos (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            filename TEXT,
-            filepath TEXT UNIQUE,
-            folder_id INTEGER,
-            size INTEGER DEFAULT 0,
-            added_at TEXT,
-            user_id TEXT,
-            FOREIGN KEY(folder_id) REFERENCES folders(id)
-        )
-    """)
+    # Cek apakah filepath masih UNIQUE
+    cur.execute("PRAGMA index_list(videos)")
+    indexes = cur.fetchall()
 
-    # ensure columns exist
-    cur.execute("PRAGMA table_info(videos)")
-    existing = [col[1] for col in cur.fetchall()]
+    filepath_unique_exists = False
+    for idx in indexes:
+        if idx[1] == "sqlite_autoindex_videos_1":  # index otomatis UNIQUE
+            filepath_unique_exists = True
 
-    required = {
-        "folder_id": "INTEGER",
-        "size": "INTEGER DEFAULT 0",
-        "added_at": "TEXT",
-        "user_id": "TEXT"
-    }
+    # Jika UNIQUE masih ada → rebuild table
+    if filepath_unique_exists:
+        print("[DB FIX] Menghapus UNIQUE(filepath) dari tabel videos...")
 
-    for col, tipe in required.items():
-        if col not in existing:
-            try:
-                cur.execute(f"ALTER TABLE videos ADD COLUMN {col} {tipe}")
-                print(f"[DB FIX] videos.{col} ditambahkan.")
-            except Exception as e:
-                print(f"[DB FIX] Error tambah videos.{col}: {e}")
-
-    try:
         cur.execute("""
-            CREATE INDEX IF NOT EXISTS idx_videos_folder_user
-            ON videos(folder_id, user_id)
+            CREATE TABLE IF NOT EXISTS videos_new (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                filename TEXT,
+                filepath TEXT,
+                folder_id INTEGER,
+                size INTEGER,
+                added_at TEXT,
+                user_id TEXT
+            );
         """)
-    except:
-        pass
+
+        cur.execute("""
+            INSERT INTO videos_new
+            (id, filename, filepath, folder_id, size, added_at, user_id)
+            SELECT id, filename, filepath, folder_id, size, added_at, user_id
+            FROM videos;
+        """)
+
+        cur.execute("DROP TABLE videos;")
+        cur.execute("ALTER TABLE videos_new RENAME TO videos;")
+
+        print("[DB FIX] Rebuild tabel videos selesai!")
 
     conn.commit()
     conn.close()
