@@ -276,7 +276,8 @@ def login():
 
     return {
         "success": True,
-        "redirect": "/admin/home" if user["role"] in ("admin", "root") else "/user/home"
+        "redirect": "/admin/home"
+    if user["role"] in ("admin", "root") else "/user/home"
     }
 
 # ======================================================
