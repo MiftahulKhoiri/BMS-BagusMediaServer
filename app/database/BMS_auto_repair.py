@@ -74,7 +74,7 @@ def ensure_root_user():
         return
 
     from werkzeug.security import generate_password_hash
-    pw_hash = generate_password_hash("root123")
+    pw_hash = generate_password_hash("Root1234")
 
     cur.execute("""
         INSERT INTO users (username, password, role, nama)
