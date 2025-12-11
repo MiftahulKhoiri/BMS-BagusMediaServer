@@ -8,16 +8,16 @@ from flask import Blueprint, render_template, request, redirect, session, jsonif
 from werkzeug.security import generate_password_hash, check_password_hash
 from app.BMS_config import DB_PATH
 
-# Optional logger from your project (if exists)
+# Optional logger
 try:
     from app.routes.BMS_logger import BMS_write
 except Exception:
     def BMS_write(*args, **kwargs):
-        pass  # fallback, no crash
+        pass
 
 auth = Blueprint("auth", __name__, url_prefix="/auth")
 
-# Configuration defaults
+# Config defaults
 DEFAULT_LOCK_THRESHOLD = 5
 DEFAULT_LOCK_WINDOW_MIN = 15
 DEFAULT_COOLDOWN_MIN = 15
@@ -33,7 +33,7 @@ def get_db():
     return conn
 
 # ======================================================
-#   🔧 Ensure required tables
+#   🔧 Ensure failed_login table
 # ======================================================
 def ensure_auth_tables():
     conn = get_db()
@@ -75,21 +75,19 @@ def verify_csrf(token_from_form):
     return bool(token and token_from_form and secrets.compare_digest(token, token_from_form))
 
 # ======================================================
-#   🔍 Failed login tracking (DB-based)
+#   🔍 Failed login tracking
 # ======================================================
 def add_failed_attempt(username, ip):
     conn = get_db()
-    cur = conn.cursor()
-    cur.execute("INSERT INTO failed_logins (username, ip, ts) VALUES (?, ?, ?)",
-                (username, ip, int(time.time())))
+    conn.execute("INSERT INTO failed_logins (username, ip, ts) VALUES (?, ?, ?)",
+                 (username, ip, int(time.time())))
     conn.commit()
     conn.close()
 
 def count_failed_attempts(username, ip, minutes_window):
     cutoff = int(time.time()) - (minutes_window * 60)
     conn = get_db()
-    cur = conn.cursor()
-    cur.execute("""
+    cur = conn.execute("""
         SELECT COUNT(*) as c
         FROM failed_logins
         WHERE (username = ? OR ip = ?) AND ts >= ?
@@ -100,8 +98,7 @@ def count_failed_attempts(username, ip, minutes_window):
 
 def clear_failed_attempts(username, ip):
     conn = get_db()
-    cur = conn.cursor()
-    cur.execute("DELETE FROM failed_logins WHERE username = ? OR ip = ?", (username, ip))
+    conn.execute("DELETE FROM failed_logins WHERE username = ? OR ip = ?", (username, ip))
     conn.commit()
     conn.close()
 
@@ -115,15 +112,22 @@ def is_locked(username, ip):
     return attempts >= threshold
 
 # ======================================================
-#   🔍 Session & Role check
+#   🔍 Session & Role check (FINAL FIXED)
 # ======================================================
 def BMS_auth_is_login():
-    username = session.get("username")
-    if not username:
+    # HARUS ada user_id
+    if not session.get("user_id"):
         return False
 
+    # HARUS ada username
+    if not session.get("username"):
+        return False
+
+    # Check expired
     expiry_ts = session.get("_expiry_ts")
-    if not expiry_ts or int(time.time()) > int(expiry_ts):
+    now = int(time.time())
+
+    if not expiry_ts or now > int(expiry_ts):
         session.clear()
         return False
 
@@ -136,7 +140,7 @@ def BMS_auth_is_root():
     return BMS_auth_is_login() and session.get("role") == "root"
 
 # ======================================================
-#   🧾 REGISTER (GET & POST)
+#   🧾 REGISTER
 # ======================================================
 @auth.route("/register", methods=["GET", "POST"])
 def register():
@@ -149,8 +153,8 @@ def register():
     username = (request.form.get("username") or "").strip()
     password = (request.form.get("password") or "")
     confirm = (request.form.get("confirm_password") or "")
-
     csrf_token = request.form.get("csrf_token")
+
     if not verify_csrf(csrf_token):
         flash("Permintaan tidak valid.", "error")
         return redirect(url_for("auth.register"))
@@ -163,7 +167,7 @@ def register():
         flash(f"Password minimal {PASSWORD_MIN_LENGTH} karakter.", "error")
         return redirect(url_for("auth.register"))
 
-    if confirm and password != confirm:
+    if password != confirm:
         flash("Konfirmasi password tidak cocok.", "error")
         return redirect(url_for("auth.register"))
 
@@ -171,41 +175,38 @@ def register():
         conn = get_db()
         cur = conn.cursor()
 
-        # Check duplicate username
         cur.execute("SELECT id FROM users WHERE username = ?", (username,))
         if cur.fetchone():
-            conn.close()
             flash("Username sudah digunakan!", "error")
             return redirect(url_for("auth.register"))
 
         pw_hash = generate_password_hash(password)
 
-        # Try insert with password_hash, fallback to password
         try:
-            cur.execute("INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
-                        (username, pw_hash, "user"))
+            cur.execute(
+                "INSERT INTO users (username, password_hash, role) VALUES (?, ?, ?)",
+                (username, pw_hash, "user")
+            )
         except sqlite3.OperationalError:
-            cur.execute("INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
-                        (username, pw_hash, "user"))
+            cur.execute(
+                "INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
+                (username, pw_hash, "user")
+            )
 
         conn.commit()
         conn.close()
 
-        flash("Registrasi berhasil! Silakan login.", "success")
+        flash("Registrasi berhasil!", "success")
         return redirect(url_for("auth.login"))
 
     except Exception as e:
-        try:
-            BMS_write(f"Register error: {e}")
-        except:
-            pass
+        BMS_write(f"Register error: {e}")
         flash("Terjadi kesalahan pada server.", "error")
         return redirect(url_for("auth.register"))
 
 # ======================================================
-#   🔍 LOGIN (GET & POST)
+#   🔐 LOGIN (FINAL FIXED)
 # ======================================================
-
 @auth.route("/login", methods=["GET", "POST"])
 def login():
     ensure_csrf_token()
@@ -228,10 +229,10 @@ def login():
         return redirect(url_for("auth.login"))
 
     if is_locked(username, ip):
-        flash("Terlalu banyak percobaan login. Coba lagi nanti.", "error")
+        flash("Terlu banyak percobaan login. Coba lagi nanti.", "error")
         return redirect(url_for("auth.login"))
 
-    # Ambil user (+ fallback password lama)
+    # Ambil user
     conn = get_db()
     cur = conn.cursor()
     cur.execute("""
@@ -251,17 +252,20 @@ def login():
 
     stored_hash = user["newpass"] or user["oldpass"]
 
-    if not stored_hash or not check_password_hash(stored_hash, password):
+    if not check_password_hash(stored_hash, password):
         add_failed_attempt(username, ip)
         flash("Invalid username or password.", "error")
         return redirect(url_for("auth.login"))
 
-    # Login success
+    # LOGIN BERHASIL
     clear_failed_attempts(username, ip)
 
+    # ============ FIX UTAMA ============
     session.clear()
+    session["user_id"] = user["id"]          # ⬅ WAJIB
     session["username"] = user["username"]
     session["role"] = user["role"]
+    # ===================================
 
     expiry = int(time.time()) + (DEFAULT_SESSION_MINUTES * 60)
     session["_expiry_ts"] = expiry
@@ -271,21 +275,19 @@ def login():
 
     flash("Login berhasil!", "success")
 
-    # PILIH HALAMAN BERDASARKAN ROLE
     redirect_url = "/admin/home" if user["role"] in ("admin", "root") else "/user/home"
 
-    return {
+    return jsonify({
         "success": True,
         "redirect": redirect_url
-    }
+    })
 
 
 # ======================================================
-#   🔍 LOGOUT
+#   🔐 LOGOUT
 # ======================================================
 @auth.route("/logout")
 def logout():
-    username = session.get("username")
     session.clear()
     flash("Berhasil logout.", "info")
     return redirect(url_for("auth.login"))
