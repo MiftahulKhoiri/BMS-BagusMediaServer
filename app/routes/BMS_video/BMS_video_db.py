@@ -14,6 +14,8 @@ from datetime import datetime
 
 from app.BMS_config import DB_PATH, VIDEO_FOLDER
 from app.routes.BMS_logger import BMS_write_log
+from app.routes.BMS_auth import BMS_auth_is_login
+
 
 # Pastikan folder video ada
 os.makedirs(VIDEO_FOLDER, exist_ok=True)
@@ -90,8 +92,10 @@ def current_user_identifier():
 # ============================================================================
 #   LOGIN CHECK
 # ============================================================================
+
 def video_login_required():
-    return session.get("is_login") == True
+    """Gunakan sistem login resmi BMS."""
+    return BMS_auth_is_login()
 
 
 # ============================================================================
