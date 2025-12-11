@@ -1,101 +1,84 @@
 # ============================================================================
-#   BMS VIDEO MODULE — DATABASE & USER CONTROL (FINAL)
-#   Menangani:
-#     ✔ Koneksi DB
-#     ✔ Tabel folders + videos
-#     ✔ Tambah kolom user_id (jika belum ada)
-#     ✔ Helper user_id & validasi
+#   BMS VIDEO MODULE — DATABASE & USER SYSTEM (FINAL, NO LOGIN BLOCK)
 # ============================================================================
 
 import os
 import sqlite3
 from flask import session
-from datetime import datetime
-
 from app.BMS_config import DB_PATH, VIDEO_FOLDER
-from app.routes.BMS_logger import BMS_write_log
-from app.routes.BMS_auth import BMS_auth_is_login
-
 
 # Pastikan folder video ada
 os.makedirs(VIDEO_FOLDER, exist_ok=True)
 
-_db_initialized = False
+_db_init = False
 
 
 def get_db():
-    """
-    Membuka koneksi SQLite dan memastikan tabel video siap
-    + migrasi kolom user_id jika belum ada.
-    """
-    global _db_initialized
-
+    """Koneksi SQLite + migrasi kolom user_id otomatis."""
+    global _db_init
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)
     conn.row_factory = sqlite3.Row
 
-    if not _db_initialized:
+    if not _db_init:
         cur = conn.cursor()
 
-        # Folder table
+        # ========= Tabel Folders (Video) ==========
         cur.execute("""
             CREATE TABLE IF NOT EXISTS folders (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 folder_name TEXT,
-                folder_path TEXT UNIQUE,
+                folder_path TEXT,
                 user_id TEXT
             )
         """)
 
-        # Video table
+        # Tambahkan kolom jika belum ada
+        cols = [c["name"] for c in cur.execute("PRAGMA table_info(folders)").fetchall()]
+        if "user_id" not in cols:
+            cur.execute("ALTER TABLE folders ADD COLUMN user_id TEXT")
+
+        # ========= Tabel Videos (Video) ==========
         cur.execute("""
             CREATE TABLE IF NOT EXISTS videos (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 filename TEXT,
                 filepath TEXT UNIQUE,
                 folder_id INTEGER,
-                size INTEGER,
+                size INTEGER DEFAULT 0,
                 added_at TEXT,
                 user_id TEXT,
-                FOREIGN KEY(folder_id) REFERENCES folders(id) ON DELETE CASCADE
+                FOREIGN KEY(folder_id) REFERENCES folders(id)
             )
         """)
 
-        # MIGRASI jika user_id belum ada
-        existing_cols = [r["name"] for r in cur.execute("PRAGMA table_info(folders)").fetchall()]
-        if "user_id" not in existing_cols:
-            cur.execute("ALTER TABLE folders ADD COLUMN user_id TEXT;")
-
-        existing_cols_v = [r["name"] for r in cur.execute("PRAGMA table_info(videos)").fetchall()]
-        if "user_id" not in existing_cols_v:
-            cur.execute("ALTER TABLE videos ADD COLUMN user_id TEXT;")
+        cols_v = [c["name"] for c in cur.execute("PRAGMA table_info(videos)").fetchall()]
+        if "user_id" not in cols_v:
+            cur.execute("ALTER TABLE videos ADD COLUMN user_id TEXT")
 
         conn.commit()
-        _db_initialized = True
+        _db_init = True
 
     return conn
 
 
 # ============================================================================
-#   USER IDENTIFIER
-#   Video sekarang per-user, sama seperti modul MP3
+#   USER IDENTIFIER (Tidak memaksa login)
 # ============================================================================
 def current_user_identifier():
-    if session.get("user_id") is not None:
-        return str(session.get("user_id"))
+    """Jika user login → pakai session user_id atau username.
+       Jika tidak login → fallback ID 'guest-<session_id>' """
+    if session.get("user_id"):
+        return str(session["user_id"])
 
-    if session.get("username") is not None:
-        return str(session.get("username"))
+    if session.get("username"):
+        return str(session["username"])
 
-    return "anonymous"
+    # fallback untuk user belum login
+    if not session.get("guest_id"):
+        import uuid
+        session["guest_id"] = "guest-" + uuid.uuid4().hex[:12]
 
-
-# ============================================================================
-#   LOGIN CHECK
-# ============================================================================
-
-def video_login_required():
-    """Gunakan sistem login resmi BMS."""
-    return BMS_auth_is_login()
+    return session["guest_id"]
 
 
 # ============================================================================
@@ -109,12 +92,9 @@ def is_video_file(name):
 
 
 # ============================================================================
-#   PATH SAFETY
+#   SAFE PATH
 # ============================================================================
 def is_inside_video_folder(path):
-    try:
-        base = os.path.realpath(VIDEO_FOLDER)
-        real = os.path.realpath(path)
-        return real.startswith(base)
-    except:
-        return False
+    base = os.path.realpath(VIDEO_FOLDER)
+    real = os.path.realpath(path)
+    return real.startswith(base)
