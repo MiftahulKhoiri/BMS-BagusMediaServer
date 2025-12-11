@@ -52,39 +52,45 @@ def list_videos(folder_id):
 def play_video(video_id):
     owner = current_user_identifier()
     conn = get_db()
-    row = conn.execute("SELECT filepath, user_id FROM videos WHERE id=?", (video_id,)).fetchone()
+
+    row = conn.execute("""
+        SELECT filepath, user_id
+        FROM videos
+        WHERE id=? AND user_id=?
+    """, (video_id, owner)).fetchone()
+
     conn.close()
+
     if not row:
         return "Video tidak ditemukan", 404
-    if str(row["user_id"]) != str(owner):
-        return "Akses ditolak", 403
 
-    fp = row["filepath"]
+    # Ambil filepath asli
+    fp = row["filepath"].split("::user::")[0]
+
     if not os.path.exists(fp):
-        return "File hilang", 404
+        return "File fisik hilang", 404
 
-    # Range support simple implementation (optional to improve)
-    range_hdr = request.headers.get("Range")
-    if not range_hdr:
+    range_header = request.headers.get("Range")
+    size = os.path.getsize(fp)
+
+    if not range_header:
         return Response(open(fp, "rb").read(), mimetype="video/mp4")
 
-    # fallback: simple partial response (works for most players)
-    try:
-        size = os.path.getsize(fp)
-        parts = range_hdr.replace("bytes=", "").split("-")
-        start = int(parts[0]) if parts[0] else 0
-        end = int(parts[1]) if parts[1] else size - 1
-        length = end - start + 1
-        with open(fp, "rb") as f:
-            f.seek(start)
-            data = f.read(length)
-        resp = Response(data, 206, mimetype="video/mp4")
-        resp.headers.add("Content-Range", f"bytes {start}-{end}/{size}")
-        resp.headers.add("Accept-Ranges", "bytes")
-        resp.headers.add("Content-Length", str(length))
-        return resp
-    except Exception as e:
-        return Response(open(fp, "rb").read(), mimetype="video/mp4")
+    # Range support
+    parts = range_header.replace("bytes=", "").split("-")
+    start = int(parts[0]) if parts[0] else 0
+    end = int(parts[1]) if len(parts) > 1 and parts[1] else size - 1
+    length = end - start + 1
+
+    with open(fp, "rb") as f:
+        f.seek(start)
+        data = f.read(length)
+
+    resp = Response(data, 206, mimetype="video/mp4")
+    resp.headers.add("Content-Range", f"bytes {start}-{end}/{size}")
+    resp.headers.add("Accept-Ranges", "bytes")
+    resp.headers.add("Content-Length", str(length))
+    return resp
 
 @video_routes.route("/watch/<int:video_id>")
 def video_watch(video_id):
