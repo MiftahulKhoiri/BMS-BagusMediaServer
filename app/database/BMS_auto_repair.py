@@ -89,6 +89,7 @@ def ensure_root_user():
 # ================================================================================
 # 3. VIDEO — TABLE FOLDERS (PER-USER)
 # ================================================================================
+
 def ensure_folders_table():
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
@@ -102,9 +103,9 @@ def ensure_folders_table():
         )
     """)
 
+    # ensure user_id column exists
     cur.execute("PRAGMA table_info(folders)")
     existing = [col[1] for col in cur.fetchall()]
-
     if "user_id" not in existing:
         try:
             cur.execute("ALTER TABLE folders ADD COLUMN user_id TEXT")
@@ -112,10 +113,19 @@ def ensure_folders_table():
         except Exception as e:
             print("[DB FIX] Error tambah folders.user_id:", e)
 
+    # create unique index per (folder_path, user_id)
+    try:
+        cur.execute("""
+            CREATE UNIQUE INDEX IF NOT EXISTS idx_folders_path_user
+            ON folders(folder_path, user_id)
+        """)
+        print("[DB FIX] idx_folders_path_user ensured.")
+    except Exception as e:
+        print("[DB FIX] Gagal membuat index idx_folders_path_user:", e)
+
     conn.commit()
     conn.close()
     print("[DB FIX] Folders table ensured.")
-
 
 # ================================================================================
 # 4. VIDEO — TABLE VIDEOS (PER-USER)
@@ -124,7 +134,6 @@ def ensure_videos_table():
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
 
-    # Tabel dasar (sekarang pakai user_id)
     cur.execute("""
         CREATE TABLE IF NOT EXISTS videos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -138,6 +147,7 @@ def ensure_videos_table():
         )
     """)
 
+    # ensure columns exist
     cur.execute("PRAGMA table_info(videos)")
     existing = [col[1] for col in cur.fetchall()]
 
@@ -156,10 +166,17 @@ def ensure_videos_table():
             except Exception as e:
                 print(f"[DB FIX] Error tambah videos.{col}: {e}")
 
+    try:
+        cur.execute("""
+            CREATE INDEX IF NOT EXISTS idx_videos_folder_user
+            ON videos(folder_id, user_id)
+        """)
+    except:
+        pass
+
     conn.commit()
     conn.close()
     print("[DB FIX] Videos table repair complete.")
-
 
 # ================================================================================
 # 5. MP3 — TABLE mp3_folders
