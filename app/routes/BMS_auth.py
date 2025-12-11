@@ -275,9 +275,9 @@ def login():
     flash("Login berhasil!", "success")
 
     return redirect(
-        url_for("profile.user_home")
+        url_for("user/home")
         if session.get("role") != "admin"
-        else url_for("admin.admin_home")
+        else url_for("admin/home")
     )
 
 # ======================================================
