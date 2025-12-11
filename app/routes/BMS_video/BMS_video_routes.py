@@ -85,3 +85,27 @@ def play_video(video_id):
         return resp
     except Exception as e:
         return Response(open(fp, "rb").read(), mimetype="video/mp4")
+
+@video_routes.route("/watch/<int:video_id>")
+def video_watch(video_id):
+    owner = current_user_identifier()
+    conn = get_db()
+
+    row = conn.execute("""
+        SELECT id, filename, folder_id, filepath, user_id
+        FROM videos
+        WHERE id=? AND user_id=?
+    """, (video_id, owner)).fetchone()
+    
+    conn.close()
+
+    if not row:
+        return "Video tidak ditemukan / akses ditolak", 404
+
+    # Passing ke template
+    return render_template(
+        "BMS_video_play.html",
+        video_id=row["id"],
+        filename=row["filename"],
+        folder_id=row["folder_id"]
+    )
