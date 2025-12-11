@@ -205,6 +205,7 @@ def register():
 # ======================================================
 #   🔍 LOGIN (GET & POST)
 # ======================================================
+
 @auth.route("/login", methods=["GET", "POST"])
 def login():
     ensure_csrf_token()
@@ -230,15 +231,11 @@ def login():
         flash("Terlalu banyak percobaan login. Coba lagi nanti.", "error")
         return redirect(url_for("auth.login"))
 
-    # ============================
-    #   FIX BAGIAN ERROR — Fallback password_hash / password
-    # ============================
+    # Ambil user (+ fallback password lama)
     conn = get_db()
     cur = conn.cursor()
     cur.execute("""
-        SELECT id,
-               username,
-               role,
+        SELECT id, username, role,
                password_hash AS newpass,
                password AS oldpass
         FROM users
@@ -274,11 +271,14 @@ def login():
 
     flash("Login berhasil!", "success")
 
+    # PILIH HALAMAN BERDASARKAN ROLE
+    redirect_url = "/admin/home" if user["role"] in ("admin", "root") else "/user/home"
+
     return {
         "success": True,
-        "redirect": "/admin/home"
-    if user["role"] in ("admin", "root") else "/user/home"
+        "redirect": redirect_url
     }
+
 
 # ======================================================
 #   🔍 LOGOUT
