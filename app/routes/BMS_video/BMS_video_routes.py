@@ -17,11 +17,12 @@ video_routes = Blueprint("video_routes", __name__, url_prefix="/video")
 # ============================================================================
 #   HALAMAN VIDEO
 # ============================================================================
-@video_routes.route("/")
-def video_page():
-    if not video_login_required():
-        return render_template("BMS_login.html")
+@video_video.route("/")
+def BMS_video_page():
+    if not BMS_auth_is_login():
+        return render_template("BMS_login.html", error="Silakan login terlebih dahulu!")
 
+    BMS_write_log("Membuka halaman BMS_video.html", session.get("username"))
     return render_template("BMS_video.html")
 
 
