@@ -1,47 +1,3 @@
-# ============================================================================
-#   BMS VIDEO SCAN — FINAL (Multi-user, No Login Block)
-# ============================================================================
-
-import os
-from datetime import datetime
-from flask import Blueprint, jsonify, session
-
-from app.routes.BMS_logger import BMS_write_log
-from .BMS_video_db import (
-    get_db,
-    is_video_file,
-    current_user_identifier
-)
-
-video_scan = Blueprint("video_scan", __name__, url_prefix="/video")
-
-
-def scan_storage_for_video():
-    ROOT = "/storage/emulated/0"
-    if not os.path.exists(ROOT):
-        ROOT = os.path.expanduser("~")
-
-    MAX_FOLDERS = 200
-    MAX_FILES = 300
-    found = []
-
-    for root, dirs, files in os.walk(ROOT):
-        if len(found) >= MAX_FOLDERS:
-            break
-
-        vids = [f for f in files if is_video_file(f)]
-        if not vids:
-            continue
-
-        found.append({
-            "folder_path": root,
-            "folder_name": os.path.basename(root) or root,
-            "files": vids[:MAX_FILES]
-        })
-
-    return found
-
-
 @video_scan.route("/scan-db", methods=["POST"])
 def scan_db():
     owner = current_user_identifier()
@@ -61,7 +17,7 @@ def scan_db():
         folder_path = f["folder_path"]
         fn = f["folder_name"]
 
-        # Cari folder user
+        # cek apakah folder user sudah ada
         row = cur.execute("""
             SELECT id FROM folders
             WHERE folder_path=? AND user_id=?
@@ -69,14 +25,26 @@ def scan_db():
 
         if row:
             folder_id = row["id"]
-        else:
-            cur.execute("""
-                INSERT INTO folders (folder_name, folder_path, user_id)
-                VALUES (?,?,?)
-            """, (fn, folder_path, owner))
-            folder_id = cur.lastrowid
-            folders_new.append(fn)
 
+        else:
+            # coba insert folder baru
+            try:
+                cur.execute("""
+                    INSERT INTO folders (folder_name, folder_path, user_id)
+                    VALUES (?,?,?)
+                """, (fn, folder_path, owner))
+                folder_id = cur.lastrowid
+                folders_new.append(fn)
+
+            except Exception:
+                # constraint gagal → ambil folder milik user
+                row2 = cur.execute("""
+                    SELECT id FROM folders
+                    WHERE folder_path=? AND user_id=?
+                """, (folder_path, owner)).fetchone()
+                folder_id = row2["id"]
+
+        # proses semua video dalam folder
         for vid in f["files"]:
             fp = os.path.join(folder_path, vid)
 
