@@ -7,7 +7,6 @@ from flask import Blueprint, jsonify, request, Response, render_template
 from .BMS_video_db import (
     get_db,
     current_user_identifier,
-    video_login_required,
     is_inside_video_folder,
 )
 
