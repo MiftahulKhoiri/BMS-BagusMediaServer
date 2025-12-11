@@ -21,16 +21,21 @@ def get_db():
 
 
 # ======================================================
-#  Proteksi Halaman
+#  Proteksi Halaman (Aman)
 # ======================================================
 def BMS_profile_required():
     if not BMS_auth_is_login():
         return redirect("/auth/login")
+
+    # Pastikan session user_id ada
+    if not session.get("user_id"):
+        return redirect("/auth/login")
+
     return None
 
 
 # ======================================================
-#  Validasi ekstensi aman (gambar saja!)
+#  Validasi Ekstensi Aman
 # ======================================================
 ALLOWED_IMG = {"jpg", "jpeg", "png", "gif", "webp"}
 
@@ -39,11 +44,11 @@ def allowed_image(filename):
 
 
 # ======================================================
-#  Load image (proteksi traversal)
+#  Load Image
 # ======================================================
 @profile.route("/image/<filename>")
 def BMS_profile_image(filename):
-    filename = secure_filename(filename)  # penting!
+    filename = secure_filename(filename)  # Anti traversal
     return send_from_directory(PROFILE_FOLDER, filename)
 
 
@@ -56,11 +61,19 @@ def BMS_profile_page():
     if cek:
         return cek
 
+    user_id = session.get("user_id")
+
     conn = get_db()
     user = conn.execute(
-        "SELECT * FROM users WHERE id=?", (session["user_id"],)
+        "SELECT * FROM users WHERE id=?",
+        (user_id,)
     ).fetchone()
     conn.close()
+
+    # Jika user tidak ditemukan, logout otomatis
+    if not user:
+        session.clear()
+        return redirect("/auth/login")
 
     return render_template("BMS_profile.html", user=user)
 
@@ -74,11 +87,18 @@ def BMS_profile_edit_page():
     if cek:
         return cek
 
+    user_id = session.get("user_id")
+
     conn = get_db()
     user = conn.execute(
-        "SELECT * FROM users WHERE id=?", (session["user_id"],)
+        "SELECT * FROM users WHERE id=?",
+        (user_id,)
     ).fetchone()
     conn.close()
+
+    if not user:
+        session.clear()
+        return redirect("/auth/login")
 
     return render_template("BMS_edit_profile.html", user=user)
 
@@ -92,16 +112,16 @@ def BMS_profile_save():
     if cek:
         return cek
 
-    user_id = session["user_id"]
+    user_id = session.get("user_id")
 
-    # Ambil data dasar
+    # Ambil data input
     nama = request.form.get("nama", "")
     umur = request.form.get("umur", "")
     gender = request.form.get("gender", "")
     email = request.form.get("email", "")
     bio = request.form.get("bio", "")
 
-    # Ambil user lama untuk hapus foto lama
+    # Ambil user lama (cek foto)
     conn = get_db()
     old = conn.execute(
         "SELECT foto_profile, foto_background FROM users WHERE id=?",
@@ -131,6 +151,7 @@ def BMS_profile_save():
         foto_profile_name = f"profile_{user_id}_{secure_filename(foto_profile.filename)}"
         foto_profile.save(os.path.join(PROFILE_FOLDER, foto_profile_name))
 
+
     # ======================================================
     #  Upload Foto Background
     # ======================================================
@@ -142,7 +163,7 @@ def BMS_profile_save():
             conn.close()
             return "❌ Ekstensi foto background tidak diizinkan!", 400
 
-        # Hapus background lama
+        # Hapus foto lama
         if foto_background_name:
             old_path = os.path.join(PROFILE_FOLDER, foto_background_name)
             if os.path.exists(old_path):
@@ -154,44 +175,31 @@ def BMS_profile_save():
         foto_background_name = f"background_{user_id}_{secure_filename(foto_background.filename)}"
         foto_background.save(os.path.join(PROFILE_FOLDER, foto_background_name))
 
+
     # ======================================================
     #  Update Database
     # ======================================================
-    fields = {
-        "nama": nama,
-        "umur": umur,
-        "gender": gender,
-        "email": email,
-        "bio": bio,
-        "foto_profile": foto_profile_name,
-        "foto_background": foto_background_name
-    }
-
     conn.execute("""
         UPDATE users SET 
-            nama=?,
-            umur=?,
-            gender=?,
-            email=?,
-            bio=?,
-            foto_profile=?,
-            foto_background=?
+            nama=?, umur=?, gender=?, email=?, bio=?,
+            foto_profile=?, foto_background=?
         WHERE id=?
     """, (
-        fields["nama"], fields["umur"], fields["gender"], fields["email"],
-        fields["bio"], fields["foto_profile"], fields["foto_background"],
+        nama, umur, gender, email, bio,
+        foto_profile_name, foto_background_name,
         user_id
     ))
 
     conn.commit()
     conn.close()
 
-    # Update session
+    # Update session biar live update
     session["foto_profile"] = foto_profile_name
     session["foto_background"] = foto_background_name
 
-    # Redirect
+    # Redirect sesuai role
     role = session.get("role")
     if role in ("admin", "root"):
         return redirect("/admin/home")
+
     return redirect("/user/home")
