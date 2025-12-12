@@ -10,8 +10,10 @@ from flask import Blueprint, request, jsonify, Response, render_template, send_f
 from werkzeug.utils import secure_filename
 
 from app.BMS_config import BASE
-from app.routes.BMS_auth import (
-    BMS_auth_is_login, BMS_auth_is_admin, BMS_auth_is_root
+from app.routes.BMS_auth.session_helpers import (
+    BMS_auth_is_login,
+    BMS_auth_is_admin,
+    BMS_auth_is_root
 )
 from app.routes.BMS_logger import BMS_write_log
 
