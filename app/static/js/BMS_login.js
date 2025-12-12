@@ -10,22 +10,18 @@ document.addEventListener("DOMContentLoaded", function () {
     const usernameError = document.getElementById("usernameError");
     const passwordError = document.getElementById("passwordError");
 
-    // === CLEAN RESET ===
+    // === RESET ERROR ===
     function resetAllErrors() {
         usernameInput.classList.remove("error");
         passwordInput.classList.remove("error");
 
         usernameError.textContent = "";
         passwordError.textContent = "";
-
-        usernameError.style.display = "block";
-        passwordError.style.display = "block";
     }
 
     function showError(input, errorElement, message) {
         input.classList.add("error");
         errorElement.textContent = message;
-        errorElement.style.display = "block";
     }
 
     // ============================================================
@@ -58,7 +54,6 @@ document.addEventListener("DOMContentLoaded", function () {
         submitBtn.disabled = true;
         btnText.innerHTML = '<span class="loading"></span> Memproses...';
 
-        // Kirim AJAX ke backend Flask
         const formData = new FormData(loginForm);
 
         try {
@@ -67,17 +62,22 @@ document.addEventListener("DOMContentLoaded", function () {
                 body: formData
             });
 
-            const data = await res.json();
+            // Cek apakah response JSON atau HTML
+            let data;
+            try {
+                data = await res.json();
+            } catch (jsonErr) {
+                showError(passwordInput, passwordError, "Server mengirim format tidak valid.");
+                throw new Error("Invalid JSON");
+            }
 
+            // Jika login sukses → redirect
             if (data.success) {
-                // LOGIN SUKSES → Redirect
                 window.location.href = data.redirect;
                 return;
             }
 
-            // ---------------------------
-            // ERROR DARI BACKEND (INLINE)
-            // ---------------------------
+            // Jika backend kirim error spesifik
             if (data.error_field === "username") {
                 showError(usernameInput, usernameError, data.message);
             }
@@ -85,15 +85,14 @@ document.addEventListener("DOMContentLoaded", function () {
                 showError(passwordInput, passwordError, data.message);
             }
             else {
-                // fallback
-                showError(passwordInput, passwordError, "Login gagal. Periksa kembali.");
+                showError(passwordInput, passwordError, data.message || "Login gagal.");
             }
 
         } catch (err) {
             showError(passwordInput, passwordError, "Koneksi gagal. Coba lagi.");
         }
 
-        // Reset tombol kembali normal
+        // Reset tombol
         submitBtn.disabled = false;
         btnText.textContent = "Masuk";
     });
