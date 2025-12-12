@@ -11,13 +11,44 @@
     <link rel="stylesheet" href="/static/css/BMS_login.css">
 
     <style>
-        /* Tambahan kecil agar error inline tampil rapi */
+        /* Error inline */
         .error-message {
             color: #ff4d4d;
             font-size: 12px;
             min-height: 16px;
             margin-top: 3px;
             transition: 0.2s ease;
+        }
+
+        /* Show/Hide Password */
+        .password-wrapper {
+            position: relative;
+        }
+
+        .password-container {
+            position: relative;
+            width: 100%;
+        }
+
+        .password-container input {
+            width: 100%;
+            padding-right: 40px; /* ruang untuk ikon mata */
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            font-size: 18px;
+            user-select: none;
+            opacity: 0.7;
+            transition: 0.2s ease;
+        }
+
+        .toggle-password:hover {
+            opacity: 1;
         }
     </style>
 </head>
@@ -33,7 +64,7 @@
             <p class="card-subtitle">Masuk ke Sistem BMS</p>
         </div>
 
-        <!-- FLASH MESSAGE DARI BACKEND -->
+        <!-- FLASH MESSAGE -->
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <div class="flash-container">
@@ -50,6 +81,7 @@
             <!-- CSRF TOKEN -->
             <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
 
+            <!-- USERNAME -->
             <div class="form-group">
                 <label for="username">Username:</label>
                 <input
@@ -64,20 +96,28 @@
                 <div class="error-message" id="usernameError"></div>
             </div>
 
-            <div class="form-group">
+            <!-- PASSWORD (DENGAN ICON SHOW/HIDE) -->
+            <div class="form-group password-wrapper">
                 <label for="password">Password:</label>
-                <input
-                    type="password"
-                    id="password"
-                    name="password"
-                    class="input-text"
-                    placeholder="Masukkan password"
-                    minlength="8"
-                    required
-                    autocomplete="new-password">
+
+                <div class="password-container">
+                    <input
+                        type="password"
+                        id="password"
+                        name="password"
+                        class="input-text"
+                        placeholder="Masukkan password"
+                        minlength="8"
+                        required
+                        autocomplete="new-password">
+                        
+                    <span id="togglePassword" class="toggle-password">👁️</span>
+                </div>
+
                 <div class="error-message" id="passwordError"></div>
             </div>
 
+            <!-- BUTTON + LINKS -->
             <div class="form-actions">
                 <button type="submit" id="submitBtn" class="submit-btn">
                     <span id="btnText">Masuk</span>
@@ -95,7 +135,7 @@
     <!-- BACKGROUND ANIMATION -->
     <script src="/static/js/begron/BMS_jellyfish_begron.js"></script>
 
-    <!-- JS LOGIN INLINE (dipisah agar bersih) -->
+    <!-- LOGIN SCRIPT -->
     <script src="/static/js/BMS_login.js"></script>
 
 </body>
