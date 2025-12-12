@@ -7,7 +7,7 @@ from datetime import datetime
 from threading import Lock
 from flask import Blueprint, jsonify, session, render_template
 
-from app.routes.BMS_auth import (
+from app.routes.BMS_auth.session_helpers import (
     BMS_auth_is_login,
     BMS_auth_is_admin,
     BMS_auth_is_root
