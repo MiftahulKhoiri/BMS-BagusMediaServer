@@ -33,6 +33,9 @@ from .BMS_systeminfo import systeminfo
 from .BMS_terminal import terminal
 from .BMS_power import BMS_power
 
+from app.routes.auth import auth
+app.register_blueprint(auth)
+
 
 # =======================================================
 #   REGISTER BLUEPRINTS SAFELY
