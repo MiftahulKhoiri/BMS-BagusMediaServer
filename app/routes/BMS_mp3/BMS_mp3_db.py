@@ -18,13 +18,22 @@ from app.routes.BMS_logger import BMS_write_log
 # Pastikan folder media ada
 os.makedirs(MUSIC_FOLDER, exist_ok=True)
 
+# Variabel untuk menandai apakah database sudah diinisialisasi
 _db_initialized = False
 
 
 def get_db():
     """
-    Membuka koneksi SQLite.
-    Sekaligus memastikan tabel mp3_folders & mp3_tracks sudah lengkap.
+    Membuka koneksi ke database SQLite dan memastikan tabel-tabel yang diperlukan tersedia.
+    
+    Fungsi ini:
+    1. Membuat koneksi ke database dengan konfigurasi yang aman untuk multi-thread
+    2. Memastikan tabel mp3_folders dan mp3_tracks sudah dibuat
+    3. Melakukan migrasi untuk menambahkan kolom baru jika belum ada
+    4. Hanya menjalankan inisialisasi sekali selama aplikasi berjalan
+    
+    Returns:
+        sqlite3.Connection: Objek koneksi database yang sudah dikonfigurasi
     """
     global _db_initialized
     conn = sqlite3.connect(DB_PATH, check_same_thread=False)
@@ -35,6 +44,7 @@ def get_db():
             cur = conn.cursor()
 
             # ============ FOLDER TABLE ============
+            # Membuat tabel untuk menyimpan folder musik jika belum ada
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS mp3_folders (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -44,6 +54,7 @@ def get_db():
             """)
 
             # ============ TRACK TABLE ============
+            # Membuat tabel untuk menyimpan track musik jika belum ada
             cur.execute("""
                 CREATE TABLE IF NOT EXISTS mp3_tracks (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -64,10 +75,12 @@ def get_db():
             conn.commit()
 
             # ============ MIGRATION CHECK ============
+            # Mengecek struktur tabel mp3_tracks untuk memastikan kolom-kolom baru ada
             existing_cols = [
                 r["name"] for r in cur.execute("PRAGMA table_info(mp3_tracks)").fetchall()
             ]
 
+            # Daftar perintah ALTER TABLE untuk menambahkan kolom yang belum ada
             add_cols = []
             if "user_id" not in existing_cols:
                 add_cols.append("ALTER TABLE mp3_tracks ADD COLUMN user_id TEXT;")
@@ -76,16 +89,18 @@ def get_db():
             if "play_count" not in existing_cols:
                 add_cols.append("ALTER TABLE mp3_tracks ADD COLUMN play_count INTEGER DEFAULT 0;")
 
+            # Eksekusi setiap perintah ALTER TABLE dengan error handling
             for cmd in add_cols:
                 try:
                     cur.execute(cmd)
                 except:
-                    pass
+                    pass  # Jika kolom sudah ada, abaikan error
 
             conn.commit()
-            _db_initialized = True
+            _db_initialized = True  # Tandai bahwa inisialisasi sudah dilakukan
 
         except Exception as e:
+            # Log error jika terjadi masalah saat inisialisasi database
             BMS_write_log(f"[DB INIT ERROR] {e}", "SYSTEM")
 
     return conn
@@ -96,7 +111,16 @@ def get_db():
 # ============================================================================
 def current_user_identifier():
     """
-    Sistem MP3 dirancang per-user, maka semua track memiliki owner.
+    Mendapatkan identifier unik untuk user yang sedang aktif.
+    
+    Sistem MP3 dirancang untuk mendukung multi-user, sehingga setiap track
+    harus memiliki pemilik (owner). Fungsi ini mengembalikan:
+    1. user_id dari session jika tersedia
+    2. username dari session jika user_id tidak tersedia
+    3. "anonymous" jika tidak ada session user
+    
+    Returns:
+        str: Identifier user (user_id, username, atau "anonymous")
     """
     if session.get("user_id") is not None:
         return str(session.get("user_id"))
@@ -111,5 +135,13 @@ def current_user_identifier():
 #   FILE HELPER
 # ============================================================================
 def is_mp3(name):
-    """Pastikan file adalah MP3"""
+    """
+    Memeriksa apakah sebuah file adalah file MP3 berdasarkan ekstensinya.
+    
+    Args:
+        name (str): Nama file yang akan diperiksa
+    
+    Returns:
+        bool: True jika file memiliki ekstensi .mp3 (case-insensitive), False jika tidak
+    """
     return isinstance(name, str) and name.lower().endswith(".mp3")
