@@ -17,6 +17,7 @@ except Exception:
     def BMS_write(*args, **kwargs):
         pass
 
+
 # ======================================================
 # REGISTER
 # ======================================================
@@ -33,30 +34,49 @@ def register():
     confirm = request.form.get("confirm_password") or ""
     csrf_token = request.form.get("csrf_token")
 
+    # CSRF
     if not verify_csrf(csrf_token):
-        flash("Permintaan tidak valid.", "error")
-        return redirect(url_for("auth.register"))
+        return _ajax_or_flash(
+            field="username",
+            message="Permintaan tidak valid.",
+            redirect_url="auth.register"
+        )
 
+    # VALIDASI USERNAME
     if not valid_username(username):
-        flash("Username tidak valid (3–32 huruf/angka/_).", "error")
-        return redirect(url_for("auth.register"))
+        return _ajax_or_flash(
+            field="username",
+            message="Username tidak valid (3–32 huruf/angka/_).",
+            redirect_url="auth.register"
+        )
 
+    # VALIDASI PASSWORD
     if not valid_password(password):
-        flash("Password minimal 8 karakter.", "error")
-        return redirect(url_for("auth.register"))
+        return _ajax_or_flash(
+            field="password",
+            message="Password minimal 8 karakter.",
+            redirect_url="auth.register"
+        )
 
     if password != confirm:
-        flash("Konfirmasi password tidak cocok.", "error")
-        return redirect(url_for("auth.register"))
+        return _ajax_or_flash(
+            field="password",
+            message="Konfirmasi password tidak cocok.",
+            redirect_url="auth.register"
+        )
 
     try:
         conn = get_db()
         cur = conn.cursor()
 
+        # Apakah username sudah ada?
         cur.execute("SELECT id FROM users WHERE username = ?", (username,))
         if cur.fetchone():
-            flash("Username sudah digunakan!", "error")
-            return redirect(url_for("auth.register"))
+            return _ajax_or_flash(
+                field="username",
+                message="Username sudah digunakan!",
+                redirect_url="auth.register"
+            )
 
         pw_hash = generate_password_hash(password)
 
@@ -66,6 +86,7 @@ def register():
                 (username, pw_hash, "user")
             )
         except Exception:
+            # fallback DB lama
             cur.execute(
                 "INSERT INTO users (username, password, role) VALUES (?, ?, ?)",
                 (username, pw_hash, "user")
@@ -74,21 +95,29 @@ def register():
         conn.commit()
         conn.close()
 
-        flash("Registrasi berhasil!", "success")
-        return redirect(url_for("auth.login"))
+        return _ajax_or_flash(
+            success=True,
+            redirect="/auth/login",
+            message="Registrasi berhasil!"
+        )
 
     except Exception as e:
         BMS_write(f"Register error: {e}")
-        flash("Terjadi kesalahan pada server.", "error")
-        return redirect(url_for("auth.register"))
+        return _ajax_or_flash(
+            field="username",
+            message="Terjadi kesalahan pada server.",
+            redirect_url="auth.register"
+        )
+
 
 # ======================================================
-# LOGIN
+# LOGIN — HYBRID MODE (AJAX + Flash Support)
 # ======================================================
 @auth.route("/login", methods=["GET", "POST"])
 def login():
     ensure_csrf_token()
 
+    # Tampilkan halaman login
     if request.method == "GET":
         return render_template("BMS_login.html", csrf_token=session.get("csrf_token"))
 
@@ -97,19 +126,38 @@ def login():
     password = request.form.get("password") or ""
     csrf_token = request.form.get("csrf_token")
 
+    # CSRF CHECK
     if not verify_csrf(csrf_token):
-        flash("Invalid request.", "error")
-        return redirect(url_for("auth.login"))
+        return _ajax_or_flash(
+            field="username",
+            message="Request tidak valid.",
+            redirect_url="auth.login"
+        )
 
-    if not valid_username(username) or not valid_password(password):
-        add_failed_attempt(username, ip)
-        flash("Invalid username or password.", "error")
-        return redirect(url_for("auth.login"))
+    # VALIDASI FORM DASAR
+    if not valid_username(username):
+        return _ajax_or_flash(
+            field="username",
+            message="Username tidak valid.",
+            redirect_url="auth.login"
+        )
 
+    if not valid_password(password):
+        return _ajax_or_flash(
+            field="password",
+            message="Password minimal 8 karakter.",
+            redirect_url="auth.login"
+        )
+
+    # CEK LOCKOUT
     if is_locked(username, ip):
-        flash("Terlalu banyak percobaan login. Coba lagi nanti.", "error")
-        return redirect(url_for("auth.login"))
+        return _ajax_or_flash(
+            field="username",
+            message="Terlalu banyak percobaan login. Coba lagi nanti.",
+            redirect_url="auth.login"
+        )
 
+    # AMBIL DATA USER
     conn = get_db()
     cur = conn.cursor()
     cur.execute("""
@@ -122,18 +170,27 @@ def login():
     user = cur.fetchone()
     conn.close()
 
+    # USER TIDAK ADA
     if not user:
         add_failed_attempt(username, ip)
-        flash("Invalid username or password.", "error")
-        return redirect(url_for("auth.login"))
+        return _ajax_or_flash(
+            field="username",
+            message="Username tidak terdaftar.",
+            redirect_url="auth.login"
+        )
 
     stored_hash = user["newpass"] or user["oldpass"]
 
+    # PASSWORD SALAH
     if not check_password_hash(stored_hash, password):
         add_failed_attempt(username, ip)
-        flash("Invalid username or password.", "error")
-        return redirect(url_for("auth.login"))
+        return _ajax_or_flash(
+            field="password",
+            message="Password salah.",
+            redirect_url="auth.login"
+        )
 
+    # LOGIN SUKSES
     clear_failed_attempts(username, ip)
 
     session.clear()
@@ -144,9 +201,8 @@ def login():
     expiry = int(time.time()) + (DEFAULT_SESSION_MINUTES * 60)
     session["_expiry_ts"] = expiry
     session.permanent = True
-    session["csrf_token"] = secrets.token_urlsafe(16)
 
-    flash("Login berhasil!", "success")
+    session["csrf_token"] = secrets.token_urlsafe(16)
 
     redirect_url = "/admin/home" if user["role"] in ("admin", "root") else "/user/home"
 
@@ -154,6 +210,7 @@ def login():
         "success": True,
         "redirect": redirect_url
     })
+
 
 # ======================================================
 # Logout
@@ -164,6 +221,7 @@ def logout():
     flash("Berhasil logout.", "info")
     return redirect(url_for("auth.login"))
 
+
 # ======================================================
 # API Role
 # ======================================================
@@ -171,9 +229,32 @@ def logout():
 def get_role():
     return jsonify({"role": session.get("role")})
 
+
 # ======================================================
 # API Check Session Valid
 # ======================================================
 @auth.route("/valid")
 def session_valid():
     return jsonify({"valid": BMS_auth_is_login()})
+
+
+# ======================================================
+# HELPER: HYBRID RESPONSE (AJAX / FLASH)
+# ======================================================
+def _ajax_or_flash(field=None, message="", redirect_url=None, success=False, redirect=None):
+    """
+    Jika request dari AJAX (fetch) → kirim JSON error
+    Jika request biasa → gunakan flash + redirect
+    """
+    if request.headers.get("X-Requested-With") == "XMLHttpRequest":
+        # Mode AJAX
+        return jsonify({
+            "success": success,
+            "error_field": field,
+            "message": message,
+            "redirect": redirect
+        })
+
+    # Mode normal (browser biasa)
+    flash(message, "error" if not success else "success")
+    return redirect(url_for(redirect_url)) if redirect_url else redirect
