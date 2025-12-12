@@ -1,42 +1,64 @@
 document.addEventListener("DOMContentLoaded", function () {
+
     const loginForm = document.getElementById("loginForm");
     const usernameInput = document.getElementById("username");
     const passwordInput = document.getElementById("password");
     const submitBtn = document.getElementById("submitBtn");
     const btnText = document.getElementById("btnText");
-    const alertContainer = document.getElementById("alertContainer");
+
+    // Elemen error inline pada HTML
+    const usernameError = document.getElementById("usernameError");
+    const passwordError = document.getElementById("passwordError");
+
+    // === CLEAN RESET ===
+    function resetAllErrors() {
+        usernameInput.classList.remove("error");
+        passwordInput.classList.remove("error");
+
+        usernameError.textContent = "";
+        passwordError.textContent = "";
+
+        usernameError.style.display = "block";
+        passwordError.style.display = "block";
+    }
+
+    function showError(input, errorElement, message) {
+        input.classList.add("error");
+        errorElement.textContent = message;
+        errorElement.style.display = "block";
+    }
 
     // ============================================================
-    //  HANDLE SUBMIT (VALIDASI + AJAX LOGIN)
+    //  FORM SUBMIT HANDLER (AJAX LOGIN)
     // ============================================================
     loginForm.addEventListener("submit", async function (e) {
-        e.preventDefault(); // Stop submit normal
+        e.preventDefault();
 
-        let isValid = true;
-        resetErrors();
+        resetAllErrors();
+        let valid = true;
 
         const username = usernameInput.value.trim();
         const password = passwordInput.value.trim();
 
-        // --- VALIDASI USERNAME ---
+        // Validasi username
         if (username.length < 3) {
-            showError(usernameInput, "usernameError", "Username minimal 3 karakter");
-            isValid = false;
+            showError(usernameInput, usernameError, "Username minimal 3 karakter");
+            valid = false;
         }
 
-        // --- VALIDASI PASSWORD ---
+        // Validasi password
         if (password.length < 8) {
-            showError(passwordInput, "passwordError", "Password minimal 8 karakter");
-            isValid = false;
+            showError(passwordInput, passwordError, "Password minimal 8 karakter");
+            valid = false;
         }
 
-        if (!isValid) return;
+        if (!valid) return;
 
-        // Tombol loading
+        // === Tombol loading ===
         submitBtn.disabled = true;
         btnText.innerHTML = '<span class="loading"></span> Memproses...';
 
-        // --- AJAX SEND TO BACKEND ---
+        // Kirim AJAX ke backend Flask
         const formData = new FormData(loginForm);
 
         try {
@@ -48,78 +70,49 @@ document.addEventListener("DOMContentLoaded", function () {
             const data = await res.json();
 
             if (data.success) {
-                // Redirect sesuai role
+                // LOGIN SUKSES → Redirect
                 window.location.href = data.redirect;
-            } else {
-                showAlert("Login gagal. Periksa username / password.", "error");
+                return;
+            }
+
+            // ---------------------------
+            // ERROR DARI BACKEND (INLINE)
+            // ---------------------------
+            if (data.error_field === "username") {
+                showError(usernameInput, usernameError, data.message);
+            }
+            else if (data.error_field === "password") {
+                showError(passwordInput, passwordError, data.message);
+            }
+            else {
+                // fallback
+                showError(passwordInput, passwordError, "Login gagal. Periksa kembali.");
             }
 
         } catch (err) {
-            showAlert("Koneksi gagal. Coba lagi.", "error");
+            showError(passwordInput, passwordError, "Koneksi gagal. Coba lagi.");
         }
 
-        // Reset tombol
+        // Reset tombol kembali normal
         submitBtn.disabled = false;
         btnText.textContent = "Masuk";
     });
 
     // ============================================================
-    //  ERROR HANDLER
-    // ============================================================
-    function showError(input, errorId, message) {
-        input.classList.add("error");
-        const errorElement = document.getElementById(errorId);
-        errorElement.textContent = message;
-        errorElement.style.display = "block";
-    }
-
-    function resetErrors() {
-        document.querySelectorAll(".input-text.error").forEach((i) => i.classList.remove("error"));
-        document.querySelectorAll(".error-message").forEach((m) => {
-            m.style.display = "none";
-            m.textContent = "";
-        });
-    }
-
-    function resetError(input, errorId) {
-        input.classList.remove("error");
-        const errorElement = document.getElementById(errorId);
-        errorElement.textContent = "";
-        errorElement.style.display = "none";
-    }
-
-    // ============================================================
-    //  ALERT NOTIFICATION (FLASH FRONTEND)
-    // ============================================================
-    function showAlert(message, type) {
-        if (!alertContainer) return;
-
-        alertContainer.innerHTML = `
-            <div class="alert alert-${type}">
-                ${escapeHTML(message)}
-            </div>
-        `;
-
-        setTimeout(() => {
-            alertContainer.innerHTML = "";
-        }, 4000);
-    }
-
-    // Escaping HTML untuk keamanan
-    function escapeHTML(text) {
-        const div = document.createElement("div");
-        div.textContent = text;
-        return div.innerHTML;
-    }
-
-    // ============================================================
-    //  REAL-TIME INPUT CHECK
+    //  REAL-TIME INPUT VALIDATION
     // ============================================================
     usernameInput.addEventListener("input", function () {
-        if (this.value.length >= 3) resetError(this, "usernameError");
+        if (this.value.length >= 3) {
+            usernameInput.classList.remove("error");
+            usernameError.textContent = "";
+        }
     });
 
     passwordInput.addEventListener("input", function () {
-        if (this.value.length >= 8) resetError(this, "passwordError");
+        if (this.value.length >= 8) {
+            passwordInput.classList.remove("error");
+            passwordError.textContent = "";
+        }
     });
+
 });
