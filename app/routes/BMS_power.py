@@ -3,7 +3,10 @@ import signal
 from flask import Blueprint, jsonify, session
 
 from app.routes.BMS_logger import BMS_write_log
-from app.routes.BMS_auth import BMS_auth_is_root, BMS_auth_is_admin
+from app.routes.BMS_auth.session_helpers import (
+    BMS_auth_is_root,
+    BMS_auth_is_admin
+)
 
 BMS_power = Blueprint("BMS_power", __name__, url_prefix="/power")
 
