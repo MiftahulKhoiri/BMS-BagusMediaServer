@@ -9,6 +9,17 @@
     <link rel="stylesheet" href="/static/css/BMS_welcome.css">
     <link rel="stylesheet" href="/static/css/begron/BMS_jellyfish_begron.css">
     <link rel="stylesheet" href="/static/css/BMS_login.css">
+
+    <style>
+        /* Tambahan kecil agar error inline tampil rapi */
+        .error-message {
+            color: #ff4d4d;
+            font-size: 12px;
+            min-height: 16px;
+            margin-top: 3px;
+            transition: 0.2s ease;
+        }
+    </style>
 </head>
 <body>
 
@@ -84,8 +95,8 @@
     <!-- BACKGROUND ANIMATION -->
     <script src="/static/js/begron/BMS_jellyfish_begron.js"></script>
 
-    <!-- LOGIN VALIDATION (Jika masih digunakan) -->
-    <script src="/static/js/BMS_login.js"></script>
+    <!-- JS LOGIN INLINE (dipisah agar bersih) -->
+    <script src="/static/js/BMS_login_inline.js"></script>
 
 </body>
 </html>
