@@ -9,7 +9,7 @@
 # ====================================
 
 # Auth baru (modular)
-from app.routes.auth import auth
+from app.routes.BMS_auth import auth
 
 # Core logger
 from .BMS_logger import logger
