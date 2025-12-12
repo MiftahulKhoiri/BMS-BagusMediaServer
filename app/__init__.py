@@ -15,7 +15,7 @@ from app.database.BMS_auto_repair import (
     ensure_mp3_tables
 )
 
-# Register Blueprint
+# Register Blueprint (BMS ROUTES INITIALIZER)
 from app.routes import register_blueprints
 
 # Register WebSocket (update system)
@@ -62,10 +62,14 @@ def create_app():
     # CORS
     CORS(app, resources={r"/*": {"origins": "*"}})
 
-    # Register Blueprints
+    # ================================
+    # REGISTER BLUEPRINT BMS
+    # ================================
     register_blueprints(app)
 
-    # Register WebSocket
+    # ================================
+    # REGISTER WEBSOCKET
+    # ================================
     try:
         sock = Sock(app)
         register_ws(sock)
