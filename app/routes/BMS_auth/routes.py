@@ -241,7 +241,7 @@ def session_valid():
 # ======================================================
 # HELPER: HYBRID RESPONSE (AJAX / FLASH)
 # ======================================================
-def _ajax_or_flash(field=None, message="", redirect_url=None, success=False, redirect=None):
+def _ajax_or_flash(field=None, message="", redirect_url=None, success=False, redirect_to=None):
     """
     Hybrid:
     - AJAX → JSON
@@ -257,7 +257,7 @@ def _ajax_or_flash(field=None, message="", redirect_url=None, success=False, red
             "success": success,
             "error_field": field,
             "message": message,
-            "redirect": redirect
+            "redirect": redirect_to
         })
 
     # ========================================================
@@ -265,7 +265,7 @@ def _ajax_or_flash(field=None, message="", redirect_url=None, success=False, red
     # ========================================================
     flash(message, "error" if not success else "success")
 
-    # Jika tidak diberikan redirect_url → fallback ke login
+    # Default redirect jika tidak diberikan endpoint
     if not redirect_url:
         redirect_url = "auth.login"
 
