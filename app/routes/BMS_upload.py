@@ -18,7 +18,7 @@ from flask import (
 from werkzeug.utils import secure_filename
 
 from app.BMS_config import BASE
-from app.routes.BMS_auth import (
+from app.routes.BMS_auth.session_helpers import (
     BMS_auth_is_login,
     BMS_auth_is_admin,
     BMS_auth_is_root
