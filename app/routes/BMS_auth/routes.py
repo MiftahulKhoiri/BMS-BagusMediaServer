@@ -244,14 +244,14 @@ def session_valid():
 def _ajax_or_flash(field=None, message="", redirect_url=None, success=False, redirect=None):
     """
     Hybrid:
-    - Jika AJAX (fetch) → JSON
-    - Jika normal → flash + redirect
+    - AJAX → JSON
+    - Normal → flash + redirect
     """
     is_ajax = request.headers.get("X-Requested-With") == "XMLHttpRequest"
 
-    # ==========================
-    # MODE AJAX → RETURN JSON
-    # ==========================
+    # ========================================================
+    # MODE AJAX
+    # ========================================================
     if is_ajax:
         return jsonify({
             "success": success,
@@ -260,14 +260,13 @@ def _ajax_or_flash(field=None, message="", redirect_url=None, success=False, red
             "redirect": redirect
         })
 
-    # ==========================
-    # MODE BROWSER NORMAL
-    # ==========================
+    # ========================================================
+    # MODE BROWSER NORMAL (FLASH)
+    # ========================================================
     flash(message, "error" if not success else "success")
 
-    # redirect_url = nama endpoint (misal: "auth.login")
-    if redirect_url:
-        return redirect(url_for(redirect_url))
+    # Jika tidak diberikan redirect_url → fallback ke login
+    if not redirect_url:
+        redirect_url = "auth.login"
 
-    # Jika tidak ada endpoint yang diberikan → aman fallback
-    return redirect("/")
+    return redirect(url_for(redirect_url))
