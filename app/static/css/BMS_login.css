@@ -300,9 +300,16 @@ label {
     align-items: center;
 }
 
+.password-container input {
+    width: 100%;
+    padding-right: 45px;   /* ruang untuk ikon 👁️ */
+}
+
 .toggle-password {
     position: absolute;
-    right: 10px;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
     cursor: pointer;
     font-size: 18px;
     user-select: none;
