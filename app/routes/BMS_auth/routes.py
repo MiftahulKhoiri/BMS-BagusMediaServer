@@ -120,10 +120,11 @@ def register():
 
         # Registrasi berhasil
         return _ajax_or_flash(
-            success=True,
-            redirect="/auth/login",
-            message="Registrasi berhasil!"
-        )
+    success=True,
+    message="Registrasi berhasil! Silakan login.",
+    redirect_url="auth.login",      # untuk form biasa
+    redirect_to="/auth/login"       # untuk AJAX
+)
 
     except Exception as e:
         # Log error dan beri pesan umum ke user
