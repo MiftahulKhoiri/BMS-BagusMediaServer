@@ -121,7 +121,7 @@ def register():
         # Registrasi berhasil
         return _ajax_or_flash(
     success=True,
-    message="Registrasi berhasil! Silakan login.",
+    message="Registrasi berhasil! Akan otomatis pindah ke halaman login.",
     redirect_url="auth.login",      # untuk form biasa
     redirect_to="/auth/login"       # untuk AJAX
 )
