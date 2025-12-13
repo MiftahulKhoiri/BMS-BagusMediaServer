@@ -132,3 +132,11 @@ document.addEventListener("DOMContentLoaded", function () {
         document.querySelectorAll(".error").forEach(e => e.classList.remove("error"));
     }
 });
+
+{% if messages %}
+<script>
+  setTimeout(() => {
+    window.location.href = "/auth/login";
+  }, 1500);
+</script>
+{% endif %}
