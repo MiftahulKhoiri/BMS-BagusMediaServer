@@ -1,43 +1,44 @@
-# core/system_tools.py
 import os
 import subprocess
-import shutil
 import shlex
 
-def run(cmd: str):
+def run(cmd: str) -> int:
     """
-    Menjalankan perintah shell dan menampilkan output secara real-time.
-    Fungsi ini memecah perintah string menjadi argument list dan menjalankannya
-    dengan subprocess, menampilkan output baris per baris saat proses berjalan.
+    Menjalankan perintah dan menampilkan output log secara real-time.
     
     Args:
         cmd (str): Perintah shell yang akan dijalankan.
     
-    Note:
-        - Menggunakan shlex.split() untuk memecah string dengan aman
-        - Menggabungkan stdout dan stderr ke aliran yang sama
-        - Menampilkan output secara real-time (line-by-line)
+    Returns:
+        int: Exit code dari proses yang dijalankan.
     """
     print(f"[RUN] {cmd}\n")
 
-    # Membagi perintah string menjadi list argument dengan aman
-    process = subprocess.Popen(
-        shlex.split(cmd),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,  # Gabungkan stderr ke stdout
-        bufsize=1,                 # Line-buffered
-        universal_newlines=True    # Mengembalikan string bukan bytes
-    )
+    try:
+        process = subprocess.Popen(
+            shlex.split(cmd),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            bufsize=1,
+            universal_newlines=True,
+            encoding='utf-8',
+            errors='replace'
+        )
 
-    # Membaca dan menampilkan output secara real-time
-    for line in process.stdout:
-        print(line, end="")  # langsung tampil ke terminal
+        # Membaca dan menampilkan output secara real-time
+        while True:
+            output = process.stdout.readline()
+            if output == '' and process.poll() is not None:
+                break
+            if output:
+                print(output.strip())
 
-    # Menunggu proses selesai
-    process.wait()
+        return process.poll()  # Return exit code
+    except Exception as e:
+        print(f"[ERROR] Gagal menjalankan perintah: {e}")
+        return 1  # Return non-zero exit code untuk menandakan error
 
-
-def fix_permissions(path: str):
+def fix_permissions(path: str) -> int:
     """
     Memperbaiki permission folder dengan menetapkan mode 755 (rwxr-xr-x)
     secara rekursif. Hanya berfungsi pada sistem POSIX (Linux/macOS).
@@ -45,13 +46,15 @@ def fix_permissions(path: str):
     Args:
         path (str): Path ke folder yang akan diperbaiki permission-nya.
     
-    Note:
-        - Menggunakan sudo untuk memastikan permission dapat diubah
-        - Mode 755 memberikan akses baca+eksekusi ke semua user
-          dan akses tulis hanya ke owner
+    Returns:
+        int: Exit code dari proses chmod.
     """
     if os.name != "posix":
         print("[!] Permission fix hanya untuk POSIX (Linux/macOS).")
-        return
+        return 1
     
-    run(f"sudo chmod -R 755 {path}")
+    if not os.path.exists(path):
+        print(f"[!] Path tidak ditemukan: {path}")
+        return 1
+    
+    return run(f"sudo chmod -R 755 {path}")
