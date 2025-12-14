@@ -116,10 +116,19 @@ def check_port_5000():
     try:
         s.settimeout(0.5)
         s.connect(("127.0.0.1", 5000))
-        s.close()
         return "Aktif"
-    except:
-        return "Mati"
+    except socket.timeout:
+        return "Mati (timeout)"
+    except ConnectionRefusedError:
+        return "Mati (connection refused)"
+    except Exception as e:
+        return f"Mati ({str(e)})"
+    finally:
+        # Pastikan socket selalu ditutup
+        try:
+            s.close()
+        except:
+            pass
 
 def check_gunicorn(env):
     """
