@@ -25,32 +25,38 @@ def venv_path():
     return os.path.join(project_root(), "venv")
 
 def get_python_in_venv(venv_dir=None):
-    """
-    Mencari executable Python di dalam virtual environment.
-    Fungsi ini mendeteksi berbagai platform (Windows, Linux, Raspberry Pi, Termux, dll).
-    
-    Args:
-        venv_dir (str, optional): Path ke folder virtual environment. 
-                                 Jika None, akan menggunakan venv_path().
-    
-    Returns:
-        str or None: Path ke executable Python dalam venv, atau None jika tidak ditemukan.
-    """
     if venv_dir is None:
         venv_dir = venv_path()
 
-    # Daftar kemungkinan lokasi executable Python di berbagai platform
     candidates = [
         os.path.join(venv_dir, "Scripts", "python.exe"),  # Windows
-        os.path.join(venv_dir, "bin", "python3"),         # Linux / Raspberry Pi
-        os.path.join(venv_dir, "bin", "python"),          # Termux / Mac OS lama
+        os.path.join(venv_dir, "Scripts", "python"),       # Windows (non-.exe)
+        os.path.join(venv_dir, "bin", "python3"),          # Linux / Raspberry Pi
+        os.path.join(venv_dir, "bin", "python3.9"),        # Python 3.9 specific
+        os.path.join(venv_dir, "bin", "python3.10"),       # Python 3.10 specific
+        os.path.join(venv_dir, "bin", "python3.11"),       # Python 3.11 specific
+        os.path.join(venv_dir, "bin", "python"),           # Termux / Mac OS lama
     ]
 
     for c in candidates:
         if os.path.exists(c):
-            return c
+            # Verifikasi bahwa ini benar-benar executable Python
+            try:
+                result = subprocess.run([c, "--version"], 
+                                      capture_output=True, 
+                                      text=True, 
+                                      timeout=2)
+                if result.returncode == 0:
+                    return c
+            except:
+                continue
 
-    # tidak ada venv
+    # Coba cari dengan which jika di PATH
+    if os.name == "posix":
+        python_in_venv = os.path.join(venv_dir, "bin", "python")
+        if os.path.exists(python_in_venv):
+            return python_in_venv
+    
     return None
 
 def create_venv(python_exec=None):
