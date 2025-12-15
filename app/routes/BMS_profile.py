@@ -10,7 +10,7 @@ profile = Blueprint("profile", __name__, url_prefix="/profile")
 
 # Folder khusus foto profile
 PROFILE_FOLDER = os.path.join(PICTURES_FOLDER, "profile")
-PROFILE_BACKGROUND_FOLDER = os.path.join(PICTURES_FOLDER, "profile_Background")
+PROFILE_BACKGROUND_FOLDER = os.path.join(PICTURES_FOLDER, "profile_background")
 
 # Pastikan folder ada
 os.makedirs(PROFILE_FOLDER, exist_ok=True)
@@ -170,7 +170,7 @@ def BMS_profile_save():
 
         # Hapus foto lama
         if foto_background_name:
-            old_path = os.path.join(PROFILE_FOLDER, foto_background_name)
+            old_path = os.path.join(PROFILE_BACKGROUND_FOLDER, foto_background_name)
             if os.path.exists(old_path):
                 try:
                     os.remove(old_path)
