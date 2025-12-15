@@ -111,6 +111,23 @@ def admin_update_role():
 # ============================================================
 #  API: DELETE USER + FILES
 # ============================================================
+def delete_user_profile_files(user_id):
+    folders = [
+        os.path.join(PICTURES_FOLDER, "profile"),
+        os.path.join(PICTURES_FOLDER, "profile_background"),
+    ]
+
+    for folder in folders:
+        if not os.path.exists(folder):
+            continue
+
+        for filename in os.listdir(folder):
+            # contoh: 12.jpg, 12.png, 12_bg.jpg
+            if filename.startswith(str(user_id)):
+                file_path = os.path.join(folder, filename)
+                if os.path.isfile(file_path):
+                    os.remove(file_path)
+
 @admin.route("/users/delete", methods=["DELETE"])
 def admin_delete_user():
     cek = require_root()
@@ -121,35 +138,43 @@ def admin_delete_user():
     user_id = data.get("id")
 
     if not user_id:
-        return jsonify({"status": "error", "message": "User ID tidak diberikan."}), 400
+        return jsonify({
+            "status": "error",
+            "message": "User ID tidak diberikan."
+        }), 400
 
     try:
         conn = get_db()
 
-        # Hapus log user (jika ada)
-        try:
-            conn.execute("DELETE FROM logs WHERE user_id=?", (user_id,))
-        except:
-            pass
+        # Hapus log user
+        conn.execute("DELETE FROM logs WHERE user_id=?", (user_id,))
 
         # Hapus user
         conn.execute("DELETE FROM users WHERE id=?", (user_id,))
         conn.commit()
         conn.close()
 
-        # Hapus folder user (profile, music, video)
+        # Hapus folder user (music, video, upload)
         folder_paths = [
-            os.path.join(PICTURES_FOLDER, str(user_id)),
             os.path.join(MUSIC_FOLDER, str(user_id)),
             os.path.join(VIDEO_FOLDER, str(user_id)),
-            os.path.join(UPLOAD_FOLDER, str(user_id))
+            os.path.join(UPLOAD_FOLDER, str(user_id)),
         ]
 
         for folder in folder_paths:
             if os.path.exists(folder):
                 shutil.rmtree(folder)
 
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
+        # 🔥 Hapus foto profile & background
+        delete_user_profile_files(user_id)
 
-    return jsonify({"status": "success", "message": "User & semua datanya berhasil dihapus."})
+    except Exception as e:
+        return jsonify({
+            "status": "error",
+            "message": str(e)
+        }), 500
+
+    return jsonify({
+        "status": "success",
+        "message": "User & semua datanya berhasil dihapus."
+    })
