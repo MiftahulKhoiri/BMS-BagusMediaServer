@@ -6,3 +6,4 @@ Flask-sock
 psutil
 requests
 waitress
+ffmpeg
