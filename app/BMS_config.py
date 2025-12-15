@@ -97,7 +97,7 @@ LOG_PATH = os.path.join(LOG_FOLDER, "system.log")
 # ============================================================
 for folder in [
     BASE, DB_FOLDER, LOG_FOLDER,
-    PROFILE_FOLDER, MUSIC_FOLDER,
+    PICTURES_FOLDER, MUSIC_FOLDER,
     VIDEO_FOLDER, UPLOAD_FOLDER
 ]:
     try:
