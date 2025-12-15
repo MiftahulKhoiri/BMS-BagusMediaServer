@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, request, jsonify
 from .BMS_utils import require_root
 from app.BMS_config import (
-    DB_PATH, PROFILE_FOLDER, MUSIC_FOLDER,
+    DB_PATH, PICTURES_FOLDER, MUSIC_FOLDER,
     VIDEO_FOLDER, UPLOAD_FOLDER
 )
 import sqlite3
@@ -139,7 +139,7 @@ def admin_delete_user():
 
         # Hapus folder user (profile, music, video)
         folder_paths = [
-            os.path.join(PROFILE_FOLDER, str(user_id)),
+            os.path.join(PICTURES_FOLDER, str(user_id)),
             os.path.join(MUSIC_FOLDER, str(user_id)),
             os.path.join(VIDEO_FOLDER, str(user_id)),
             os.path.join(UPLOAD_FOLDER, str(user_id))
