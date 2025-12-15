@@ -25,7 +25,6 @@ from .BMS_mp3 import blueprints as mp3_blueprints
 # System & Tools
 from .BMS_update import update
 from .BMS_profile import profile
-from .BMS_filemanager_premium import fm_premium
 from .BMS_upload import upload
 from .BMS_systeminfo import systeminfo
 from .BMS_terminal import terminal
