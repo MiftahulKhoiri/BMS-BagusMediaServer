@@ -1,113 +1,142 @@
 # ============================================================================
-# BMS_video_scan.py — Scan storage & import (Multi-user, no login block)
-# - Safe insert (try/except) to avoid UNIQUE crashes
-# - Inserts folder + videos under owner (current_user_identifier)
+# BMS_video_scan.py — Scan storage & import + AUTO THUMBNAIL
+# - Multi-user safe
+# - Thumbnail berbasis PATH video (global, shared)
+# - Thumbnail dibuat saat scan (1x saja)
 # ============================================================================
 
 import os
+import subprocess
+import hashlib
 from datetime import datetime
 from flask import Blueprint, jsonify, session
 
 from app.routes.BMS_logger import BMS_write_log
+from app.BMS_config import PICTURES_FOLDER
 from .BMS_video_db import get_db, is_video_file, current_user_identifier
 
-# Membuat Blueprint untuk rute pemindaian video dengan prefix '/video'
+# Blueprint
 video_scan = Blueprint("video_scan", __name__, url_prefix="/video")
 
+# ============================================================================
+# Thumbnail folder
+# ============================================================================
+THUMBNAIL_FOLDER = os.path.join(PICTURES_FOLDER, "thumbnail")
+os.makedirs(THUMBNAIL_FOLDER, exist_ok=True)
 
+
+# ============================================================================
+# Helper: nama thumbnail berbasis PATH video (GLOBAL)
+# ============================================================================
+def get_thumbnail_name(video_path):
+    """
+    Nama thumbnail konsisten berdasarkan PATH video
+    Semua user mendapat thumbnail yang sama untuk video yang sama
+    """
+    key = os.path.abspath(video_path)
+    return hashlib.md5(key.encode()).hexdigest() + ".jpg"
+
+
+# ============================================================================
+# Helper: generate thumbnail dengan ffmpeg
+# ============================================================================
+def generate_thumbnail(video_path, thumbnail_path):
+    """
+    Ambil frame tengah video menggunakan ffmpeg
+    Aman: tidak mengganggu scan jika gagal
+    """
+    try:
+        # Ambil durasi video
+        cmd_duration = [
+            "ffprobe", "-v", "error",
+            "-show_entries", "format=duration",
+            "-of", "default=noprint_wrappers=1:nokey=1",
+            video_path
+        ]
+        duration = float(
+            subprocess.check_output(cmd_duration).decode().strip()
+        )
+        middle = duration / 2
+
+        # Generate thumbnail
+        cmd_thumb = [
+            "ffmpeg",
+            "-ss", str(middle),
+            "-i", video_path,
+            "-frames:v", "1",
+            "-q:v", "2",
+            thumbnail_path
+        ]
+
+        subprocess.run(
+            cmd_thumb,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL
+        )
+        return True
+
+    except Exception:
+        return False
+
+
+# ============================================================================
+# Scan storage (Android / Termux friendly)
+# ============================================================================
 def scan_storage_for_video():
-    """
-    Memindai penyimpanan perangkat untuk mencari file video.
-    
-    Fungsi ini membatasi jumlah folder dan file yang dipindai untuk menghindari
-    proses yang terlalu lama. Didesain untuk kompatibel dengan Android/Termux.
-    
-    Returns:
-        list: Daftar dictionary berisi informasi folder dan file video di dalamnya
-    """
-    # Tentukan root directory berdasarkan platform
     ROOT = "/storage/emulated/0"
     if not os.path.exists(ROOT):
-        ROOT = os.path.expanduser("~")  # Fallback untuk Termux
+        ROOT = os.path.expanduser("~")
 
-    # Batasan untuk mencegah pemindaian tak terbatas
-    MAX_FOLDERS = 200  # Maksimal folder yang akan dipindai
-    MAX_FILES = 300    # Maksimal file per folder yang akan diproses
+    MAX_FOLDERS = 200
+    MAX_FILES = 300
     found = []
 
-    # Rekursif walk melalui direktori
     for root, dirs, files in os.walk(ROOT):
-        # Hentikan jika sudah mencapai batas maksimal folder
         if len(found) >= MAX_FOLDERS:
             break
 
-        # Filter hanya file video dari daftar file
         vids = [f for f in files if is_video_file(f)]
-        
-        # Lewati folder jika tidak ada file video
         if not vids:
             continue
 
-        # Simpan informasi folder dan file video di dalamnya
         found.append({
-            "folder_path": root,                    # Path lengkap folder
-            "folder_name": os.path.basename(root) or root,  # Nama folder (atau path jika kosong)
-            "files": vids[:MAX_FILES]               # File video (dibatasi jumlahnya)
+            "folder_path": root,
+            "folder_name": os.path.basename(root) or root,
+            "files": vids[:MAX_FILES]
         })
 
     return found
 
 
+# ============================================================================
+# Route: scan & import DB + thumbnail
+# ============================================================================
 @video_scan.route("/scan-db", methods=["POST"])
 def scan_db():
-    """
-    Endpoint untuk memindai penyimpanan dan mengimpor file video ke database.
-    
-    Proses:
-    1. Memindai seluruh penyimpanan untuk mencari folder berisi video
-    2. Menyimpan informasi folder ke tabel folders (jika belum ada untuk user ini)
-    3. Menyimpan informasi video ke tabel videos (jika belum ada untuk user ini)
-    
-    Setiap folder dan video yang diimpor dikaitkan dengan owner (user yang sedang aktif).
-    
-    Returns:
-        JSON response berisi status, jumlah folder dan video yang ditambahkan,
-        atau pesan error jika terjadi masalah
-    """
-    # Ambil identifier user yang sedang aktif
     owner = current_user_identifier()
-    # Ambil username untuk logging (gunakan owner sebagai fallback)
     username = session.get("username", owner)
 
-    # Log awal proses pemindaian
     BMS_write_log(f"SCAN VIDEO oleh: {owner}", username)
 
-    # Panggil fungsi pemindaian untuk mendapatkan daftar folder
     folders = scan_storage_for_video()
-
     conn = get_db()
     cur = conn.cursor()
 
-    # Variabel untuk melacak apa yang telah ditambahkan
-    folders_new = []  # Nama folder yang baru ditambahkan ke database
-    videos_new = []   # Nama file video yang baru ditambahkan ke database
+    folders_new = []
+    videos_new = []
 
-    # Proses setiap folder yang ditemukan
     for f in folders:
         folder_path = f["folder_path"]
         fn = f["folder_name"]
 
-        # Cek apakah folder sudah ada di database untuk user ini
         row = cur.execute("""
             SELECT id FROM folders
             WHERE folder_path=? AND user_id=?
         """, (folder_path, owner)).fetchone()
 
-        # Jika folder sudah ada, gunakan ID-nya
         if row:
             folder_id = row["id"]
         else:
-            # Jika folder belum ada, coba insert dengan error handling
             try:
                 cur.execute("""
                     INSERT INTO folders (folder_name, folder_path, user_id)
@@ -117,7 +146,6 @@ def scan_db():
                 folders_new.append(fn)
 
             except Exception:
-                # Fallback: coba lagi ambil ID folder jika insert gagal karena constraint
                 row2 = cur.execute("""
                     SELECT id FROM folders
                     WHERE folder_path=? AND user_id=?
@@ -125,9 +153,6 @@ def scan_db():
                 if row2:
                     folder_id = row2["id"]
                 else:
-                    # Kasus sangat langka: folder_path ada secara global tapi tidak untuk owner ini
-                    # Buat path alternatif dengan menambahkan suffix owner untuk menghindari conflict
-                    # Catatan: Branch ini defensif; normalnya idx_folders_path_user mencegah collision.
                     alt_path = folder_path + "::" + owner
                     cur.execute("""
                         INSERT INTO folders (folder_name, folder_path, user_id)
@@ -136,30 +161,27 @@ def scan_db():
                     folder_id = cur.lastrowid
                     folders_new.append(fn)
 
-        # Simpan video untuk folder ini (scoped oleh owner)
+        # ================================
+        # Proses file video
+        # ================================
         for vid in f["files"]:
             fp = os.path.join(folder_path, vid)
 
-            # Cek apakah video sudah ada di database untuk user ini
             exists = cur.execute("""
                 SELECT id FROM videos
                 WHERE filepath=? AND user_id=?
             """, (fp, owner)).fetchone()
 
-            # Jika sudah ada, skip
             if exists:
                 continue
 
-            # Dapatkan ukuran file (dengan error handling)
             try:
                 size = os.path.getsize(fp)
             except:
                 size = 0
 
-            # Timestamp saat ini
             added = datetime.utcnow().isoformat()
 
-            # Insert video ke database
             cur.execute("""
                 INSERT INTO videos (filename, filepath, folder_id, size, added_at, user_id)
                 VALUES (?,?,?,?,?,?)
@@ -167,11 +189,18 @@ def scan_db():
 
             videos_new.append(vid)
 
-    # Commit perubahan ke database
+            # ================================
+            # AUTO GENERATE THUMBNAIL
+            # ================================
+            thumb_name = get_thumbnail_name(fp)
+            thumb_path = os.path.join(THUMBNAIL_FOLDER, thumb_name)
+
+            if not os.path.exists(thumb_path):
+                generate_thumbnail(fp, thumb_path)
+
     conn.commit()
     conn.close()
 
-    # Return hasil pemindaian dan impor
     return jsonify({
         "status": "ok",
         "folders_added": folders_new,
