@@ -10,7 +10,7 @@
 
 # Auth baru (modular)
 from app.routes.BMS_auth import auth
-
+from app.routes.BMS_file_manager import fm_premium
 # Core logger
 from .BMS_logger import logger
 
