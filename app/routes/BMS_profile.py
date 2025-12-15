@@ -9,10 +9,10 @@ from app.routes.BMS_auth.session_helpers import BMS_auth_is_login
 profile = Blueprint("profile", __name__, url_prefix="/profile")
 
 # Folder khusus foto profile
-PROFILE_PICTURE_DIR = os.path.join(PICTURES_FOLDER, "profile")
+PROFILE_FOLDER = os.path.join(PICTURES_FOLDER, "profile")
 
 # Pastikan folder ada
-os.makedirs(PROFILE_PICTURE_DIR, exist_ok=True)
+os.makedirs(PROFILE_FOLDER, exist_ok=True)
 
 
 # ======================================================
