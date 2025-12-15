@@ -8,7 +8,11 @@ from app.routes.BMS_auth.session_helpers import BMS_auth_is_login
 
 profile = Blueprint("profile", __name__, url_prefix="/profile")
 
-os.makedirs(PICTURES_FOLDER, exist_ok=True)
+
+BASE_FOTO = os.path.join(BASE, "Pictures")
+THUMB_DIR = os.path.join(BASE_FOTO, "profile")
+
+os.makedirs(THUMB_DIR, exist_ok=True)
 
 
 # ======================================================
