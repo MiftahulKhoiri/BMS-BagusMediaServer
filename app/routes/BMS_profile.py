@@ -3,7 +3,7 @@ import sqlite3
 from flask import Blueprint, render_template, request, redirect, session, send_from_directory, abort
 from werkzeug.utils import secure_filename
 
-from app.BMS_config import PICTURES_FOLDER
+from app.BMS_config import PICTURES_FOLDER,DB_PATH
 from app.routes.BMS_auth.session_helpers import BMS_auth_is_login
 
 profile = Blueprint("profile", __name__, url_prefix="/profile")
