@@ -3,10 +3,10 @@
    Fitur:
    - Folder list
    - Video list per folder
+   - Thumbnail video
    - Navigation state
-   - Open external player page
+   - Open player page
 ========================================================== */
-
 
 let currentFolderId = null;
 let currentFolderName = null;
@@ -16,7 +16,7 @@ let currentFolderName = null;
    Helper GET JSON
 ---------------------------------------------------------- */
 async function api(path){
-    let r = await fetch(path);
+    const r = await fetch(path);
     return await r.json();
 }
 
@@ -25,11 +25,13 @@ async function api(path){
    SCAN DB
 ========================================================== */
 async function scanDB(){
-    document.getElementById("status").innerHTML = "🔍 Scan berjalan...";
-    let res = await fetch("/video/scan-db", { method: "POST" });
-    let data = await res.json();
+    const status = document.getElementById("status");
+    status.innerHTML = "🔍 Scan berjalan...";
 
-    document.getElementById("status").innerHTML = data.message;
+    const res = await fetch("/video/scan-db", { method: "POST" });
+    const data = await res.json();
+
+    status.innerHTML = data.message;
     showFolders();
 }
 
@@ -38,26 +40,27 @@ async function scanDB(){
    TAMPILKAN FOLDER
 ========================================================== */
 async function showFolders(){
-    document.getElementById("status").innerHTML = "📁 Memuat folder...";
+    const status = document.getElementById("status");
+    const lib = document.getElementById("library");
 
+    status.innerHTML = "📁 Memuat folder...";
     currentFolderId = null;
     currentFolderName = null;
 
     document.getElementById("backButton").style.display = "none";
-
-    let data = await api("/video/folders");
-
-    const lib = document.getElementById("library");
     lib.innerHTML = "";
 
+    const data = await api("/video/folders");
+
     if (!data || data.length === 0) {
-        lib.innerHTML = "<div>Tidak ada folder video.</div>";
+        lib.innerHTML = "<div class='empty'>Tidak ada folder video.</div>";
+        status.innerHTML = "";
         return;
     }
 
     data.forEach(f => {
-        let card = document.createElement("div");
-        card.className = "card";
+        const card = document.createElement("div");
+        card.className = "card folder-card";
         card.onclick = () => loadVideos(f.id, f.folder_name);
 
         card.innerHTML = `
@@ -69,7 +72,7 @@ async function showFolders(){
         lib.appendChild(card);
     });
 
-    document.getElementById("status").innerHTML = "";
+    status.innerHTML = "";
 }
 
 
@@ -80,39 +83,46 @@ async function loadVideos(folder_id, folder_name){
     currentFolderId = folder_id;
     currentFolderName = folder_name;
 
-    document.getElementById("backButton").style.display = "block";
-    document.getElementById("status").innerHTML = "🎬 Memuat video...";
-
-    let data = await api(`/video/folder/${folder_id}/videos`);
-
+    const status = document.getElementById("status");
     const lib = document.getElementById("library");
+
+    document.getElementById("backButton").style.display = "block";
+    status.innerHTML = "🎬 Memuat video...";
     lib.innerHTML = "";
 
+    const data = await api(`/video/folder/${folder_id}/videos`);
+
     if (!data || data.length === 0){
-        lib.innerHTML = "<div>Folder kosong.</div>";
+        lib.innerHTML = "<div class='empty'>Folder kosong.</div>";
+        status.innerHTML = `📁 Folder: ${folder_name}`;
         return;
     }
 
-    data.forEach(v=>{
-        let card = document.createElement("div");
-        card.className = "card";
+    data.forEach(v => {
+        const card = document.createElement("div");
+        card.className = "card video-card";
         card.onclick = () => openVideoPlayer(v.id);
 
         card.innerHTML = `
-            <img src="/video/thumbnail/${v.id}" class="thumb-video">
+            <img 
+                src="/video/thumbnail/${v.thumbnail}"
+                class="thumb-video"
+                alt="thumbnail"
+                onerror="this.src='/static/img/video_default.jpg'"
+            >
             <div class="title">${v.filename}</div>
-            <div class="sub">${(v.size/1024/1024).toFixed(1)} MB</div>
+            <div class="sub">${(v.size / 1024 / 1024).toFixed(1)} MB</div>
         `;
 
         lib.appendChild(card);
     });
 
-    document.getElementById("status").innerHTML = `📁 Folder: ${folder_name}`;
+    status.innerHTML = `📁 Folder: ${folder_name}`;
 }
 
 
 /* ==========================================================
-   BUKA HALAMAN PLAYER (watch/<id>)
+   BUKA HALAMAN PLAYER
 ========================================================== */
 function openVideoPlayer(video_id){
     window.location.href = `/video/watch/${video_id}`;
@@ -123,34 +133,20 @@ function openVideoPlayer(video_id){
    TOMBOL KEMBALI
 ========================================================== */
 function goBack(){
-    if(currentFolderId){
-        showFolders();
-    } else {
-        showFolders();
-    }
+    showFolders();
 }
 
-/* ======================================================
-   AUTO LOAD FOLDER ATAU ROOT
-====================================================== */
 
+/* ==========================================================
+   AUTO LOAD SAAT HALAMAN DIBUKA
+========================================================== */
 document.addEventListener("DOMContentLoaded", () => {
-    const params = new URLSearchParams(window.location.search);
-    const folderId = params.get("folder");
-    const folderName = params.get("name");
-
-    if (folderId) {
-        loadVideos(folderId, folderName || "Folder");
-    } else {
-        showFolders();
-    }
+    showFolders();
 });
 
 
 /* ======================================================
    HOME BUTTON
-   - admin/root -> /admin/home
-   - user biasa  -> /user/home
 ====================================================== */
 function goHome(){
     fetch("/auth/role")
@@ -162,5 +158,5 @@ function goHome(){
                 window.location.href = "/user/home";
             }
         })
-        .catch(() => window.location.href = "/user/home"); // fallback
+        .catch(() => window.location.href = "/user/home");
 }
