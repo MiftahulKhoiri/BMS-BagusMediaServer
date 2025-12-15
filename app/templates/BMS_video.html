@@ -10,26 +10,43 @@
 </head>
 <body>
 
+<!-- ================= TOP BAR ================= -->
 <div class="topbar">
-
-    <!-- BUTTON HOME -->
     <h2 class="home-btn" onclick="goHome()">🎬 BMS Video Library</h2>
 
-    <div>
+    <div class="top-actions">
         <button class="btn" onclick="scanDB()">🔍 Scan</button>
     </div>
 </div>
 
-<!-- Tombol Back -->
-<div id="backButton" style="display:none; margin-bottom:10px;">
+<!-- ================= BACK BUTTON ================= -->
+<div id="backButton" class="backbar" style="display:none;">
     <button class="btn" onclick="goBack()">⬅ Kembali</button>
 </div>
 
+<!-- ================= STATUS ================= -->
 <div id="status" class="status"></div>
 
-<div id="library" class="grid"></div>
+<!-- ================= VIDEO GRID ================= -->
+<div id="library" class="grid">
+    
+        Card video akan di-inject oleh JS
+        Contoh struktur (JS yang isi):
 
-<!-- LOAD JS -->
+        <div class="video-card">
+            <img src="/video/thumbnail/xxxx.jpg">
+            <div class="video-title">video.mp4</div>
+        </div>
+    
+</div>
+
+<!-- ================= EMPTY STATE ================= -->
+<div id="emptyState" class="empty" style="display:none;">
+    📂 Belum ada video.<br>
+    Tekan <b>Scan</b> untuk memindai video.
+</div>
+
+<!-- ================= JS ================= -->
 <script src="/static/js/BMS_video.js"></script>
 
 </body>
