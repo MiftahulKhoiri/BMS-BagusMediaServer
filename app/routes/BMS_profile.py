@@ -56,6 +56,11 @@ def BMS_profile_image(filename):
     filename = secure_filename(filename)  # Anti traversal
     return send_from_directory(PROFILE_FOLDER, filename)
 
+@profile.route("/background/<filename>")
+def BMS_profile_background(filename):
+    filename = secure_filename(filename)
+    return send_from_directory(PROFILE_BACKGROUND_FOLDER, filename)
+
 
 # ======================================================
 #  Halaman Profil
