@@ -200,3 +200,18 @@ def action_stream():
                 yield chunk
 
     return Response(generate(), mimetype=mime)
+
+def action_search():
+    query = request.args.get("q", "").lower()
+    start = safe(request.args.get("path") or ROOT)
+
+    results = []
+    for root, dirs, files in os.walk(start):
+        for f in files:
+            if query in f.lower():
+                results.append(os.path.join(root, f))
+        for d in dirs:
+            if query in d.lower():
+                results.append(os.path.join(root, d))
+
+    return jsonify({"query": query, "results": results})
