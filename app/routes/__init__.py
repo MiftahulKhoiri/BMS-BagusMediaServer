@@ -25,7 +25,7 @@ from .BMS_mp3 import blueprints as mp3_blueprints
 # System & Tools
 from .BMS_update import update
 from .BMS_profile import profile
-from .BMS_upload import upload
+from app.routes.BMS_upload import upload
 from .BMS_systeminfo import systeminfo
 from .BMS_terminal import terminal
 from .BMS_power import BMS_power
@@ -37,7 +37,7 @@ from .BMS_power import BMS_power
 def register_blueprints(app):
 
     BLUEPRINTS = [
-        auth,        # Auth system baru
+        auth,        
         logger,
         user,
         admin,
