@@ -26,7 +26,7 @@ from .BMS_mp3 import blueprints as mp3_blueprints
 from .BMS_update import update
 from .BMS_profile import profile
 from app.routes.BMS_upload import upload
-from .BMS_systeminfo import systeminfo
+from app.routes.BMS_systeminfo import systeminfo
 from .BMS_terminal import terminal
 from .BMS_power import BMS_power
 
