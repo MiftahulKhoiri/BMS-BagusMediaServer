@@ -6,7 +6,7 @@ Aman untuk: Linux, Raspberry Pi OS Bookworm, Termux, Windows, macOS.
 """
 
 import sys
-from core.BMS_detect import detect, pretty_print
+from core.detect_os import detect, pretty_print
 
 # Import core modules
 from core.env_tools import (
