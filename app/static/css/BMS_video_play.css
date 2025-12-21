@@ -1,79 +1,147 @@
-/* BMS_video_play.css - Style (Mode A) */
+/* ==========================================================
+   BMS VIDEO PLAYER — BRIGHT BLUE MODERN UI
+========================================================== */
+
 body {
   margin: 0;
   padding: 0;
-  font-family: Arial, Helvetica, sans-serif;
-  background: #050505;
-  color: #ccffe0;
+  font-family: "Inter", Arial, Helvetica, sans-serif;
+  background: linear-gradient(135deg, #eaf3ff, #f7fbff);
+  color: #0f2a44;
 }
 
+/* ============================
+   CONTAINER
+============================ */
 .container {
   max-width: 980px;
-  margin: 14px auto;
-  padding: 12px;
+  margin: 16px auto;
+  padding: 14px;
 }
 
-/* header */
+/* ============================
+   HEADER
+============================ */
 .header {
   display: flex;
   gap: 12px;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
+  background: #ffffff;
+  padding: 12px 14px;
+  border-radius: 14px;
+  box-shadow: 0 6px 18px rgba(0, 80, 160, 0.12);
 }
-.btn {
-  padding: 7px 12px;
-  border-radius: 6px;
-  background: #000;
-  border: 1px solid #00ff7f;
-  color: #00ff7f;
-  cursor: pointer;
-}
-.video-title { font-size: 16px; font-weight: 600; color: #bfffd0; }
 
-/* player box */
+.btn {
+  padding: 8px 14px;
+  border-radius: 10px;
+  background: #1b6cff;
+  border: none;
+  color: #ffffff;
+  cursor: pointer;
+  font-size: 14px;
+  transition: 0.2s ease;
+}
+.btn:hover {
+  background: #1556d8;
+}
+
+.video-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #1b6cff;
+}
+
+/* ============================
+   PLAYER BOX
+============================ */
 .player-box {
   width: 100%;
-  background: #000;
-  border-radius: 10px;
+  background: #ffffff;
+  border-radius: 18px;
   overflow: hidden;
-  margin-bottom: 14px;
-  box-shadow: 0 6px 18px rgba(0,255,120,0.06);
+  margin-bottom: 16px;
+  box-shadow: 0 10px 28px rgba(0, 90, 180, 0.18);
 }
+
 .player-box video {
   width: 100%;
   height: auto;
   display: block;
-  background: #000;
+  background: #000; /* video tetap hitam */
 }
 
-/* playlist */
+/* ============================
+   PLAYLIST
+============================ */
 .playlist-container {
-  padding: 10px;
-  background: rgba(0,255,110,0.04);
-  border: 1px solid rgba(0,255,110,0.09);
-  border-radius: 8px;
-  height: 260px;
-  overflow-y: auto; /* scrollable */
+  padding: 14px;
+  background: #ffffff;
+  border-radius: 18px;
+  height: 280px;
+  overflow-y: auto;
+  box-shadow: 0 10px 28px rgba(0, 90, 180, 0.15);
 }
-.playlist-title { color: #b2ffc9; margin-bottom: 8px; font-weight:600; }
-.playlist-box { display:flex; flex-direction: column; gap:8px; }
-.playlist-item {
-  padding: 10px;
-  background: rgba(0,255,120,0.06);
-  border-radius: 6px;
-  cursor: pointer;
-  transition: background .12s;
-  font-size: 14px;
-  color: #eafff0;
-}
-.playlist-item:hover { background: rgba(0,255,120,0.14); }
-.playlist-item.playing {
-  background: rgba(0,255,120,0.24);
-  border-left: 4px solid #00ff7f;
+
+.playlist-title {
+  color: #1b6cff;
+  margin-bottom: 10px;
   font-weight: 700;
 }
 
+.playlist-box {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ============================
+   PLAYLIST ITEM
+============================ */
+.playlist-item {
+  padding: 12px 14px;
+  background: #f4f8ff;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: 0.2s ease;
+  font-size: 14px;
+  color: #123b66;
+  border: 1px solid #d6e7ff;
+}
+
+.playlist-item:hover {
+  background: #e6f0ff;
+  border-color: #1b6cff;
+}
+
+.playlist-item.playing {
+  background: #1b6cff;
+  color: #ffffff;
+  font-weight: 700;
+  border-left: 5px solid #0f4ed8;
+}
+
+/* ============================
+   SCROLLBAR
+============================ */
+.playlist-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.playlist-container::-webkit-scrollbar-thumb {
+  background: #1b6cff;
+  border-radius: 10px;
+}
+
+.playlist-container::-webkit-scrollbar-track {
+  background: #eaf3ff;
+}
+
+/* ============================
+   RESPONSIVE
+============================ */
 @media (max-width: 600px){
   .playlist-container { height: 220px; }
-  .video-title { font-size: 14px; }
+  .video-title { font-size: 15px; }
 }
