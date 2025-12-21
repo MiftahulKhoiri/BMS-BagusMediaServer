@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BMS Music Player</title>
+<link rel="stylesheet" href="/static/css/BMS_mp3_play_modeB.css">
+</head>
+<body>
+
+<div class="player-app">
+
+  <!-- TOP BAR -->
+  <div class="top-bar">
+    <button class="icon-btn" onclick="history.back()">⌄</button>
+    <div class="tabs">
+      <span class="active">Lagu</span>
+      <span>Video</span>
+    </div>
+    <button class="icon-btn">⋮</button>
+  </div>
+
+  <!-- COVER -->
+  <div class="cover-box">
+    <img id="coverImg" src="/static/img/default_cover.jpg">
+  </div>
+
+  <!-- INFO -->
+  <div class="info">
+    <h2 id="trackTitle">Judul Lagu</h2>
+    <p id="trackArtist">Artist</p>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="actions">
+    <button id="likeBtn">👍 <span id="likeCount">0</span></button>
+    <button id="saveBtn">💾 Simpan</button>
+    <button>↗</button>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="progress">
+    <span id="currentTime">0:00</span>
+    <input type="range" id="progressBar" value="0">
+    <span id="duration">0:00</span>
+  </div>
+
+  <!-- CONTROLS -->
+  <div class="controls">
+    <button id="shuffleBtn">🔀</button>
+    <button id="prevBtn">⏮</button>
+    <button id="playBtn">⏸</button>
+    <button id="nextBtn">⏭</button>
+    <button id="repeatBtn">🔁</button>
+  </div>
+
+  <!-- AUDIO -->
+  <audio id="audioPlayer"></audio>
+
+  <!-- BOTTOM TAB -->
+  <div class="bottom-tab">
+    <span class="active">BERIKUTNYA</span>
+    <span>LIRIK</span>
+    <span>TERKAIT</span>
+  </div>
+
+</div>
+
+<script src="/static/js/BMS_mp3_play_modeB.js"></script>
+</body>
+</html>
