@@ -10,7 +10,7 @@ import os
 import sys
 
 
-def detect_environment():
+def detect():
     info = {}
 
     # --------------------------------------------------
@@ -79,4 +79,4 @@ def pretty_print(info):
 
 
 if __name__ == "__main__":
-    pretty_print(detect_environment())
+    pretty_print(detect())
