@@ -274,4 +274,4 @@ def watch(track_id):
     Returns:
         Rendered template: Halaman pemutaran track dengan player
     """
-    return render_template("BMS_mp3_play.html")
+    return render_template("BMS_mp3_play_modelB.html")
