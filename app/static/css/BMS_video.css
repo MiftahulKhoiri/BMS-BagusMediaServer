@@ -1,88 +1,128 @@
+/* ==========================================================
+   BMS LIBRARY UI (Folder & Video)
+   Tema: Bright Blue Modern
+========================================================== */
+
 body {
-    font-family: Arial, Helvetica, sans-serif;
-    background: #060606;
-    color: #d8ffe6;
+    font-family: "Inter", Arial, sans-serif;
+    background: linear-gradient(135deg, #eaf3ff, #f7fbff);
+    color: #0f2a44;
     margin: 0;
     padding: 15px;
 }
 
+/* ============================
+   TOP BAR
+============================ */
 .topbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding: 14px 16px;
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 6px 18px rgba(0, 80, 160, 0.12);
 }
 
-.btn {
-    padding: 8px 12px;
-    background: #000;
-    border: 1px solid #00ff7f;
-    color: #00ff7f;
-    border-radius: 6px;
+.home-btn {
     cursor: pointer;
+    font-weight: bold;
+    font-size: 20px;
+    color: #1b6cff;
+    transition: 0.15s;
+}
+.home-btn:hover {
+    opacity: 0.85;
+}
+
+/* ============================
+   BUTTON
+============================ */
+.btn {
+    padding: 8px 14px;
+    background: #1b6cff;
+    border: none;
+    color: #ffffff;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: 0.2s ease;
 }
 .btn:hover {
-    background: #003319;
+    background: #1556d8;
 }
 
+/* ============================
+   STATUS
+============================ */
 .status {
-    margin: 10px 0;
-    color: #b8ffd6;
+    margin: 12px 0;
+    color: #4a6fa3;
+    font-size: 14px;
 }
 
+/* ============================
+   GRID
+============================ */
 .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
-    gap: 12px;
+    gap: 14px;
     margin-top: 12px;
 }
 
+/* ============================
+   CARD
+============================ */
 .card {
-    background: rgba(0, 0, 0, 0.5);
-    border: 1px solid rgba(0,255,110,0.1);
-    padding: 10px;
-    border-radius: 10px;
+    background: #ffffff;
+    border: 1px solid #d6e7ff;
+    padding: 12px;
+    border-radius: 16px;
     cursor: pointer;
-    transition: 0.2s;
+    transition: 0.2s ease;
+    box-shadow: 0 6px 18px rgba(0, 90, 180, 0.1);
 }
 .card:hover {
-    border-color: #00ff7f;
+    transform: translateY(-3px);
+    border-color: #1b6cff;
+    box-shadow: 0 10px 28px rgba(0, 90, 180, 0.18);
 }
 
+/* ============================
+   THUMBNAIL
+============================ */
 .thumb-folder {
     width: 100%;
-    height: 100px;
-    background: #111;
-    border-radius: 6px;
-    display:flex;
-    align-items:center;
+    height: 110px;
+    background: linear-gradient(135deg, #dceaff, #eef5ff);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
     justify-content: center;
-    font-size: 32px;
+    font-size: 34px;
+    color: #1b6cff;
 }
 
 .thumb-video {
     width: 100%;
     height: 110px;
-    background: #111;
     object-fit: cover;
-    border-radius: 6px;
+    border-radius: 12px;
+    background: #eaf3ff;
 }
 
+/* ============================
+   TEXT
+============================ */
 .title {
-    margin-top: 6px;
-    font-weight: bold;
-    font-size: 14px;
-    color: #c6ffe0;
+    margin-top: 8px;
+    font-weight: 700;
+    font-size: 15px;
+    color: #123b66;
 }
 
 .sub {
-    font-size: 12px;
-    color: #99ffbb;
-}
-
-.home-btn {
-    cursor: pointer;
-    transition: .15s;
-}
-.home-btn:hover {
-    color: #00ff99;
+    font-size: 13px;
+    color: #6b8fbf;
 }
