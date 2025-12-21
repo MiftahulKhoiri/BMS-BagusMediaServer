@@ -1,7 +1,7 @@
 # core/__init__.py
 # Package initializer for core modules.
 __all__ = [
-    "BMS_detect",
+    "detect_os",
     "system_tools",
     "env_tools",
     "server_dev",
