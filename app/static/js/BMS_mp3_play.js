@@ -1,11 +1,8 @@
 /* ==========================================================
-   BMS MP3 PLAYER – FINAL STABLE VERSION
-   Semua tombol diperbaiki:
-   - Prev / Next
-   - Shuffle
-   - Repeat
-   - Reload
-   - Favorite (auto insert)
+   BMS MP3 PLAYER – FINAL STABLE VERSION (FIXED)
+   ✔ Judul lagu selalu update
+   ✔ Next / Prev / Shuffle / Repeat / Reload
+   ✔ Favorite stabil
 ========================================================== */
 
 let currentFolderId = null;
@@ -31,14 +28,12 @@ async function initPlayer(trackId, folderId) {
     currentTrackId = Number(trackId);
     currentFolderId = folderId || null;
 
-    // Load track info
-    const info = await api(`/mp3/info/${currentTrackId}`);
-    if (info?.filename) {
-        updateTitle(info.filename);
-    }
-
-    // Set audio source
     const audio = document.getElementById("audioPlayer");
+
+    // Load info awal
+    const info = await api(`/mp3/info/${currentTrackId}`);
+    if (info?.filename) updateTitle(info.filename);
+
     audio.src = `/mp3/play/${currentTrackId}`;
     audio.play().catch(() => {});
     audio.onended = handleTrackEnd;
@@ -80,13 +75,13 @@ function renderPlaylist() {
             div.textContent = mp3.filename;
         }
 
-        div.onclick = () => changeTrack(mp3.id);
+        div.onclick = () => loadTrack(mp3.id);
         box.appendChild(div);
     });
 }
 
-/* ----------------------- CHANGE TRACK ---------------------- */
-function changeTrack(id) {
+/* ----------------------- LOAD TRACK (CORE) ---------------------- */
+async function loadTrack(id) {
     if (isChanging) return;
     isChanging = true;
     setTimeout(() => (isChanging = false), 300);
@@ -97,19 +92,31 @@ function changeTrack(id) {
     audio.src = `/mp3/play/${id}`;
     audio.play().catch(() => {});
 
+    // 🔥 FIX UTAMA: update judul lagu
+    let track = playlistData.find(t => t.id === id);
+
+    if (track?.filename) {
+        updateTitle(track.filename);
+    } else {
+        const info = await api(`/mp3/info/${id}`);
+        if (info?.filename) updateTitle(info.filename);
+    }
+
     updateActivePlaylist();
     updateFavoriteState(id);
 }
 
+/* ----------------------- ACTIVE PLAYLIST ---------------------- */
 function updateActivePlaylist() {
     const items = document.querySelectorAll(".playlist-item");
     items.forEach(el => {
+        const clean = el.textContent.replace("▶", "").trim();
         if (Number(el.dataset.id) === Number(currentTrackId)) {
             el.classList.add("active");
-            el.textContent = `▶ ${el.textContent.replace("▶", "").trim()}`;
+            el.textContent = `▶ ${clean}`;
         } else {
             el.classList.remove("active");
-            el.textContent = el.textContent.replace("▶", "").trim();
+            el.textContent = clean;
         }
     });
 }
@@ -118,14 +125,14 @@ function updateActivePlaylist() {
 function nextTrack() {
     const index = playlistData.findIndex(t => t.id === currentTrackId);
     if (index < playlistData.length - 1) {
-        changeTrack(playlistData[index + 1].id);
+        loadTrack(playlistData[index + 1].id);
     }
 }
 
 function prevTrack() {
     const index = playlistData.findIndex(t => t.id === currentTrackId);
     if (index > 0) {
-        changeTrack(playlistData[index - 1].id);
+        loadTrack(playlistData[index - 1].id);
     }
 }
 
@@ -136,8 +143,9 @@ function toggleShuffle() {
 }
 
 function updateShuffleButton() {
-    const btn = document.getElementById("shuffleBtn");
-    btn.classList.toggle("active", shuffleMode);
+    document
+        .getElementById("shuffleBtn")
+        .classList.toggle("active", shuffleMode);
 }
 
 /* ----------------------- REPEAT ---------------------- */
@@ -163,40 +171,41 @@ function updateRepeatButton() {
 
 /* ----------------------- RELOAD ---------------------- */
 function reloadTrack() {
-    changeTrack(currentTrackId);
+    loadTrack(currentTrackId);
 }
 
-/* ----------------------- AUTO NEXT HANDLING ---------------------- */
+/* ----------------------- AUTO NEXT ---------------------- */
 function handleTrackEnd() {
     const index = playlistData.findIndex(t => t.id === currentTrackId);
 
     if (repeatMode === 1) {
-        changeTrack(currentTrackId);
+        loadTrack(currentTrackId);
         return;
     }
 
     if (shuffleMode) {
-        const random = playlistData[Math.floor(Math.random() * playlistData.length)];
-        changeTrack(random.id);
+        const random =
+            playlistData[Math.floor(Math.random() * playlistData.length)];
+        loadTrack(random.id);
         return;
     }
 
     if (repeatMode === 2) {
-        if (index === playlistData.length - 1) changeTrack(playlistData[0].id);
-        else changeTrack(playlistData[index + 1].id);
+        if (index === playlistData.length - 1)
+            loadTrack(playlistData[0].id);
+        else
+            loadTrack(playlistData[index + 1].id);
         return;
     }
 
     if (index < playlistData.length - 1) {
-        changeTrack(playlistData[index + 1].id);
+        loadTrack(playlistData[index + 1].id);
     }
 }
 
-/* ----------------------- FAVORITE BUTTON ---------------------- */
+/* ----------------------- FAVORITE ---------------------- */
 function createFavoriteButton(info) {
     const row = document.getElementById("controlRow");
-
-    // Jika sudah ada, return
     if (document.getElementById("favBtn")) return;
 
     const btn = document.createElement("button");
@@ -205,8 +214,10 @@ function createFavoriteButton(info) {
     btn.textContent = info?.is_favorite ? "❤️" : "🤍";
 
     btn.onclick = async () => {
-        const res = await api(`/mp3/favorite/${currentTrackId}`, { method: "POST" });
-        btn.textContent = res.is_favorite ? "❤️" : "🤍";
+        const res = await api(`/mp3/favorite/${currentTrackId}`, {
+            method: "POST"
+        });
+        btn.textContent = res?.is_favorite ? "❤️" : "🤍";
     };
 
     row.appendChild(btn);
@@ -218,7 +229,7 @@ async function updateFavoriteState(id) {
     if (btn) btn.textContent = info?.is_favorite ? "❤️" : "🤍";
 }
 
-/* ----------------------- ATTACH BUTTON EVENTS ---------------------- */
+/* ----------------------- CONTROLS ---------------------- */
 function attachControlListeners() {
     document.getElementById("nextBtn").onclick = nextTrack;
     document.getElementById("prevBtn").onclick = prevTrack;
