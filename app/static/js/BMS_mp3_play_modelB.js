@@ -1,8 +1,19 @@
+/* ==========================================================
+   BMS MP3 PLAYER – FINAL STABLE + MEMORY
+   ✔ Playlist per folder
+   ✔ Next / Prev
+   ✔ Dropdown "Berikutnya"
+   ✔ Shuffle + Repeat (ingat localStorage)
+========================================================== */
+
+/* ================= ELEMENT ================= */
 const audio = document.getElementById("audioPlayer");
 
 const playBtn = document.getElementById("playBtn");
 const prevBtn = document.getElementById("prevBtn");
 const nextBtn = document.getElementById("nextBtn");
+const shuffleBtn = document.getElementById("shuffleBtn");
+const repeatBtn = document.getElementById("repeatBtn");
 
 const progressBar = document.getElementById("progressBar");
 const currentTimeEl = document.getElementById("currentTime");
@@ -14,11 +25,21 @@ const artistEl = document.getElementById("trackArtist");
 const nextList = document.getElementById("nextList");
 const tabNext = document.getElementById("tabNext");
 
+/* ================= STATE ================= */
 let playlist = [];
 let currentIndex = 0;
 let isPlaying = false;
 
-/* ---------------- HELPERS ---------------- */
+/*
+ repeatMode:
+ 0 = off
+ 1 = ulang 1
+ 2 = ulang semua
+*/
+let shuffleMode = localStorage.getItem("bms_shuffle") === "1";
+let repeatMode = Number(localStorage.getItem("bms_repeat") || 0);
+
+/* ================= HELPERS ================= */
 async function api(url) {
   const res = await fetch(url);
   return await res.json();
@@ -32,7 +53,27 @@ function getFolderId() {
   return new URLSearchParams(location.search).get("folder");
 }
 
-/* ---------------- INIT ---------------- */
+function savePlayerState() {
+  localStorage.setItem("bms_shuffle", shuffleMode ? "1" : "0");
+  localStorage.setItem("bms_repeat", repeatMode);
+}
+
+function loadPlayerState() {
+  shuffleBtn.classList.toggle("active", shuffleMode);
+
+  if (repeatMode === 1) {
+    repeatBtn.textContent = "🔂";
+    repeatBtn.classList.add("active");
+  } else if (repeatMode === 2) {
+    repeatBtn.textContent = "🔁";
+    repeatBtn.classList.add("active");
+  } else {
+    repeatBtn.textContent = "🔁";
+    repeatBtn.classList.remove("active");
+  }
+}
+
+/* ================= INIT ================= */
 async function initPlayer() {
   const trackId = getTrackId();
   const folderId = getFolderId();
@@ -42,16 +83,18 @@ async function initPlayer() {
   currentIndex = playlist.findIndex(t => t.id === trackId);
   if (currentIndex < 0) currentIndex = 0;
 
+  loadPlayerState();
   renderNextList();
   loadTrack(currentIndex);
 }
 
-/* ---------------- LOAD TRACK ---------------- */
+/* ================= LOAD TRACK ================= */
 function loadTrack(index) {
   const track = playlist[index];
   if (!track) return;
 
   currentIndex = index;
+
   titleEl.textContent = track.filename;
   artistEl.textContent = "BMS";
 
@@ -63,7 +106,7 @@ function loadTrack(index) {
   highlightNext();
 }
 
-/* ---------------- CONTROLS ---------------- */
+/* ================= CONTROLS ================= */
 playBtn.onclick = () => {
   if (isPlaying) {
     audio.pause();
@@ -75,30 +118,63 @@ playBtn.onclick = () => {
   isPlaying = !isPlaying;
 };
 
-nextBtn.onclick = () => {
-  if (currentIndex < playlist.length - 1) {
-    loadTrack(currentIndex + 1);
-  }
+nextBtn.onclick = () => playNext();
+prevBtn.onclick = () => playPrev();
+
+/* ================= SHUFFLE ================= */
+shuffleBtn.onclick = () => {
+  shuffleMode = !shuffleMode;
+  shuffleBtn.classList.toggle("active", shuffleMode);
+  savePlayerState();
 };
 
-prevBtn.onclick = () => {
+/* ================= REPEAT ================= */
+repeatBtn.onclick = () => {
+  repeatMode = (repeatMode + 1) % 3;
+  savePlayerState();
+  loadPlayerState();
+};
+
+/* ================= PLAY LOGIC ================= */
+function playNext() {
+  if (shuffleMode) {
+    const rand = Math.floor(Math.random() * playlist.length);
+    loadTrack(rand);
+    return;
+  }
+
+  if (currentIndex < playlist.length - 1) {
+    loadTrack(currentIndex + 1);
+  } else if (repeatMode === 2) {
+    loadTrack(0); // ulang semua
+  }
+}
+
+function playPrev() {
+  if (audio.currentTime > 3) {
+    audio.currentTime = 0;
+    return;
+  }
+
   if (currentIndex > 0) {
     loadTrack(currentIndex - 1);
   }
-};
+}
 
-/* ---------------- AUTO NEXT + AUTO OPEN ---------------- */
+/* ================= AUTO END ================= */
 audio.onended = () => {
-  if (currentIndex < playlist.length - 1) {
-    loadTrack(currentIndex + 1);
-    openNextList(); // 🔥 auto open dropdown
+  if (repeatMode === 1) {
+    loadTrack(currentIndex); // ulang 1
+    return;
   }
+  playNext();
 };
 
-/* ---------------- PROGRESS ---------------- */
+/* ================= PROGRESS ================= */
 audio.ontimeupdate = () => {
   progressBar.max = audio.duration || 0;
   progressBar.value = audio.currentTime || 0;
+
   currentTimeEl.textContent = formatTime(audio.currentTime);
   durationEl.textContent = formatTime(audio.duration);
 };
@@ -114,9 +190,10 @@ function formatTime(sec) {
   return `${m}:${s}`;
 }
 
-/* ---------------- NEXT LIST ---------------- */
+/* ================= NEXT LIST ================= */
 function renderNextList() {
   nextList.innerHTML = "";
+
   playlist.forEach((track, i) => {
     const div = document.createElement("div");
     div.className = "next-item";
@@ -135,14 +212,10 @@ function highlightNext() {
   });
 }
 
-/* ---------------- DROPDOWN TOGGLE ---------------- */
-function openNextList() {
-  nextList.classList.remove("hidden");
-}
-
+/* ================= DROPDOWN ================= */
 tabNext.onclick = () => {
   nextList.classList.toggle("hidden");
 };
 
-/* ---------------- START ---------------- */
+/* ================= START ================= */
 initPlayer();
