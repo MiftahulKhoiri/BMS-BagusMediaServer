@@ -151,3 +151,10 @@ function formatTime(sec) {
 
 /* ---------------- INIT ---------------- */
 initPlayer();
+
+const tabNext = document.getElementById("tabNext");
+const nextList = document.getElementById("nextList");
+
+tabNext.onclick = () => {
+  nextList.classList.toggle("hidden");
+};
