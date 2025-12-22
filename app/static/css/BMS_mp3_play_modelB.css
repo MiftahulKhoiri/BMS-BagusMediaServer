@@ -101,9 +101,14 @@ body{
   color:#fff;
   font-size:32px;
 }
+
 .controls button.active {
-  color: #00ff7f;
+  color: #ff3b3b;
+  background: rgba(255, 59, 59, 0.15);
+  border-color: #ff3b3b;
+  box-shadow: 0 0 10px rgba(255, 59, 59, 0.8);
 }
+
 #playBtn{
   background:#fff;
   color:#000;
