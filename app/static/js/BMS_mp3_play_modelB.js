@@ -1,8 +1,8 @@
 /* ==========================================================
-   BMS MP3 PLAYER – MODEL B (FOLDER CONTEXT)
-   ✔ Next / Prev dalam folder
-   ✔ Back navigation
-   ✔ Resume play (mini-player logic)
+   BMS MP3 PLAYER – FIX NEXT / PREV + NEXT LIST
+   ✔ Playlist dari folder
+   ✔ Next / Prev BENAR
+   ✔ List "BERIKUTNYA" tampil
 ========================================================== */
 
 const audio = document.getElementById("audioPlayer");
@@ -11,7 +11,6 @@ const audio = document.getElementById("audioPlayer");
 const playBtn = document.getElementById("playBtn");
 const prevBtn = document.getElementById("prevBtn");
 const nextBtn = document.getElementById("nextBtn");
-const repeatBtn = document.getElementById("repeatBtn");
 
 const progressBar = document.getElementById("progressBar");
 const currentTimeEl = document.getElementById("currentTime");
@@ -20,11 +19,12 @@ const durationEl = document.getElementById("duration");
 const titleEl = document.getElementById("trackTitle");
 const artistEl = document.getElementById("trackArtist");
 
+const nextList = document.getElementById("nextList");
+
 /* STATE */
 let playlist = [];
 let currentIndex = 0;
 let isPlaying = false;
-let repeatMode = 0;
 
 /* ---------------- HELPERS ---------------- */
 async function api(url) {
@@ -32,25 +32,32 @@ async function api(url) {
   return await res.json();
 }
 
-function getTrackIdFromURL() {
-  return window.location.pathname.split("/").pop();
+function getTrackId() {
+  return Number(window.location.pathname.split("/").pop());
+}
+
+function getFolderId() {
+  const params = new URLSearchParams(window.location.search);
+  return params.get("folder");
 }
 
 /* ---------------- INIT ---------------- */
 async function initPlayer() {
-  playlist = JSON.parse(localStorage.getItem("bms_playlist") || "[]");
+  const trackId = getTrackId();
+  const folderId = getFolderId();
 
-  const trackId = Number(getTrackIdFromURL());
-  currentIndex = playlist.findIndex(t => t.id === trackId);
-
-  if (currentIndex === -1) {
-    // fallback jika direct access
-    const info = await api(`/mp3/info/${trackId}`);
-    playlist = [{ id: trackId, filename: info.filename }];
-    currentIndex = 0;
+  if (!folderId) {
+    console.error("Folder ID tidak ada");
+    return;
   }
 
+  playlist = await api(`/mp3/folder/${folderId}/tracks`);
+  currentIndex = playlist.findIndex(t => t.id === trackId);
+
+  if (currentIndex === -1) currentIndex = 0;
+
   loadTrack(currentIndex);
+  renderNextList();
 }
 
 /* ---------------- LOAD TRACK ---------------- */
@@ -59,17 +66,16 @@ async function loadTrack(index) {
   if (!track) return;
 
   currentIndex = index;
-  localStorage.setItem("bms_current", track.id);
 
-  const info = await api(`/mp3/info/${track.id}`);
-
-  titleEl.textContent = info.filename;
+  titleEl.textContent = track.filename;
   artistEl.textContent = "BMS";
 
   audio.src = `/mp3/play/${track.id}`;
   audio.play().catch(() => {});
   isPlaying = true;
   playBtn.textContent = "⏸";
+
+  highlightNextList();
 }
 
 /* ---------------- CONTROLS ---------------- */
@@ -96,24 +102,38 @@ prevBtn.onclick = () => {
   }
 };
 
-repeatBtn.onclick = () => {
-  repeatMode = (repeatMode + 1) % 2;
-  repeatBtn.classList.toggle("active", repeatMode === 1);
-};
-
-/* ---------------- AUTO END ---------------- */
+/* ---------------- AUTO NEXT ---------------- */
 audio.onended = () => {
-  if (repeatMode === 1) {
-    loadTrack(currentIndex);
-  } else if (currentIndex < playlist.length - 1) {
+  if (currentIndex < playlist.length - 1) {
     loadTrack(currentIndex + 1);
   }
 };
+
+/* ---------------- NEXT LIST ---------------- */
+function renderNextList() {
+  nextList.innerHTML = "";
+
+  playlist.forEach((track, i) => {
+    const div = document.createElement("div");
+    div.className = "next-item";
+    div.textContent = track.filename;
+
+    div.onclick = () => loadTrack(i);
+    nextList.appendChild(div);
+  });
+}
+
+function highlightNextList() {
+  document.querySelectorAll(".next-item").forEach((el, i) => {
+    el.classList.toggle("active", i === currentIndex);
+  });
+}
 
 /* ---------------- PROGRESS ---------------- */
 audio.ontimeupdate = () => {
   progressBar.max = audio.duration || 0;
   progressBar.value = audio.currentTime || 0;
+
   currentTimeEl.textContent = formatTime(audio.currentTime);
   durationEl.textContent = formatTime(audio.duration);
 };
@@ -127,19 +147,7 @@ function formatTime(sec) {
   const m = Math.floor(sec / 60);
   const s = Math.floor(sec % 60).toString().padStart(2, "0");
   return `${m}:${s}`;
-};
-
-/* ---------------- BACK BUTTON ---------------- */
-function goBack() {
-  const folder = localStorage.getItem("bms_folder");
-  if (folder) {
-    window.location.href = `/mp3/folder/${folder}`;
-  } else {
-    window.location.href = "/mp3";
-  }
 }
-
-document.querySelector(".icon-btn").onclick = goBack;
 
 /* ---------------- INIT ---------------- */
 initPlayer();
