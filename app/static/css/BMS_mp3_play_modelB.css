@@ -121,3 +121,27 @@ body{
   opacity:1;
   border-bottom:2px solid #1b6cff;
 }
+
+.next-list {
+  max-height: 240px;
+  overflow-y: auto;
+  background: #0b0b0b;
+  border-top: 1px solid #222;
+  transition: max-height 0.25s ease;
+}
+
+.next-list.hidden {
+  max-height: 0;
+  overflow: hidden;
+}
+
+.next-item {
+  padding: 12px;
+  border-bottom: 1px solid #1a1a1a;
+  cursor: pointer;
+}
+
+.next-item.active {
+  background: #1f1f1f;
+  color: #00ff7f;
+}
