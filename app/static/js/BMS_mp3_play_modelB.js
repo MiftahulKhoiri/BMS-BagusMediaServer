@@ -1,9 +1,10 @@
 /* ==========================================================
-   BMS MP3 PLAYER – FINAL STABLE + MEMORY
+   BMS MP3 PLAYER – FINAL STABLE + MEMORY + COVER
    ✔ Playlist per folder
    ✔ Next / Prev
    ✔ Dropdown "Berikutnya"
    ✔ Shuffle + Repeat (ingat localStorage)
+   ✔ Cover dari backend (ID3 / folder / default)
 ========================================================== */
 
 /* ================= ELEMENT ================= */
@@ -21,6 +22,7 @@ const durationEl = document.getElementById("duration");
 
 const titleEl = document.getElementById("trackTitle");
 const artistEl = document.getElementById("trackArtist");
+const coverImg = document.getElementById("coverImg");
 
 const nextList = document.getElementById("nextList");
 const tabNext = document.getElementById("tabNext");
@@ -88,15 +90,21 @@ async function initPlayer() {
   loadTrack(currentIndex);
 }
 
-/* ================= LOAD TRACK ================= */
-function loadTrack(index) {
+/* ================= LOAD TRACK (WITH COVER) ================= */
+async function loadTrack(index) {
   const track = playlist[index];
   if (!track) return;
 
   currentIndex = index;
 
-  titleEl.textContent = track.filename;
+  // 🔥 ambil info lengkap (TERMASUK COVER)
+  const info = await api(`/mp3/info/${track.id}`);
+
+  titleEl.textContent = info.filename;
   artistEl.textContent = "BMS";
+
+  // 🔥 SET COVER (sudah ada fallback di backend)
+  coverImg.src = info.cover;
 
   audio.src = `/mp3/play/${track.id}`;
   audio.play().catch(() => {});
