@@ -88,6 +88,8 @@ def get_db():
                 add_cols.append("ALTER TABLE mp3_tracks ADD COLUMN is_favorite INTEGER DEFAULT 0;")
             if "play_count" not in existing_cols:
                 add_cols.append("ALTER TABLE mp3_tracks ADD COLUMN play_count INTEGER DEFAULT 0;")
+            if "cover_path" not in existing_cols:
+    add_cols.append("ALTER TABLE mp3_tracks ADD COLUMN cover_path TEXT;")
 
             # Eksekusi setiap perintah ALTER TABLE dengan error handling
             for cmd in add_cols:
