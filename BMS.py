@@ -6,7 +6,7 @@ Aman untuk: Linux, Raspberry Pi OS Bookworm, Termux, Windows, macOS.
 """
 
 import sys
-from core.detect_os import detect, pretty_print
+from core.detect_os import info_os, pretty_print
 
 # Import core modules
 from core.env_tools import (
@@ -24,7 +24,7 @@ from core.repair_tools import auto_repair
 # ------------------------------------------------------------
 # 0. DETECT ENVIRONMENT
 # ------------------------------------------------------------
-env = detect()
+env = info_os()
 
 print("=== BMS Environment Info ===")
 pretty_print(env)
