@@ -84,33 +84,41 @@ def folder_tracks(folder_id):
 # ============================================================================
 @media_mp3.route("/info/<int:track_id>")
 def track_info(track_id):
-    """
-    Mengembalikan informasi detail untuk sebuah track MP3 berdasarkan ID.
-    
-    Args:
-        track_id (int): ID track yang ingin dilihat informasinya
-    
-    Returns:
-        JSON object berisi detail track atau error 404 jika tidak ditemukan
-    """
     owner = current_user_identifier()
     conn = get_db()
 
-    # Query untuk mengambil informasi track berdasarkan ID dan kepemilikan user
     row = conn.execute("""
-        SELECT id, filename, filepath, size, is_favorite, play_count
-        FROM mp3_tracks WHERE id=? AND user_id=?
+        SELECT t.id, t.filename, t.filepath,
+               t.is_favorite, t.play_count,
+               t.cover_path,
+               f.folder_name
+        FROM mp3_tracks t
+        JOIN mp3_folders f ON t.folder_id = f.id
+        WHERE t.id=? AND t.user_id=?
     """, (track_id, owner)).fetchone()
 
     conn.close()
 
-    # Jika track tidak ditemukan, kembalikan error 404
     if not row:
         return jsonify({"error": "Track tidak ditemukan"}), 404
 
-    # Kembalikan informasi track dalam format JSON
-    return jsonify(dict(row))
+    # ===== COVER FALLBACK LOGIC =====
+    if row["cover_path"]:
+        cover = row["cover_path"]
+    else:
+        folder_cover = f"/static/mp3_cover/folders/{row['folder_name']}.jpg"
+        if os.path.exists(folder_cover.lstrip("/")):
+            cover = folder_cover
+        else:
+            cover = "/static/mp3_cover/default.jpg"
 
+    return jsonify({
+        "id": row["id"],
+        "filename": row["filename"],
+        "cover": cover,
+        "is_favorite": row["is_favorite"],
+        "play_count": row["play_count"]
+    })
 
 # ============================================================================
 #   TOGGLE FAVORITE
