@@ -10,7 +10,7 @@ import os
 from datetime import datetime
 from flask import Blueprint, jsonify, session
 
-from BMS_mp3_cover import extract_cover
+from app.routes.BMS_mp3.BMS_mp3_cover import extract_cover
 from app.routes.BMS_logger import BMS_write_log
 from .BMS_mp3_db import get_db, current_user_identifier, is_mp3
 
