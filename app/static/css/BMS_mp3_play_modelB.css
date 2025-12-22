@@ -102,11 +102,18 @@ body{
   font-size:32px;
 }
 
+.controls button {
+  transition: all 0.2s ease;
+}
+
 .controls button.active {
-  color: #ff3b3b;
-  background: rgba(255, 59, 59, 0.15);
-  border-color: #ff3b3b;
-  box-shadow: 0 0 10px rgba(255, 59, 59, 0.8);
+  color: #ff2a2a;
+  background: rgba(255, 60, 60, 0.25);
+  border: 1px solid #ff2a2a;
+  box-shadow:
+    0 0 14px rgba(255, 60, 60, 0.9),
+    inset 0 0 8px rgba(255, 60, 60, 0.5);
+  transform: scale(1.15);
 }
 
 #playBtn{
