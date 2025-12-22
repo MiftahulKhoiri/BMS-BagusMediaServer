@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>BMS Music Player</title>
-<link rel="stylesheet" href="/static/css/BMS_mp3_play_modelB.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BMS Music Player</title>
+  <link rel="stylesheet" href="/static/css/BMS_mp3_play_modelB.css">
 </head>
 <body>
 
@@ -22,7 +22,7 @@
 
   <!-- COVER -->
   <div class="cover-box">
-    <img id="coverImg" src="/static/img/default_cover.jpg">
+    <img id="coverImg" src="/static/img/default_cover.jpg" alt="cover">
   </div>
 
   <!-- INFO -->
@@ -35,33 +35,41 @@
   <div class="actions">
     <button id="likeBtn">👍 <span id="likeCount">0</span></button>
     <button id="saveBtn">💾 Simpan</button>
-    <button>↗</button>
+    <button title="Bagikan">↗</button>
   </div>
 
   <!-- PROGRESS -->
   <div class="progress">
     <span id="currentTime">0:00</span>
-    <input type="range" id="progressBar" value="0">
+    <input type="range" id="progressBar" value="0" min="0">
     <span id="duration">0:00</span>
   </div>
 
   <!-- CONTROLS -->
   <div class="controls">
-    <button id="shuffleBtn">🔀</button>
-    <button id="prevBtn">⏮</button>
-    <button id="playBtn">⏸</button>
-    <button id="nextBtn">⏭</button>
-    <button id="repeatBtn">🔁</button>
+    <button id="shuffleBtn" title="Acak">🔀</button>
+    <button id="prevBtn" title="Sebelumnya">⏮</button>
+    <button id="playBtn" title="Play / Pause">⏸</button>
+    <button id="nextBtn" title="Berikutnya">⏭</button>
+    <button id="repeatBtn" title="Ulangi">🔁</button>
   </div>
 
   <!-- AUDIO -->
-  <audio id="audioPlayer"></audio>
+  <audio id="audioPlayer" preload="metadata"></audio>
 
   <!-- BOTTOM TAB -->
-  <div class="bottom-tab">
-    <span class="active">BERIKUTNYA</span>
-    <span>LIRIK</span>
-    <span>TERKAIT</span>
+<div class="bottom-tab">
+  <span class="tab active" id="tabNext">BERIKUTNYA</span>
+  <span class="tab">LIRIK</span>
+  <span class="tab">TERKAIT</span>
+</div>
+
+<!-- DROPDOWN NEXT LIST -->
+<div class="next-list hidden" id="nextList"></div>
+
+  <!-- NEXT SONG LIST (WAJIB ADA) -->
+  <div class="next-list" id="nextList">
+    <!-- JS akan mengisi list lagu di sini -->
   </div>
 
 </div>
