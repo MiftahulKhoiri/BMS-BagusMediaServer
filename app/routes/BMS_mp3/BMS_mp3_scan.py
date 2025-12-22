@@ -76,54 +76,31 @@ def scan_storage_for_mp3():
 # ============================================================================
 @mp3_scan.route("/scan-db", methods=["POST"])
 def scan_db():
-    """
-    Endpoint untuk memindai penyimpanan dan mengimpor file MP3 ke database.
-    
-    Proses:
-    1. Memindai seluruh penyimpanan untuk mencari folder berisi MP3
-    2. Menyimpan informasi folder ke tabel mp3_folders (jika belum ada)
-    3. Menyimpan informasi track ke tabel mp3_tracks (jika belum ada)
-    
-    Setiap track yang diimpor dikaitkan dengan user yang sedang login.
-    
-    Returns:
-        JSON response berisi status, jumlah folder dan track yang ditambahkan,
-        atau pesan error jika terjadi masalah
-    """
-    # Ambil informasi user dari session untuk logging
     username = session.get("username", "UNKNOWN")
-    # Ambil identifier user untuk kepemilikan track
     owner = current_user_identifier()
 
-    # Log awal proses pemindaian
     BMS_write_log("Memulai scan MP3", username)
 
-    # Panggil fungsi pemindaian untuk mendapatkan daftar folder
     folders = scan_storage_for_mp3()
 
     conn = get_db()
     cur = conn.cursor()
 
-    # Variabel untuk melacak apa yang telah ditambahkan
-    folders_added = []  # Nama folder yang baru ditambahkan ke database
-    tracks_added = []   # Nama file MP3 yang baru ditambahkan ke database
+    folders_added = []
+    tracks_added = []
 
     try:
-        # Proses setiap folder yang ditemukan
         for f in folders:
             folder_path = f["folder_path"]
             folder_name = f["folder_name"]
 
-            # Cek apakah folder sudah ada di database
             row = cur.execute(
                 "SELECT id FROM mp3_folders WHERE folder_path=?", (folder_path,)
             ).fetchone()
 
-            # Jika folder sudah ada, gunakan ID-nya
             if row:
                 folder_id = row["id"]
             else:
-                # Jika folder belum ada, tambahkan ke database
                 cur.execute("""
                     INSERT INTO mp3_folders (folder_name, folder_path)
                     VALUES (?,?)
@@ -131,50 +108,56 @@ def scan_db():
                 folder_id = cur.lastrowid
                 folders_added.append(folder_name)
 
-            # Proses setiap file MP3 dalam folder
             for fn in f["files"]:
                 fp = os.path.join(folder_path, fn)
 
-                # Skip jika file tidak ada (untuk berjaga-jaga)
                 if not os.path.exists(fp):
                     continue
 
-                # Cek apakah track sudah ada di database untuk user ini
                 exists = cur.execute("""
                     SELECT id FROM mp3_tracks
                     WHERE filepath=? AND user_id=?
                 """, (fp, owner)).fetchone()
 
-                # Jika sudah ada, skip
                 if exists:
                     continue
 
-                # Dapatkan ukuran file dan timestamp saat ini
                 size = os.path.getsize(fp)
                 added_at = datetime.utcnow().isoformat()
 
-                # Tambahkan track ke database
+                # INSERT TRACK
                 cur.execute("""
                     INSERT INTO mp3_tracks
                     (folder_id, filename, filepath, size, added_at, user_id)
                     VALUES (?, ?, ?, ?, ?, ?)
                 """, (folder_id, fn, fp, size, added_at, owner))
 
+                track_id = cur.lastrowid
                 tracks_added.append(fn)
 
-        # Commit perubahan ke database
+                # ⭐ COVER: extract dari ID3 (aman & silent)
+                cover_rel = f"/static/mp3_cover/tracks/{track_id}.jpg"
+                cover_abs = f"static/mp3_cover/tracks/{track_id}.jpg"
+
+                try:
+                    ok = extract_cover(fp, cover_abs)
+                    if ok:
+                        cur.execute(
+                            "UPDATE mp3_tracks SET cover_path=? WHERE id=?",
+                            (cover_rel, track_id)
+                        )
+                except Exception:
+                    pass  # cover gagal? tidak masalah, lanjut
+
         conn.commit()
 
     except Exception as e:
-        # Rollback jika terjadi error dan kembalikan pesan error
         conn.rollback()
         return jsonify({"error": str(e)}), 500
 
     finally:
-        # Pastikan koneksi database ditutup
         conn.close()
 
-    # Return hasil pemindaian dan impor
     return jsonify({
         "status": "ok",
         "folders_added": folders_added,
