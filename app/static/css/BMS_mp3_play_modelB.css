@@ -99,7 +99,10 @@ body{
   background:none;
   border:none;
   color:#fff;
-  font-size:22px;
+  font-size:32px;
+}
+.controls button.active {
+  color: #00ff7f;
 }
 #playBtn{
   background:#fff;
