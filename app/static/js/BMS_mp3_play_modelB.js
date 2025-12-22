@@ -1,13 +1,12 @@
 /* ==========================================================
-   BMS MP3 PLAYER – MODEL B (API + LIST)
-   ✔ Playlist dari Flask API
-   ✔ List Lagu UI
-   ✔ Play / Pause / Next / Prev
-   ✔ Shuffle / Repeat
-   ✔ Progress & Time
+   BMS MP3 PLAYER – MODEL B (FINAL – ROUTE MATCHED)
+   ✔ Watch page only
+   ✔ Stream from /mp3/play/<id>
+   ✔ Info from /mp3/info/<id>
+   ✔ Favorite server-based
 ========================================================== */
 
-/* ------------------ ELEMENT ------------------ */
+/* ---------------- ELEMENT ---------------- */
 const audio = document.getElementById("audioPlayer");
 
 const playBtn = document.getElementById("playBtn");
@@ -26,119 +25,80 @@ const coverImg = document.getElementById("coverImg");
 
 const likeBtn = document.getElementById("likeBtn");
 const likeCountEl = document.getElementById("likeCount");
-const saveBtn = document.getElementById("saveBtn");
 
-/* ------------------ STATE ------------------ */
-let playlist = [];
-let currentIndex = 0;
+/* ---------------- STATE ---------------- */
+let currentTrackId = null;
 let isPlaying = false;
 let shuffleMode = false;
 let repeatMode = 0; // 0 off | 1 one | 2 all
 
-/* ------------------ API ------------------ */
-async function api(url) {
+/* ---------------- HELPER ---------------- */
+async function api(url, options = {}) {
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, options);
     return await res.json();
   } catch (e) {
-    console.error("API ERROR", e);
-    return [];
+    console.error("API ERROR:", e);
+    return null;
   }
 }
 
-/* ------------------ PLAYLIST ------------------ */
-async function loadPlaylist() {
-  playlist = await api("/mp3/list");
-  renderSongList();
-  if (playlist.length > 0) loadTrack(0);
+function getTrackIdFromURL() {
+  const parts = window.location.pathname.split("/");
+  return parts[parts.length - 1];
 }
 
-/* ------------------ RENDER LIST ------------------ */
-function renderSongList() {
-  let box = document.getElementById("songList");
-  if (!box) {
-    box = document.createElement("div");
-    box.id = "songList";
-    box.className = "song-list";
-    document.querySelector(".player-app").appendChild(box);
-  }
+/* ---------------- INIT PLAYER ---------------- */
+async function initPlayer() {
+  currentTrackId = getTrackIdFromURL();
+  if (!currentTrackId) return;
 
-  box.innerHTML = "";
+  const info = await api(`/mp3/info/${currentTrackId}`);
+  if (!info) return;
 
-  playlist.forEach((song, index) => {
-    const div = document.createElement("div");
-    div.className = "song-item";
-    div.textContent = song.title;
+  titleEl.textContent = info.filename;
+  artistEl.textContent = "BMS";
+  coverImg.src = "/static/img/default_cover.jpg";
 
-    div.onclick = () => loadTrack(index);
-    box.appendChild(div);
-  });
-
-  updateActiveSong();
-}
-
-function updateActiveSong() {
-  document.querySelectorAll(".song-item").forEach((el, i) => {
-    el.classList.toggle("active", i === currentIndex);
-  });
-}
-
-/* ------------------ CORE ------------------ */
-function loadTrack(index) {
-  const track = playlist[index];
-  if (!track) return;
-
-  currentIndex = index;
-  audio.src = track.src;
-  titleEl.textContent = track.title;
-  artistEl.textContent = track.artist || "BMS";
-  coverImg.src = track.cover || "/static/img/default_cover.jpg";
-
-  playAudio();
-  updateActiveSong();
-}
-
-function playAudio() {
+  // 🔑 STREAM FILE (INI KUNCI)
+  audio.src = `/mp3/play/${currentTrackId}`;
   audio.play().catch(() => {});
   isPlaying = true;
   playBtn.textContent = "⏸";
+
+  updateFavorite(info.is_favorite);
 }
 
-function pauseAudio() {
-  audio.pause();
-  isPlaying = false;
-  playBtn.textContent = "▶";
-}
-
-/* ------------------ CONTROLS ------------------ */
+/* ---------------- PLAY / PAUSE ---------------- */
 playBtn.onclick = () => {
-  isPlaying ? pauseAudio() : playAudio();
-};
-
-nextBtn.onclick = () => {
-  if (shuffleMode) {
-    currentIndex = Math.floor(Math.random() * playlist.length);
+  if (isPlaying) {
+    audio.pause();
+    playBtn.textContent = "▶";
   } else {
-    currentIndex++;
-    if (currentIndex >= playlist.length) {
-      if (repeatMode === 2) currentIndex = 0;
-      else return;
-    }
+    audio.play().catch(() => {});
+    playBtn.textContent = "⏸";
   }
-  loadTrack(currentIndex);
+  isPlaying = !isPlaying;
 };
 
-prevBtn.onclick = () => {
-  currentIndex--;
-  if (currentIndex < 0) currentIndex = 0;
-  loadTrack(currentIndex);
-};
+/* ---------------- NEXT / PREV ----------------
+   (sementara reload lagu, nanti folder context)
+------------------------------------------------ */
+nextBtn.onclick = () => reloadTrack();
+prevBtn.onclick = () => reloadTrack();
 
+function reloadTrack() {
+  audio.currentTime = 0;
+  audio.play().catch(() => {});
+}
+
+/* ---------------- SHUFFLE ---------------- */
 shuffleBtn.onclick = () => {
   shuffleMode = !shuffleMode;
   shuffleBtn.classList.toggle("active", shuffleMode);
 };
 
+/* ---------------- REPEAT ---------------- */
 repeatBtn.onclick = () => {
   repeatMode = (repeatMode + 1) % 3;
   repeatBtn.textContent =
@@ -146,16 +106,14 @@ repeatBtn.onclick = () => {
     repeatMode === 2 ? "🔁" : "🔁";
 };
 
-/* ------------------ AUTO NEXT ------------------ */
+/* ---------------- AUTO END ---------------- */
 audio.onended = () => {
   if (repeatMode === 1) {
-    playAudio();
-    return;
+    reloadTrack();
   }
-  nextBtn.click();
 };
 
-/* ------------------ PROGRESS ------------------ */
+/* ---------------- PROGRESS ---------------- */
 audio.ontimeupdate = () => {
   progressBar.max = audio.duration || 0;
   progressBar.value = audio.currentTime || 0;
@@ -175,20 +133,19 @@ function formatTime(sec) {
   return `${m}:${s}`;
 }
 
-/* ------------------ LIKE & SAVE ------------------ */
-let likes = Number(localStorage.getItem("bms_like") || 0);
-likeCountEl.textContent = likes;
+/* ---------------- FAVORITE ❤️ ---------------- */
+function updateFavorite(state) {
+  likeBtn.textContent = state ? "❤️" : "🤍";
+}
 
-likeBtn.onclick = () => {
-  likes++;
-  likeCountEl.textContent = likes;
-  localStorage.setItem("bms_like", likes);
+likeBtn.onclick = async () => {
+  const res = await api(`/mp3/favorite/${currentTrackId}`, {
+    method: "POST"
+  });
+  if (res?.is_favorite !== undefined) {
+    updateFavorite(res.is_favorite);
+  }
 };
 
-saveBtn.onclick = () => {
-  localStorage.setItem("bms_saved_track", currentIndex);
-  alert("Lagu disimpan 👍");
-};
-
-/* ------------------ INIT ------------------ */
-loadPlaylist();
+/* ---------------- INIT ---------------- */
+initPlayer();
