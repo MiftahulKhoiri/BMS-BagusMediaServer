@@ -1,13 +1,5 @@
-/* ==========================================================
-   BMS MP3 PLAYER – FIX NEXT / PREV + NEXT LIST
-   ✔ Playlist dari folder
-   ✔ Next / Prev BENAR
-   ✔ List "BERIKUTNYA" tampil
-========================================================== */
-
 const audio = document.getElementById("audioPlayer");
 
-/* UI */
 const playBtn = document.getElementById("playBtn");
 const prevBtn = document.getElementById("prevBtn");
 const nextBtn = document.getElementById("nextBtn");
@@ -20,8 +12,8 @@ const titleEl = document.getElementById("trackTitle");
 const artistEl = document.getElementById("trackArtist");
 
 const nextList = document.getElementById("nextList");
+const tabNext = document.getElementById("tabNext");
 
-/* STATE */
 let playlist = [];
 let currentIndex = 0;
 let isPlaying = false;
@@ -33,40 +25,33 @@ async function api(url) {
 }
 
 function getTrackId() {
-  return Number(window.location.pathname.split("/").pop());
+  return Number(location.pathname.split("/").pop());
 }
 
 function getFolderId() {
-  const params = new URLSearchParams(window.location.search);
-  return params.get("folder");
+  return new URLSearchParams(location.search).get("folder");
 }
 
 /* ---------------- INIT ---------------- */
 async function initPlayer() {
   const trackId = getTrackId();
   const folderId = getFolderId();
-
-  if (!folderId) {
-    console.error("Folder ID tidak ada");
-    return;
-  }
+  if (!folderId) return;
 
   playlist = await api(`/mp3/folder/${folderId}/tracks`);
   currentIndex = playlist.findIndex(t => t.id === trackId);
+  if (currentIndex < 0) currentIndex = 0;
 
-  if (currentIndex === -1) currentIndex = 0;
-
-  loadTrack(currentIndex);
   renderNextList();
+  loadTrack(currentIndex);
 }
 
 /* ---------------- LOAD TRACK ---------------- */
-async function loadTrack(index) {
+function loadTrack(index) {
   const track = playlist[index];
   if (!track) return;
 
   currentIndex = index;
-
   titleEl.textContent = track.filename;
   artistEl.textContent = "BMS";
 
@@ -75,7 +60,7 @@ async function loadTrack(index) {
   isPlaying = true;
   playBtn.textContent = "⏸";
 
-  highlightNextList();
+  highlightNext();
 }
 
 /* ---------------- CONTROLS ---------------- */
@@ -102,38 +87,18 @@ prevBtn.onclick = () => {
   }
 };
 
-/* ---------------- AUTO NEXT ---------------- */
+/* ---------------- AUTO NEXT + AUTO OPEN ---------------- */
 audio.onended = () => {
   if (currentIndex < playlist.length - 1) {
     loadTrack(currentIndex + 1);
+    openNextList(); // 🔥 auto open dropdown
   }
 };
-
-/* ---------------- NEXT LIST ---------------- */
-function renderNextList() {
-  nextList.innerHTML = "";
-
-  playlist.forEach((track, i) => {
-    const div = document.createElement("div");
-    div.className = "next-item";
-    div.textContent = track.filename;
-
-    div.onclick = () => loadTrack(i);
-    nextList.appendChild(div);
-  });
-}
-
-function highlightNextList() {
-  document.querySelectorAll(".next-item").forEach((el, i) => {
-    el.classList.toggle("active", i === currentIndex);
-  });
-}
 
 /* ---------------- PROGRESS ---------------- */
 audio.ontimeupdate = () => {
   progressBar.max = audio.duration || 0;
   progressBar.value = audio.currentTime || 0;
-
   currentTimeEl.textContent = formatTime(audio.currentTime);
   durationEl.textContent = formatTime(audio.duration);
 };
@@ -149,12 +114,35 @@ function formatTime(sec) {
   return `${m}:${s}`;
 }
 
-/* ---------------- INIT ---------------- */
-initPlayer();
+/* ---------------- NEXT LIST ---------------- */
+function renderNextList() {
+  nextList.innerHTML = "";
+  playlist.forEach((track, i) => {
+    const div = document.createElement("div");
+    div.className = "next-item";
+    div.textContent = track.filename;
+    div.onclick = () => loadTrack(i);
+    nextList.appendChild(div);
+  });
+}
 
-const tabNext = document.getElementById("tabNext");
-const nextList = document.getElementById("nextList");
+function highlightNext() {
+  document.querySelectorAll(".next-item").forEach((el, i) => {
+    el.classList.toggle("active", i === currentIndex);
+    if (i === currentIndex) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  });
+}
+
+/* ---------------- DROPDOWN TOGGLE ---------------- */
+function openNextList() {
+  nextList.classList.remove("hidden");
+}
 
 tabNext.onclick = () => {
   nextList.classList.toggle("hidden");
 };
+
+/* ---------------- START ---------------- */
+initPlayer();
