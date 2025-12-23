@@ -1,10 +1,11 @@
 /* ==========================================================
-   BMS MP3 PLAYER – FINAL STABLE (PATH BASED COVER)
+   BMS MP3 PLAYER – FINAL STABLE + BLUR SYNC
    ✔ Playlist per folder
    ✔ Next / Prev
    ✔ Dropdown "Berikutnya"
    ✔ Shuffle + Repeat (ingat localStorage)
    ✔ Cover GLOBAL berbasis filepath (thumbnail_mp3)
+   ✔ Cover → Background Blur (CSS Variable)
 ========================================================== */
 
 /* ================= ELEMENT ================= */
@@ -75,13 +76,21 @@ function loadPlayerState() {
   }
 }
 
+/* ================= BLUR SYNC ================= */
+function updateBackgroundFromCover() {
+  if (!coverImg.src) return;
+  document.documentElement.style.setProperty(
+    "--cover-bg",
+    `url('${coverImg.src}')`
+  );
+}
+
 /* ================= INIT ================= */
 async function initPlayer() {
   const trackId = getTrackId();
   const folderId = getFolderId();
   if (!folderId) return;
 
-  // 🔥 playlist WAJIB mengandung: id, filename, filepath
   playlist = await api(`/mp3/folder/${folderId}/tracks`);
 
   currentIndex = playlist.findIndex(t => t.id === trackId);
@@ -92,23 +101,25 @@ async function initPlayer() {
   loadTrack(currentIndex);
 }
 
-/* ================= LOAD TRACK (PATH COVER) ================= */
+/* ================= LOAD TRACK ================= */
 function loadTrack(index) {
   const track = playlist[index];
   if (!track) return;
 
   currentIndex = index;
 
-  // info dasar
   titleEl.textContent = track.filename;
   artistEl.textContent = "BMS";
 
-  // ⭐ COVER GLOBAL berbasis PATH
+  // ⭐ COVER GLOBAL BERBASIS PATH
   if (track.filepath) {
     coverImg.src = "/mp3/thumbnail/" + encodeURIComponent(track.filepath);
   } else {
     coverImg.src = "/static/img/default_cover.jpg";
   }
+
+  // 🔥 SINKRON BACKGROUND SAAT COVER LOAD
+  coverImg.onload = updateBackgroundFromCover;
 
   audio.src = `/mp3/play/${track.id}`;
   audio.play().catch(() => {});
@@ -150,15 +161,14 @@ repeatBtn.onclick = () => {
 /* ================= PLAY LOGIC ================= */
 function playNext() {
   if (shuffleMode) {
-    const rand = Math.floor(Math.random() * playlist.length);
-    loadTrack(rand);
+    loadTrack(Math.floor(Math.random() * playlist.length));
     return;
   }
 
   if (currentIndex < playlist.length - 1) {
     loadTrack(currentIndex + 1);
   } else if (repeatMode === 2) {
-    loadTrack(0); // ulang semua
+    loadTrack(0);
   }
 }
 
@@ -167,7 +177,6 @@ function playPrev() {
     audio.currentTime = 0;
     return;
   }
-
   if (currentIndex > 0) {
     loadTrack(currentIndex - 1);
   }
@@ -176,7 +185,7 @@ function playPrev() {
 /* ================= AUTO END ================= */
 audio.onended = () => {
   if (repeatMode === 1) {
-    loadTrack(currentIndex); // ulang 1
+    loadTrack(currentIndex);
     return;
   }
   playNext();
@@ -205,7 +214,6 @@ function formatTime(sec) {
 /* ================= NEXT LIST ================= */
 function renderNextList() {
   nextList.innerHTML = "";
-
   playlist.forEach((track, i) => {
     const div = document.createElement("div");
     div.className = "next-item";
