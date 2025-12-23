@@ -1,70 +1,63 @@
 # ============================================================================
-#   BMS MP3 MODULE — SCAN STORAGE (FINAL)
-#   Bagian ini mengelola:
-#     ✔ Scan seluruh storage (Android / Termux compatible)
-#     ✔ Import folder ke DB
-#     ✔ Import track MP3 per-user
+#   BMS MP3 MODULE — SCAN STORAGE (PATH-BASED THUMBNAIL)
+#   ✔ Scan storage (Android / Termux)
+#   ✔ Import folder & track MP3
+#   ✔ Thumbnail GLOBAL berbasis PATH (ID3 cover)
 # ============================================================================
 
 import os
+import hashlib
 from datetime import datetime
 from flask import Blueprint, jsonify, session
 
 from app.routes.BMS_mp3.BMS_mp3_cover import extract_cover
 from app.routes.BMS_logger import BMS_write_log
+from app.BMS_config import PICTURES_FOLDER
 from .BMS_mp3_db import get_db, current_user_identifier, is_mp3
 
-# Membuat Blueprint untuk rute pemindaian MP3 dengan prefix '/mp3'
 mp3_scan = Blueprint("mp3_scan", __name__, url_prefix="/mp3")
+
+# ============================================================================
+#   THUMBNAIL MP3 FOLDER
+# ============================================================================
+THUMBNAIL_MP3_FOLDER = os.path.join(PICTURES_FOLDER, "thumbnail_mp3")
+os.makedirs(THUMBNAIL_MP3_FOLDER, exist_ok=True)
+
+
+# ============================================================================
+#   HELPER: thumbnail name berbasis PATH (GLOBAL)
+# ============================================================================
+def get_mp3_thumbnail_name(mp3_path):
+    key = os.path.abspath(mp3_path)
+    return hashlib.md5(key.encode()).hexdigest() + ".jpg"
 
 
 # ============================================================================
 #   SCAN STORAGE
 # ============================================================================
 def scan_storage_for_mp3():
-    """
-    Memindai seluruh penyimpanan perangkat untuk mencari file MP3.
-    
-    Fungsi ini dirancang untuk kompatibel dengan lingkungan Android/Termux:
-    1. Prioritas: /storage/emulated/0 (penyimpanan internal Android)
-    2. Fallback: Home directory Termux (~/) jika folder Android tidak ada
-    
-    Fungsi ini membatasi jumlah folder dan file yang dipindai untuk menghindari
-    pemindaian yang terlalu lama atau penggunaan memori berlebihan.
-    
-    Returns:
-        list: Daftar dictionary yang berisi informasi folder dan file MP3 di dalamnya
-    """
-    # Tentukan root directory berdasarkan platform
     ROOT = "/storage/emulated/0"
     if not os.path.exists(ROOT):
-        ROOT = os.path.expanduser("~")  # Fallback untuk Termux
+        ROOT = os.path.expanduser("~")
 
-    # Batasan untuk mencegah pemindaian tak terbatas
-    MAX_FOLDERS = 200  # Maksimal folder yang akan dipindai
-    MAX_FILES = 300    # Maksimal file per folder yang akan diproses
+    MAX_FOLDERS = 200
+    MAX_FILES = 300
 
     folders = []
     used = 0
 
-    # Rekursif walk melalui direktori
     for root, dirs, files in os.walk(ROOT):
-        # Hentikan jika sudah mencapai batas maksimal folder
         if used >= MAX_FOLDERS:
             break
 
-        # Filter hanya file MP3 dari daftar file
         mp3s = [f for f in files if is_mp3(f)]
-        
-        # Lewati folder jika tidak ada file MP3
         if not mp3s:
             continue
 
-        # Simpan informasi folder dan file MP3 di dalamnya
         folders.append({
-            "folder_path": root,                    # Path lengkap folder
-            "folder_name": os.path.basename(root) or root,  # Nama folder (atau path jika kosong)
-            "files": mp3s[:MAX_FILES]               # File MP3 (dibatasi jumlahnya)
+            "folder_path": root,
+            "folder_name": os.path.basename(root) or root,
+            "files": mp3s[:MAX_FILES]
         })
 
         used += 1
@@ -80,10 +73,9 @@ def scan_db():
     username = session.get("username", "UNKNOWN")
     owner = current_user_identifier()
 
-    BMS_write_log("Memulai scan MP3", username)
+    BMS_write_log("SCAN MP3", username)
 
     folders = scan_storage_for_mp3()
-
     conn = get_db()
     cur = conn.cursor()
 
@@ -96,22 +88,25 @@ def scan_db():
             folder_name = f["folder_name"]
 
             row = cur.execute(
-                "SELECT id FROM mp3_folders WHERE folder_path=?", (folder_path,)
+                "SELECT id FROM mp3_folders WHERE folder_path=?",
+                (folder_path,)
             ).fetchone()
 
             if row:
                 folder_id = row["id"]
             else:
-                cur.execute("""
-                    INSERT INTO mp3_folders (folder_name, folder_path)
-                    VALUES (?,?)
-                """, (folder_name, folder_path))
+                cur.execute(
+                    "INSERT INTO mp3_folders (folder_name, folder_path) VALUES (?,?)",
+                    (folder_name, folder_path)
+                )
                 folder_id = cur.lastrowid
                 folders_added.append(folder_name)
 
+            # ================================
+            # PROSES FILE MP3
+            # ================================
             for fn in f["files"]:
                 fp = os.path.join(folder_path, fn)
-
                 if not os.path.exists(fp):
                     continue
 
@@ -126,29 +121,25 @@ def scan_db():
                 size = os.path.getsize(fp)
                 added_at = datetime.utcnow().isoformat()
 
-                # INSERT TRACK
                 cur.execute("""
                     INSERT INTO mp3_tracks
                     (folder_id, filename, filepath, size, added_at, user_id)
-                    VALUES (?, ?, ?, ?, ?, ?)
+                    VALUES (?,?,?,?,?,?)
                 """, (folder_id, fn, fp, size, added_at, owner))
 
-                track_id = cur.lastrowid
                 tracks_added.append(fn)
 
-                # ⭐ COVER: extract dari ID3 (aman & silent)
-                cover_rel = f"/static/mp3_cover/tracks/{track_id}.jpg"
-                cover_abs = f"static/mp3_cover/tracks/{track_id}.jpg"
+                # ================================
+                # AUTO MP3 THUMBNAIL (ID3)
+                # ================================
+                thumb_name = get_mp3_thumbnail_name(fp)
+                thumb_abs = os.path.join(THUMBNAIL_MP3_FOLDER, thumb_name)
 
-                try:
-                    ok = extract_cover(fp, cover_abs)
-                    if ok:
-                        cur.execute(
-                            "UPDATE mp3_tracks SET cover_path=? WHERE id=?",
-                            (cover_rel, track_id)
-                        )
-                except Exception:
-                    pass  # cover gagal? tidak masalah, lanjut
+                if not os.path.exists(thumb_abs):
+                    try:
+                        extract_cover(fp, thumb_abs)
+                    except Exception:
+                        pass  # silent & aman
 
         conn.commit()
 
@@ -163,5 +154,5 @@ def scan_db():
         "status": "ok",
         "folders_added": folders_added,
         "tracks_added": tracks_added,
-        "message": f"{len(folders_added)} folder dan {len(tracks_added)} MP3 ditemukan."
+        "message": f"{len(folders_added)} folder dan {len(tracks_added)} MP3 baru."
     })
