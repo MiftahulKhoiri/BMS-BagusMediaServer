@@ -195,3 +195,7 @@ def home():
 @media_mp3.route("/watch/<int:track_id>")
 def watch(track_id):
     return render_template("BMS_mp3_play_modelB.html")
+
+@media_mp3.route("/watch")
+def watch_multi():
+    return render_template("BMS_mp3_play_modelB.html")
