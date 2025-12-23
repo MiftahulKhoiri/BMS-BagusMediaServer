@@ -8,12 +8,10 @@
 </head>
 <body>
 
-<div class="player-app">
+<!-- 🔥 BACKGROUND BLUR (PAKAI CSS VARIABLE, BUKAN IMG) -->
+<div class="cover-bg"></div>
 
-  <!-- 🔥 BLUR BACKGROUND (AMBIL DARI COVER) -->
-  <div class="cover-bg">
-    <img id="coverBgImg" src="/static/img/default_cover.jpg">
-  </div>
+<div class="player-app">
 
   <!-- TOP BAR -->
   <div class="top-bar">
@@ -25,9 +23,9 @@
     <button class="icon-btn">⋮</button>
   </div>
 
-  <!-- COVER -->
+  <!-- COVER UTAMA -->
   <div class="cover-box">
-    <img id="coverImg" src="/static/img/default_cover.jpg">
+    <img id="coverImg" src="/static/img/default_cover.jpg" alt="Cover">
   </div>
 
   <!-- INFO -->
@@ -75,15 +73,22 @@
 
 <script src="/static/js/BMS_mp3_play_modelB.js"></script>
 
-<!-- 🔥 SYNC COVER → BACKGROUND -->
+<!-- 🔥 SYNC COVER → BACKGROUND BLUR -->
 <script>
   const coverImg = document.getElementById("coverImg");
-  const coverBg = document.getElementById("coverBgImg");
 
-  const observer = new MutationObserver(() => {
-    coverBg.src = coverImg.src;
-  });
+  function updateBackground() {
+    document.documentElement.style.setProperty(
+      "--cover-bg",
+      `url('${coverImg.src}')`
+    );
+  }
 
+  // saat cover pertama kali load
+  coverImg.addEventListener("load", updateBackground);
+
+  // saat cover berubah (ganti lagu)
+  const observer = new MutationObserver(updateBackground);
   observer.observe(coverImg, { attributes: true, attributeFilter: ["src"] });
 </script>
 
