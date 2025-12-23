@@ -1,10 +1,10 @@
 /* ==========================================================
-   BMS MP3 PLAYER – FINAL STABLE + MEMORY + COVER
+   BMS MP3 PLAYER – FINAL STABLE (PATH BASED COVER)
    ✔ Playlist per folder
    ✔ Next / Prev
    ✔ Dropdown "Berikutnya"
    ✔ Shuffle + Repeat (ingat localStorage)
-   ✔ Cover dari backend (ID3 / folder / default)
+   ✔ Cover GLOBAL berbasis filepath (thumbnail_mp3)
 ========================================================== */
 
 /* ================= ELEMENT ================= */
@@ -81,7 +81,9 @@ async function initPlayer() {
   const folderId = getFolderId();
   if (!folderId) return;
 
+  // 🔥 playlist WAJIB mengandung: id, filename, filepath
   playlist = await api(`/mp3/folder/${folderId}/tracks`);
+
   currentIndex = playlist.findIndex(t => t.id === trackId);
   if (currentIndex < 0) currentIndex = 0;
 
@@ -90,21 +92,23 @@ async function initPlayer() {
   loadTrack(currentIndex);
 }
 
-/* ================= LOAD TRACK (WITH COVER) ================= */
-async function loadTrack(index) {
+/* ================= LOAD TRACK (PATH COVER) ================= */
+function loadTrack(index) {
   const track = playlist[index];
   if (!track) return;
 
   currentIndex = index;
 
-  // 🔥 ambil info lengkap (TERMASUK COVER)
-  const info = await api(`/mp3/info/${track.id}`);
-
-  titleEl.textContent = info.filename;
+  // info dasar
+  titleEl.textContent = track.filename;
   artistEl.textContent = "BMS";
 
-  // 🔥 SET COVER (sudah ada fallback di backend)
-  coverImg.src = info.cover;
+  // ⭐ COVER GLOBAL berbasis PATH
+  if (track.filepath) {
+    coverImg.src = "/mp3/thumbnail/" + encodeURIComponent(track.filepath);
+  } else {
+    coverImg.src = "/static/img/default_cover.jpg";
+  }
 
   audio.src = `/mp3/play/${track.id}`;
   audio.play().catch(() => {});
@@ -192,7 +196,7 @@ progressBar.oninput = () => {
 };
 
 function formatTime(sec) {
-  if (!sec) return "0:00";
+  if (!sec || isNaN(sec)) return "0:00";
   const m = Math.floor(sec / 60);
   const s = Math.floor(sec % 60).toString().padStart(2, "0");
   return `${m}:${s}`;
