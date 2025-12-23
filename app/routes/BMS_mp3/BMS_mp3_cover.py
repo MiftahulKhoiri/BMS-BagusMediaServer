@@ -1,11 +1,17 @@
-import os
-import hashlib
+from mutagen.id3 import ID3, APIC
 
-def mp3_thumb_hash(mp3_path: str) -> str:
+def extract_cover(mp3_path, save_path):
     """
-    HASH GLOBAL MP3 THUMBNAIL
-    WAJIB dipakai di scan & serve
+    Ambil cover dari metadata MP3 (ID3 APIC).
+    Return True jika berhasil, False jika tidak ada cover.
     """
-    path = os.path.realpath(mp3_path)
-    path = os.path.normpath(path)
-    return hashlib.md5(path.encode("utf-8")).hexdigest() + ".jpg"
+    try:
+        tags = ID3(mp3_path)
+        for tag in tags.values():
+            if isinstance(tag, APIC):
+                with open(save_path, "wb") as img:
+                    img.write(tag.data)
+                return True
+    except Exception:
+        pass
+    return False
