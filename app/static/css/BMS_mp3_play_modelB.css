@@ -1,5 +1,5 @@
 /* ======================================================
-   ROOT VARIABLE (UNTUK BACKGROUND COVER)
+   ROOT VARIABLE
 ====================================================== */
 :root{
   --cover-bg: none;
@@ -13,21 +13,28 @@ body{
   font-family: Inter, Arial, sans-serif;
   background:#050814;
   color:#fff;
-  overflow:hidden;
+
+  /* ✅ IZINKAN SCROLL */
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* ======================================================
-   BLUR BACKGROUND DARI COVER (FINAL & BENAR)
+   BLUR BACKGROUND (FIXED, TIDAK IKUT SCROLL)
 ====================================================== */
 .cover-bg{
-  position:fixed;
-  inset:-20%;
-  z-index:0;
+  position: fixed;
+  inset: -20%;
+  z-index: 0;
+
   background-image: var(--cover-bg);
   background-size: cover;
   background-position: center;
+
   filter: blur(42px) brightness(0.55) saturate(1.2);
   transform: scale(1.2);
+
+  pointer-events: none;
 }
 
 /* overlay gelap biar teks kontras */
@@ -46,11 +53,15 @@ body{
    PLAYER WRAPPER
 ====================================================== */
 .player-app{
-  position:relative;
-  z-index:2;
-  max-width:420px;
-  margin:auto;
-  padding:16px;
+  position: relative;
+  z-index: 2;
+
+  max-width: 420px;
+  margin: auto;
+  padding: 16px;
+
+  /* 🔥 BIAR MENU BAWAH AMAN */
+  padding-bottom: 100px;
 }
 
 /* ======================================================
@@ -62,22 +73,26 @@ body{
   align-items:center;
   margin-bottom:14px;
 }
+
 .icon-btn{
   background:none;
   border:none;
   color:#fff;
   font-size:22px;
 }
+
 .tabs{
-  background:rgba(18,27,59,.75);
+  background: rgba(18,27,59,.7);
   backdrop-filter: blur(10px);
   border-radius:20px;
   padding:4px;
 }
+
 .tabs span{
   padding:6px 14px;
   opacity:.6;
 }
+
 .tabs .active{
   background:#1b6cff;
   border-radius:16px;
@@ -92,11 +107,12 @@ body{
   justify-content:center;
   margin:18px 0;
 }
+
 .cover-box img{
   width:100%;
   max-width:320px;
   border-radius:18px;
-  box-shadow:0 25px 60px rgba(0,0,0,.7);
+  box-shadow:0 25px 60px rgba(0,0,0,.75);
 }
 
 /* ======================================================
@@ -105,9 +121,11 @@ body{
 .info{
   text-align:center;
 }
+
 .info h2{
   margin:8px 0 4px;
 }
+
 .info p{
   opacity:.75;
 }
@@ -120,8 +138,9 @@ body{
   justify-content:space-around;
   margin:16px 0;
 }
+
 .actions button{
-  background:rgba(18,27,59,.6);
+  background: rgba(18,27,59,.6);
   backdrop-filter: blur(8px);
   border:none;
   color:#fff;
@@ -138,6 +157,7 @@ body{
   gap:8px;
   font-size:12px;
 }
+
 #progressBar{
   flex:1;
 }
@@ -151,6 +171,7 @@ body{
   align-items:center;
   margin:18px 0;
 }
+
 .controls button{
   background:none;
   border:none;
@@ -187,6 +208,7 @@ body{
   opacity:.8;
   margin-top:12px;
 }
+
 .bottom-tab .active{
   opacity:1;
   border-bottom:2px solid #1b6cff;
@@ -198,8 +220,10 @@ body{
 .next-list{
   max-height:240px;
   overflow-y:auto;
-  background:rgba(0,0,0,.75);
+
+  background: rgba(0,0,0,.75);
   backdrop-filter: blur(10px);
+
   border-top:1px solid #222;
   transition:max-height 0.25s ease;
 }
