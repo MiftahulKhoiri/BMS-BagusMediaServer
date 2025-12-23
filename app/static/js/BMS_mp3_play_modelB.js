@@ -114,6 +114,7 @@ function loadTrack(index) {
   // ⭐ COVER GLOBAL BERBASIS PATH
   if (track.filepath) {
     coverImg.src = "/mp3/thumbnail/" + encodeURIComponent(track.filepath);
+    applyAccentColor(track.filepath);
   } else {
     coverImg.src = "/static/img/default_cover.jpg";
   }
@@ -239,3 +240,19 @@ tabNext.onclick = () => {
 
 /* ================= START ================= */
 initPlayer();
+
+async function applyAccentColor(filepath){
+  try{
+    const res = await fetch(
+      "/mp3/color/" + encodeURIComponent(filepath)
+    );
+    const data = await res.json();
+
+    if(data.color){
+      document.documentElement.style.setProperty(
+        "--accent-color",
+        data.color
+      );
+    }
+  }catch(e){}
+}
