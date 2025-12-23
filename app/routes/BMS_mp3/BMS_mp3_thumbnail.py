@@ -31,42 +31,42 @@ def get_thumb_name(mp3_path: str) -> str:
 
 @mp3_thumb.route("/thumbnail/<path:mp3_path>")
 def serve_mp3_thumbnail(mp3_path):
-    print("🔥🔥🔥 BMS_mp3_thumbnail LOADED 🔥🔥🔥")
-    """
-    mp3_path = path asli MP3 (URL encoded)
-    Alur:
-      1) decode URL path
-      2) cek file MP3 ada
-      3) jika thumbnail ada → kirim
-      4) jika belum → extract ID3 → simpan → kirim
-      5) gagal → default icon
-    """
-    # 🔥 PENTING: decode URL (%2Fstorage%2F...)
+    from urllib.parse import unquote
+
+    print("🔥 RAW PATH:", mp3_path)
+
+    # decode URL
     mp3_path = unquote(mp3_path)
+
+    # 🔥 FIX PENTING: pastikan path absolut
+    if not mp3_path.startswith("/"):
+        mp3_path = "/" + mp3_path
+
     mp3_path = os.path.abspath(mp3_path)
 
-    # validasi file mp3
+    print("🔥 FIXED PATH:", mp3_path)
+
     if not os.path.exists(mp3_path):
+        print("❌ MP3 FILE NOT FOUND")
         abort(404)
 
     thumb_name = get_thumb_name(mp3_path)
     thumb_path = os.path.join(THUMBNAIL_MP3_FOLDER, thumb_name)
 
-    # 1️⃣ cache sudah ada
+    # cache
     if os.path.exists(thumb_path):
+        print("✅ SEND CACHED THUMB")
         return send_file(thumb_path, mimetype="image/jpeg")
 
-    # 2️⃣ belum ada → coba extract dari ID3
+    # auto extract
     try:
+        print("🛠 EXTRACT COVER...")
         ok = extract_cover(mp3_path, thumb_path)
         if ok and os.path.exists(thumb_path):
+            print("✅ EXTRACT SUCCESS")
             return send_file(thumb_path, mimetype="image/jpeg")
-    except Exception:
-        pass  # silent, lanjut fallback
+    except Exception as e:
+        print("❌ EXTRACT ERROR:", e)
 
-    # 3️⃣ fallback default icon
-    default_icon = os.path.join("static", "img", "mp3_default.jpg")
-    if os.path.exists(default_icon):
-        return send_file(default_icon, mimetype="image/jpeg")
-
-    abort(404)
+    print("⚠️ FALLBACK DEFAULT")
+    return send_file("static/img/mp3_default.jpg", mimetype="image/jpeg")
