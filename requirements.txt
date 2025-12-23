@@ -8,3 +8,4 @@ requests
 waitress
 ffmpeg
 mutagen
+pillow
