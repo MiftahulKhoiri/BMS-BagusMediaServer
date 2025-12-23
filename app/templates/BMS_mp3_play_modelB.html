@@ -10,6 +10,11 @@
 
 <div class="player-app">
 
+  <!-- 🔥 BLUR BACKGROUND (AMBIL DARI COVER) -->
+  <div class="cover-bg">
+    <img id="coverBgImg" src="/static/img/default_cover.jpg">
+  </div>
+
   <!-- TOP BAR -->
   <div class="top-bar">
     <button class="icon-btn" onclick="history.back()">⌄</button>
@@ -45,13 +50,13 @@
   </div>
 
   <!-- CONTROLS -->
-<div class="controls">
-  <button id="shuffleBtn" title="Acak">🔀</button>
-  <button id="prevBtn" title="Sebelumnya">⏮</button>
-  <button id="playBtn" title="Play / Pause">⏸</button>
-  <button id="nextBtn" title="Berikutnya">⏭</button>
-  <button id="repeatBtn" title="Ulangi">🔁</button>
-</div>
+  <div class="controls">
+    <button id="shuffleBtn">🔀</button>
+    <button id="prevBtn">⏮</button>
+    <button id="playBtn">⏸</button>
+    <button id="nextBtn">⏭</button>
+    <button id="repeatBtn">🔁</button>
+  </div>
 
   <!-- AUDIO -->
   <audio id="audioPlayer"></audio>
@@ -63,11 +68,24 @@
     <span class="tab">TERKAIT</span>
   </div>
 
-  <!-- DROPDOWN NEXT LIST -->
+  <!-- NEXT LIST -->
   <div class="next-list hidden" id="nextList"></div>
 
 </div>
 
 <script src="/static/js/BMS_mp3_play_modelB.js"></script>
+
+<!-- 🔥 SYNC COVER → BACKGROUND -->
+<script>
+  const coverImg = document.getElementById("coverImg");
+  const coverBg = document.getElementById("coverBgImg");
+
+  const observer = new MutationObserver(() => {
+    coverBg.src = coverImg.src;
+  });
+
+  observer.observe(coverImg, { attributes: true, attributeFilter: ["src"] });
+</script>
+
 </body>
 </html>
