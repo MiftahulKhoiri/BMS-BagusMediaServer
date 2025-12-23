@@ -28,7 +28,7 @@ mp3_thumb = Blueprint("mp3_thumb", __name__, url_prefix="/mp3")
 THUMBNAIL_MP3_FOLDER = os.path.join(PICTURES_FOLDER, "thumbnail_mp3")
 os.makedirs(THUMBNAIL_MP3_FOLDER, exist_ok=True)
 
-DEFAULT_COVER = "static/img/mp3_default.jpg"
+DEFAULT_COVER = "static/img/bms_music_player.jpg"
 DEFAULT_COLOR = "#1b6cff"
 
 
