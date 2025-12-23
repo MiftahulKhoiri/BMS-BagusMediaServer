@@ -1,11 +1,5 @@
 /* ==========================================================
-   BMS MP3 PLAYER – FINAL STABLE + BLUR SYNC
-   ✔ Playlist per folder
-   ✔ Next / Prev
-   ✔ Dropdown "Berikutnya"
-   ✔ Shuffle + Repeat (ingat localStorage)
-   ✔ Cover GLOBAL berbasis filepath (thumbnail_mp3)
-   ✔ Cover → Background Blur (CSS Variable)
+   BMS MP3 PLAYER – FINAL STABLE (MULTI FOLDER FIXED)
 ========================================================== */
 
 /* ================= ELEMENT ================= */
@@ -33,12 +27,6 @@ let playlist = [];
 let currentIndex = 0;
 let isPlaying = false;
 
-/*
- repeatMode:
- 0 = off
- 1 = ulang 1
- 2 = ulang semua
-*/
 let shuffleMode = localStorage.getItem("bms_shuffle") === "1";
 let repeatMode = Number(localStorage.getItem("bms_repeat") || 0);
 
@@ -49,31 +37,12 @@ async function api(url) {
 }
 
 function getTrackId() {
-  return Number(location.pathname.split("/").pop());
+  const v = Number(location.pathname.split("/").pop());
+  return isNaN(v) ? null : v;
 }
 
 function getFolderId() {
   return new URLSearchParams(location.search).get("folder");
-}
-
-function savePlayerState() {
-  localStorage.setItem("bms_shuffle", shuffleMode ? "1" : "0");
-  localStorage.setItem("bms_repeat", repeatMode);
-}
-
-function loadPlayerState() {
-  shuffleBtn.classList.toggle("active", shuffleMode);
-
-  if (repeatMode === 1) {
-    repeatBtn.textContent = "🔂";
-    repeatBtn.classList.add("active");
-  } else if (repeatMode === 2) {
-    repeatBtn.textContent = "🔁";
-    repeatBtn.classList.add("active");
-  } else {
-    repeatBtn.textContent = "🔁";
-    repeatBtn.classList.remove("active");
-  }
 }
 
 /* ================= BLUR SYNC ================= */
@@ -85,23 +54,29 @@ function updateBackgroundFromCover() {
   );
 }
 
-/* ================= INIT ================= */
+/* ================= INIT (FIXED) ================= */
 async function initPlayer() {
-  const trackId = getTrackId();
   const folderIds = new URLSearchParams(location.search).get("folders");
+  const trackId = getTrackId();
 
-if(folderIds){
-  playlist = await api(`/mp3/tracks/by-folders?folders=${folderIds}`);
-}else{
-  const folderId = getFolderId();
-  if(!folderId) return;
-  playlist = await api(`/mp3/folder/${folderId}/tracks`);
-}
+  // 🔥 MODE MULTI FOLDER
+  if (folderIds) {
+    playlist = await api(`/mp3/tracks/by-folders?folders=${folderIds}`);
+    if (!playlist.length) return;
 
-  playlist = await api(`/mp3/folder/${folderId}/tracks`);
+    currentIndex = 0; // 🔥 LANGSUNG MAIN LAGU PERTAMA
+  }
+  // 🔥 MODE SINGLE FOLDER
+  else {
+    const folderId = getFolderId();
+    if (!folderId) return;
 
-  currentIndex = playlist.findIndex(t => t.id === trackId);
-  if (currentIndex < 0) currentIndex = 0;
+    playlist = await api(`/mp3/folder/${folderId}/tracks`);
+    if (!playlist.length) return;
+
+    currentIndex = playlist.findIndex(t => t.id === trackId);
+    if (currentIndex < 0) currentIndex = 0;
+  }
 
   loadPlayerState();
   renderNextList();
@@ -118,7 +93,6 @@ function loadTrack(index) {
   titleEl.textContent = track.filename;
   artistEl.textContent = "BMS";
 
-  // ⭐ COVER GLOBAL BERBASIS PATH
   if (track.filepath) {
     coverImg.src = "/mp3/thumbnail/" + encodeURIComponent(track.filepath);
     applyAccentColor(track.filepath);
@@ -126,7 +100,6 @@ function loadTrack(index) {
     coverImg.src = "/static/img/default_cover.jpg";
   }
 
-  // 🔥 SINKRON BACKGROUND SAAT COVER LOAD
   coverImg.onload = updateBackgroundFromCover;
 
   audio.src = `/mp3/play/${track.id}`;
@@ -156,15 +129,19 @@ prevBtn.onclick = () => playPrev();
 shuffleBtn.onclick = () => {
   shuffleMode = !shuffleMode;
   shuffleBtn.classList.toggle("active", shuffleMode);
-  savePlayerState();
+  localStorage.setItem("bms_shuffle", shuffleMode ? "1" : "0");
 };
 
 /* ================= REPEAT ================= */
 repeatBtn.onclick = () => {
   repeatMode = (repeatMode + 1) % 3;
-  savePlayerState();
+  localStorage.setItem("bms_repeat", repeatMode);
   loadPlayerState();
 };
+
+function loadPlayerState() {
+  shuffleBtn.classList.toggle("active", shuffleMode);
+}
 
 /* ================= PLAY LOGIC ================= */
 function playNext() {
@@ -172,7 +149,6 @@ function playNext() {
     loadTrack(Math.floor(Math.random() * playlist.length));
     return;
   }
-
   if (currentIndex < playlist.length - 1) {
     loadTrack(currentIndex + 1);
   } else if (repeatMode === 2) {
@@ -190,20 +166,10 @@ function playPrev() {
   }
 }
 
-/* ================= AUTO END ================= */
-audio.onended = () => {
-  if (repeatMode === 1) {
-    loadTrack(currentIndex);
-    return;
-  }
-  playNext();
-};
-
 /* ================= PROGRESS ================= */
 audio.ontimeupdate = () => {
   progressBar.max = audio.duration || 0;
   progressBar.value = audio.currentTime || 0;
-
   currentTimeEl.textContent = formatTime(audio.currentTime);
   durationEl.textContent = formatTime(audio.duration);
 };
@@ -234,9 +200,6 @@ function renderNextList() {
 function highlightNext() {
   document.querySelectorAll(".next-item").forEach((el, i) => {
     el.classList.toggle("active", i === currentIndex);
-    if (i === currentIndex) {
-      el.scrollIntoView({ behavior: "smooth", block: "center" });
-    }
   });
 }
 
@@ -245,16 +208,11 @@ tabNext.onclick = () => {
   nextList.classList.toggle("hidden");
 };
 
-/* ================= START ================= */
-initPlayer();
-
+/* ================= ACCENT COLOR ================= */
 async function applyAccentColor(filepath){
   try{
-    const res = await fetch(
-      "/mp3/color/" + encodeURIComponent(filepath)
-    );
+    const res = await fetch("/mp3/color/" + encodeURIComponent(filepath));
     const data = await res.json();
-
     if(data.color){
       document.documentElement.style.setProperty(
         "--accent-color",
@@ -263,3 +221,6 @@ async function applyAccentColor(filepath){
     }
   }catch(e){}
 }
+
+/* ================= START ================= */
+initPlayer();
