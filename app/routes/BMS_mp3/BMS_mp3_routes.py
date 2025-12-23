@@ -60,6 +60,29 @@ def folder_tracks(folder_id):
     conn.close()
     return jsonify([dict(r) for r in rows])
 
+# list beberapa folder
+@media_mp3.route("/tracks/by-folders")
+def tracks_by_folders():
+    owner = current_user_identifier()
+    ids = request.args.get("folders", "")
+
+    folder_ids = [i for i in ids.split(",") if i.isdigit()]
+    if not folder_ids:
+        return jsonify([])
+
+    q = ",".join("?" * len(folder_ids))
+    conn = get_db()
+
+    rows = conn.execute(f"""
+        SELECT id, filename, filepath, folder_id
+        FROM mp3_tracks
+        WHERE user_id=? AND folder_id IN ({q})
+        ORDER BY filename ASC
+    """, [owner] + folder_ids).fetchall()
+
+    conn.close()
+    return jsonify([dict(r) for r in rows])
+
 
 # ============================================================================
 #   TOGGLE FAVORITE
