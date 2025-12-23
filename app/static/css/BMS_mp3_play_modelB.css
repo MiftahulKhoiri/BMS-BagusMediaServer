@@ -1,17 +1,58 @@
+/* ======================================================
+   BASE
+====================================================== */
 body{
   margin:0;
   font-family: Inter, Arial, sans-serif;
-  background: linear-gradient(180deg,#0b1633,#050814);
+  background:#050814; /* fallback */
   color:#fff;
+  overflow:hidden;
 }
 
+/* ======================================================
+   BLUR BACKGROUND DARI COVER (BARU)
+====================================================== */
+.cover-bg{
+  position:fixed;
+  inset:0;
+  z-index:0;
+  overflow:hidden;
+}
+
+.cover-bg img{
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  filter: blur(38px) brightness(0.55) saturate(1.2);
+  transform: scale(1.25);
+}
+
+/* overlay gelap biar teks kontras */
+.cover-bg::after{
+  content:"";
+  position:absolute;
+  inset:0;
+  background: radial-gradient(
+    circle at top,
+    rgba(0,0,0,0.35),
+    rgba(0,0,0,0.75)
+  );
+}
+
+/* ======================================================
+   PLAYER WRAPPER
+====================================================== */
 .player-app{
+  position:relative;
+  z-index:2;
   max-width:420px;
   margin:auto;
   padding:16px;
 }
 
-/* TOP */
+/* ======================================================
+   TOP BAR
+====================================================== */
 .top-bar{
   display:flex;
   justify-content:space-between;
@@ -39,7 +80,9 @@ body{
   opacity:1;
 }
 
-/* COVER */
+/* ======================================================
+   COVER
+====================================================== */
 .cover-box{
   display:flex;
   justify-content:center;
@@ -50,9 +93,12 @@ body{
   max-width:320px;
   border-radius:18px;
   box-shadow:0 20px 40px rgba(0,0,0,.6);
+  z-index:2;
 }
 
-/* INFO */
+/* ======================================================
+   INFO
+====================================================== */
 .info{
   text-align:center;
 }
@@ -63,7 +109,9 @@ body{
   opacity:.7;
 }
 
-/* ACTIONS */
+/* ======================================================
+   ACTIONS
+====================================================== */
 .actions{
   display:flex;
   justify-content:space-around;
@@ -77,7 +125,9 @@ body{
   border-radius:18px;
 }
 
-/* PROGRESS */
+/* ======================================================
+   PROGRESS
+====================================================== */
 .progress{
   display:flex;
   align-items:center;
@@ -88,7 +138,9 @@ body{
   flex:1;
 }
 
-/* CONTROLS */
+/* ======================================================
+   CONTROLS
+====================================================== */
 .controls{
   display:flex;
   justify-content:space-around;
@@ -100,16 +152,13 @@ body{
   border:none;
   color:#fff;
   font-size:32px;
-}
-
-.controls button {
   transition: all 0.2s ease;
 }
 
-.controls button.active {
-  color: #ff2a2a;
+.controls button.active{
+  color:#ff2a2a;
   background: rgba(255, 60, 60, 0.25);
-  border: 1px solid #ff2a2a;
+  border:1px solid #ff2a2a;
   box-shadow:
     0 0 14px rgba(255, 60, 60, 0.9),
     inset 0 0 8px rgba(255, 60, 60, 0.5);
@@ -125,7 +174,9 @@ body{
   font-size:26px;
 }
 
-/* BOTTOM */
+/* ======================================================
+   BOTTOM TAB
+====================================================== */
 .bottom-tab{
   display:flex;
   justify-content:space-around;
@@ -137,26 +188,29 @@ body{
   border-bottom:2px solid #1b6cff;
 }
 
-.next-list {
-  max-height: 240px;
-  overflow-y: auto;
-  background: #0b0b0b;
-  border-top: 1px solid #222;
-  transition: max-height 0.25s ease;
+/* ======================================================
+   NEXT LIST
+====================================================== */
+.next-list{
+  max-height:240px;
+  overflow-y:auto;
+  background:#0b0b0b;
+  border-top:1px solid #222;
+  transition:max-height 0.25s ease;
 }
 
-.next-list.hidden {
-  max-height: 0;
-  overflow: hidden;
+.next-list.hidden{
+  max-height:0;
+  overflow:hidden;
 }
 
-.next-item {
-  padding: 12px;
-  border-bottom: 1px solid #1a1a1a;
-  cursor: pointer;
+.next-item{
+  padding:12px;
+  border-bottom:1px solid #1a1a1a;
+  cursor:pointer;
 }
 
-.next-item.active {
-  background: #1f1f1f;
-  color: #00ff7f;
+.next-item.active{
+  background:#1f1f1f;
+  color:#00ff7f;
 }
