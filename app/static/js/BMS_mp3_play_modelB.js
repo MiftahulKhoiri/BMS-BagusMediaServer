@@ -1,5 +1,5 @@
 /* ==========================================================
-   BMS MP3 PLAYER – FINAL STABLE (MULTI FOLDER FIXED)
+   BMS MP3 PLAYER – FINAL STABLE (MULTI FOLDER + REPEAT FIX)
 ========================================================== */
 
 /* ================= ELEMENT ================= */
@@ -27,6 +27,12 @@ let playlist = [];
 let currentIndex = 0;
 let isPlaying = false;
 
+/*
+ repeatMode:
+ 0 = off
+ 1 = ulang 1
+ 2 = ulang semua
+*/
 let shuffleMode = localStorage.getItem("bms_shuffle") === "1";
 let repeatMode = Number(localStorage.getItem("bms_repeat") || 0);
 
@@ -45,7 +51,7 @@ function getFolderId() {
   return new URLSearchParams(location.search).get("folder");
 }
 
-/* ================= BLUR SYNC ================= */
+/* ================= BLUR BACKGROUND SYNC ================= */
 function updateBackgroundFromCover() {
   if (!coverImg.src) return;
   document.documentElement.style.setProperty(
@@ -54,19 +60,35 @@ function updateBackgroundFromCover() {
   );
 }
 
-/* ================= INIT (FIXED) ================= */
+/* ================= PLAYER STATE ================= */
+function loadPlayerState() {
+  shuffleBtn.classList.toggle("active", shuffleMode);
+
+  repeatBtn.classList.remove("active");
+
+  if (repeatMode === 1) {
+    repeatBtn.textContent = "🔂"; // repeat one
+    repeatBtn.classList.add("active");
+  } else if (repeatMode === 2) {
+    repeatBtn.textContent = "🔁"; // repeat all
+    repeatBtn.classList.add("active");
+  } else {
+    repeatBtn.textContent = "🔁"; // off
+  }
+}
+
+/* ================= INIT ================= */
 async function initPlayer() {
   const folderIds = new URLSearchParams(location.search).get("folders");
   const trackId = getTrackId();
 
-  // 🔥 MODE MULTI FOLDER
+  // 🔥 MULTI FOLDER MODE
   if (folderIds) {
     playlist = await api(`/mp3/tracks/by-folders?folders=${folderIds}`);
     if (!playlist.length) return;
-
-    currentIndex = 0; // 🔥 LANGSUNG MAIN LAGU PERTAMA
+    currentIndex = 0;
   }
-  // 🔥 MODE SINGLE FOLDER
+  // 🔥 SINGLE FOLDER MODE
   else {
     const folderId = getFolderId();
     if (!folderId) return;
@@ -128,8 +150,8 @@ prevBtn.onclick = () => playPrev();
 /* ================= SHUFFLE ================= */
 shuffleBtn.onclick = () => {
   shuffleMode = !shuffleMode;
-  shuffleBtn.classList.toggle("active", shuffleMode);
   localStorage.setItem("bms_shuffle", shuffleMode ? "1" : "0");
+  loadPlayerState();
 };
 
 /* ================= REPEAT ================= */
@@ -139,20 +161,17 @@ repeatBtn.onclick = () => {
   loadPlayerState();
 };
 
-function loadPlayerState() {
-  shuffleBtn.classList.toggle("active", shuffleMode);
-}
-
 /* ================= PLAY LOGIC ================= */
 function playNext() {
   if (shuffleMode) {
     loadTrack(Math.floor(Math.random() * playlist.length));
     return;
   }
+
   if (currentIndex < playlist.length - 1) {
     loadTrack(currentIndex + 1);
   } else if (repeatMode === 2) {
-    loadTrack(0);
+    loadTrack(0); // repeat all
   }
 }
 
@@ -166,10 +185,20 @@ function playPrev() {
   }
 }
 
+/* ================= AUTO END ================= */
+audio.onended = () => {
+  if (repeatMode === 1) {
+    loadTrack(currentIndex); // repeat one
+    return;
+  }
+  playNext();
+};
+
 /* ================= PROGRESS ================= */
 audio.ontimeupdate = () => {
   progressBar.max = audio.duration || 0;
   progressBar.value = audio.currentTime || 0;
+
   currentTimeEl.textContent = formatTime(audio.currentTime);
   durationEl.textContent = formatTime(audio.duration);
 };
@@ -209,17 +238,17 @@ tabNext.onclick = () => {
 };
 
 /* ================= ACCENT COLOR ================= */
-async function applyAccentColor(filepath){
-  try{
+async function applyAccentColor(filepath) {
+  try {
     const res = await fetch("/mp3/color/" + encodeURIComponent(filepath));
     const data = await res.json();
-    if(data.color){
+    if (data.color) {
       document.documentElement.style.setProperty(
         "--accent-color",
         data.color
       );
     }
-  }catch(e){}
+  } catch (e) {}
 }
 
 /* ================= START ================= */
