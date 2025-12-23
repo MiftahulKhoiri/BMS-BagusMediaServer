@@ -164,3 +164,54 @@ document.addEventListener("DOMContentLoaded", () => {
         showFolders();
     }
 });
+
+async function api(url){
+  const res = await fetch(url);
+  return await res.json();
+}
+
+const folderListEl = document.getElementById("folderList");
+const playBtn = document.getElementById("playSelectedBtn");
+
+let selectedFolders = [];
+
+// load folder list
+async function loadFolders(){
+  const folders = await api("/mp3/folders");
+
+  folderListEl.innerHTML = "";
+  folders.forEach(f => {
+    const div = document.createElement("div");
+    div.className = "folder-item";
+
+    div.innerHTML = `
+      <input type="checkbox" value="${f.id}">
+      <span>${f.folder_name} (${f.total_mp3})</span>
+    `;
+
+    const checkbox = div.querySelector("input");
+    checkbox.onchange = () => {
+      if(checkbox.checked){
+        selectedFolders.push(f.id);
+      }else{
+        selectedFolders = selectedFolders.filter(x => x !== f.id);
+      }
+    };
+
+    folderListEl.appendChild(div);
+  });
+}
+
+// klik putar
+playBtn.onclick = () => {
+  if(selectedFolders.length === 0){
+    alert("Pilih minimal 1 folder");
+    return;
+  }
+
+  const ids = selectedFolders.join(",");
+  // arahkan ke player (track pertama akan auto play)
+  location.href = `/mp3/watch/0?folders=${ids}`;
+};
+
+loadFolders();
