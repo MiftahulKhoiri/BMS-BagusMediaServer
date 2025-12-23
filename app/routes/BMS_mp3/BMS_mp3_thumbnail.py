@@ -31,6 +31,7 @@ def get_thumb_name(mp3_path: str) -> str:
 
 @mp3_thumb.route("/thumbnail/<path:mp3_path>")
 def serve_mp3_thumbnail(mp3_path):
+    print("🔥🔥🔥 BMS_mp3_thumbnail LOADED 🔥🔥🔥")
     """
     mp3_path = path asli MP3 (URL encoded)
     Alur:
