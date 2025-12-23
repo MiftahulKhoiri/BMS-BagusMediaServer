@@ -17,6 +17,7 @@ from app.routes.BMS_mp3.BMS_mp3_online_cover import (
     search_musicbrainz_cover,
     download_image
 )
+from app.routes.BMS_mp3.BMS_mp3_dominant_color import extract_dominant_color
 
 mp3_thumb = Blueprint("mp3_thumb", __name__, url_prefix="/mp3")
 
@@ -24,6 +25,18 @@ THUMBNAIL_MP3_FOLDER = os.path.join(PICTURES_FOLDER, "thumbnail_mp3")
 os.makedirs(THUMBNAIL_MP3_FOLDER, exist_ok=True)
 
 DEFAULT_COVER = "static/img/mp3_default.jpg"
+
+def save_dominant_color(thumb_path: str):
+    color = extract_dominant_color(thumb_path)
+    if not color:
+        return
+
+    color_file = thumb_path + ".color"
+    try:
+        with open(color_file, "w") as f:
+            f.write(color)
+    except Exception:
+        pass
 
 
 def get_thumb_name(mp3_path: str) -> str:
