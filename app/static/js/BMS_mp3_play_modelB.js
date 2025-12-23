@@ -88,8 +88,15 @@ function updateBackgroundFromCover() {
 /* ================= INIT ================= */
 async function initPlayer() {
   const trackId = getTrackId();
+  const folderIds = new URLSearchParams(location.search).get("folders");
+
+if(folderIds){
+  playlist = await api(`/mp3/tracks/by-folders?folders=${folderIds}`);
+}else{
   const folderId = getFolderId();
-  if (!folderId) return;
+  if(!folderId) return;
+  playlist = await api(`/mp3/folder/${folderId}/tracks`);
+}
 
   playlist = await api(`/mp3/folder/${folderId}/tracks`);
 
