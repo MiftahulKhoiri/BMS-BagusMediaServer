@@ -1,6 +1,5 @@
 # ============================================================
 # audio.py
-# Download audio MP3 via yt-dlp (BMS)
 # ============================================================
 
 import os
@@ -11,15 +10,9 @@ from app.routes.BMS_downlod.progress import yt_progress_hook
 from app.routes.BMS_downlod.file_helper import buat_nama_unik
 
 def download_mp3(url, title, task_id=None):
-    """
-    Download audio menjadi MP3
-    """
-
-    # 📁 pastikan folder mp3 ada
     mp3_folder = os.path.join(DOWNLOADS_FOLDER, "mp3")
     os.makedirs(mp3_folder, exist_ok=True)
 
-    # 🧹 nama file aman & unik
     nama_file = buat_nama_unik(mp3_folder, title, "mp3")
 
     outtmpl = os.path.join(
