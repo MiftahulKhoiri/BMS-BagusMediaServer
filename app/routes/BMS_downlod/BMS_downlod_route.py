@@ -239,6 +239,6 @@ def ui_downlod():
     require_login()   # ← panggil langsung
 
     if require_root():
-        return render_template("BMS_downlod_admin.html")
-
-    return render_template("BMS_downlod_user.html")
+        return render_template("BMS_downlod_user.html")
+    
+    return render_template("BMS_downlod_admin.html")
