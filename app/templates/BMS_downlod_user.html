@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>BMS Downloader</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/BMS_downlod_user.css') }}">
+</head>
+<body>
+
+<div class="box">
+  <h2>BMS Downloader</h2>
+
+  <input id="url" placeholder="Tempel URL YouTube di sini">
+
+  <button onclick="startDownload('video')">Download Video</button>
+  <button onclick="startDownload('audio')">Download MP3</button>
+
+  <div id="progress" class="progress">
+    Status: menunggu…
+  </div>
+</div>
+
+<script src="{{ url_for('static', filename='js/BMS_downlod_user.js') }}"></script>
+</body>
+</html>
