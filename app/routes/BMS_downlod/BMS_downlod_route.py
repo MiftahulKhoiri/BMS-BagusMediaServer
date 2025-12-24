@@ -236,7 +236,7 @@ def sync_downloads():
 
 @BMS_downlod_bp.route("/ui", methods=["GET"])
 def ui_downlod():
-    cek = BMS_profile_required()
+    cek = require_root()
     if cek:
         return cek
 
