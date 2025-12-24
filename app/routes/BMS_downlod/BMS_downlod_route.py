@@ -13,6 +13,8 @@ from app.routes.BMS_downlod.db import get_db
 from app.routes.BMS_downlod.db import ambil_semua_download
 from app.routes.BMS_downlod.progress_store import buat_task, get_task
 
+from app.routes.BMS_utils import require_root
+
 
 # ============================================================
 # BLUEPRINT
@@ -132,9 +134,12 @@ def download_audio_route():
             "error": str(e)
         }), 500
 
-
 @BMS_downlod_bp.route("/history", methods=["GET"])
 def download_history():
+    cek = require_root()
+    if cek:
+        return cek
+
     try:
         limit = request.args.get("limit", 50, type=int)
         data = ambil_semua_download(limit)
@@ -145,6 +150,7 @@ def download_history():
         })
     except Exception as e:
         return jsonify({"status": "gagal", "error": str(e)}), 500
+
 
 
 
