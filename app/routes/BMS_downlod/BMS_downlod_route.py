@@ -236,9 +236,11 @@ def sync_downloads():
 
 @BMS_downlod_bp.route("/ui", methods=["GET"])
 def ui_downlod():
-   cek = BMS_profile_required()
+    cek = BMS_profile_required()
     if cek:
-        return cek render_template("BMS_downlod_admin.html")
-      
-    
-   return render_template("BMS_downlod_user.html")
+        return cek
+
+    if session.get("role") == "admin":
+        return render_template("BMS_downlod_admin.html")
+
+    return render_template("BMS_downlod_user.html")
