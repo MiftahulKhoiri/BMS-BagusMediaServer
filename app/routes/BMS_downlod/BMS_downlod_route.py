@@ -234,11 +234,10 @@ def sync_downloads():
     except Exception as e:
         return jsonify({"status": "gagal", "error": str(e)}), 500
 
-from flask import render_template
-
 @BMS_downlod_bp.route("/ui", methods=["GET"])
-@require_login
 def ui_downlod():
+    require_login()   # ← panggil langsung
+
     if require_root():
         return render_template("BMS_downlod_admin.html")
 
