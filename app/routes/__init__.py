@@ -26,6 +26,7 @@ from .BMS_mp3 import blueprints as mp3_blueprints
 from .BMS_update import update
 from .BMS_profile import profile
 from app.routes.BMS_upload import upload
+from app.routes.BMS_downlod.BMS_downlod_route import BMS_downlod_bp
 from app.routes.BMS_systeminfo import systeminfo
 from .BMS_terminal import terminal
 from .BMS_power import BMS_power
@@ -45,6 +46,7 @@ def register_blueprints(app):
         profile,
         fm_premium,
         upload,
+        BMS_downlod_bp,
         systeminfo,
         terminal,
         BMS_power,
