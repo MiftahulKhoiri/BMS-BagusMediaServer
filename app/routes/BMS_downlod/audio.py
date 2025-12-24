@@ -4,7 +4,7 @@ from app.BMS_config import DOWNLOADS_FOLDER
 from app.routes.BMS_downlod.file_helper import buat_nama_unik
 import os
 
-def download_mp3(url, title):
+def download_audio(url, title):
     mp3_folder = os.path.join(DOWNLOADS_FOLDER, "mp3")
     os.makedirs(mp3_folder, exist_ok=True)
 
