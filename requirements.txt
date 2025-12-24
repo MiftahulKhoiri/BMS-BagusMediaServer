@@ -9,3 +9,4 @@ waitress
 ffmpeg
 mutagen
 pillow
+yt_dlp
