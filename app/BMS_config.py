@@ -87,6 +87,7 @@ PICTURES_FOLDER  = os.path.join(BASE, "Pictures")
 MUSIC_FOLDER    = os.path.join(BASE, "music")
 VIDEO_FOLDER    = os.path.join(BASE, "video")
 UPLOAD_FOLDER   = os.path.join(BASE, "upload")
+DOWNLOADS_FOLDER   = os.path.join(BASE, "downloads")
 
 DB_PATH = os.path.join(DB_FOLDER, "users.db")
 LOG_PATH = os.path.join(LOG_FOLDER, "system.log")
@@ -98,7 +99,8 @@ LOG_PATH = os.path.join(LOG_FOLDER, "system.log")
 for folder in [
     BASE, DB_FOLDER, LOG_FOLDER,
     PICTURES_FOLDER, MUSIC_FOLDER,
-    VIDEO_FOLDER, UPLOAD_FOLDER
+    VIDEO_FOLDER, UPLOAD_FOLDER,
+    DOWNLOADS_FOLDER
 ]:
     try:
         os.makedirs(folder, exist_ok=True)
