@@ -6,6 +6,8 @@
 from flask import Blueprint, request, jsonify
 
 from app.routes.BMS_downlod.downloader import unduh_video
+from app.routes.BMS_downlod.audio import download_mp3
+from app.routes.BMS_downlod.file_helper import bersihkan_nama_file
 
 # ============================================================
 # BLUEPRINT
@@ -30,7 +32,7 @@ def status():
     })
 
 # ============================================================
-# ROUTE: DOWNLOAD VIDEO
+# ROUTE: DOWNLOAD VIDEO (MP4)
 # ============================================================
 
 @BMS_downlod_bp.route("/video", methods=["POST"])
@@ -63,7 +65,48 @@ def download_video_route():
 
         return jsonify({
             "status": "sukses",
+            "tipe": "video",
             "file": hasil
+        })
+
+    except Exception as e:
+        return jsonify({
+            "status": "gagal",
+            "error": str(e)
+        }), 500
+
+
+# ============================================================
+# ROUTE: DOWNLOAD AUDIO (MP3)
+# ============================================================
+
+@BMS_downlod_bp.route("/audio", methods=["POST"])
+def download_audio_route():
+    """
+    Body JSON:
+    {
+        "url": "https://youtube.com/..."
+    }
+    """
+
+    data = request.get_json(silent=True)
+    if not data:
+        return jsonify({"error": "Body JSON tidak valid"}), 400
+
+    url = data.get("url")
+    if not url:
+        return jsonify({"error": "URL wajib diisi"}), 400
+
+    try:
+        # Ambil judul dulu (nama file aman)
+        nama_file = bersihkan_nama_file("audio_youtube")
+
+        download_mp3(url, nama_file)
+
+        return jsonify({
+            "status": "sukses",
+            "tipe": "audio",
+            "file": f"downloads/mp3/{nama_file}.mp3"
         })
 
     except Exception as e:
