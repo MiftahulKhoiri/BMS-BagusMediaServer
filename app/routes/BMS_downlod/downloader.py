@@ -17,7 +17,7 @@ def unduh_video(url, resolusi=720):
     if not konfirmasi_mode_pribadi():
         return None
 
-    video_folder = os.path.join(BASE_DOWNLOADS_FOLDER, "video")
+    video_folder = os.path.join(DOWNLOADS_FOLDER, "video")
     os.makedirs(video_folder, exist_ok=True)
 
     info = ambil_info_video(url)
