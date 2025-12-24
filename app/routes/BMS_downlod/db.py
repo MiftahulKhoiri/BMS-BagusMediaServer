@@ -24,3 +24,19 @@ def init_db():
     """)
     conn.commit()
     conn.close()
+
+def ambil_semua_download(limit=50):
+    conn = get_db()
+    cur = conn.cursor()
+    cur.execute(
+        """
+        SELECT id, tipe, title, file_path, source_url, created_at
+        FROM downloads
+        ORDER BY created_at DESC
+        LIMIT ?
+        """,
+        (limit,)
+    )
+    rows = cur.fetchall()
+    conn.close()
+    return [dict(r) for r in rows]
