@@ -12,7 +12,7 @@ from app.routes.BMS_downlod.utils_info import ambil_info_video
 from app.routes.BMS_downlod.db import get_db
 from app.routes.BMS_downlod.db import ambil_semua_download
 from app.routes.BMS_downlod.progress_store import buat_task, get_task
-
+from app.routes.BMS_downlod.maintenance import cleanup_file_lama
 from app.routes.BMS_utils import require_root
 
 
@@ -160,3 +160,22 @@ def cek_progress(task_id):
     if not data:
         return jsonify({"error": "task_id tidak ditemukan"}), 404
     return jsonify(data)
+
+
+@BMS_downlod_bp.route("/cleanup", methods=["POST"])
+def cleanup_download():
+    cek = require_root()
+    if cek:
+        return cek
+
+    hari = request.json.get("hari", 30)
+
+    try:
+        total = cleanup_file_lama(hari)
+        return jsonify({
+            "status": "sukses",
+            "dihapus": total,
+            "hari": hari
+        })
+    except Exception as e:
+        return jsonify({"status": "gagal", "error": str(e)}), 500
