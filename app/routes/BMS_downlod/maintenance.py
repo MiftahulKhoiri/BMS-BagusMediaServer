@@ -1,6 +1,6 @@
 import os
 import time
-from app.BMS_config import BASE_DOWNLOADS_FOLDER
+from app.BMS_config import DOWNLOADS_FOLDER
 from app.routes.BMS_downlod.db import get_db
 
 def cleanup_file_lama(hari=30):
