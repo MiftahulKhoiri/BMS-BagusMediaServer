@@ -15,6 +15,7 @@ from app.routes.BMS_downlod.progress_store import buat_task, get_task
 from app.routes.BMS_downlod.maintenance import cleanup_file_lama
 from app.routes.BMS_utils import require_root
 from app.routes.BMS_downlod.maintenance import hapus_download_id
+from app.routes.BMS_downlod.maintenance import sinkron_file_db
 
 # ============================================================
 # BLUEPRINT
@@ -195,6 +196,22 @@ def delete_download(download_id):
         return jsonify({
             "status": "sukses",
             "id": download_id
+        })
+    except Exception as e:
+        return jsonify({"status": "gagal", "error": str(e)}), 500
+
+
+@BMS_downlod_bp.route("/sync", methods=["POST"])
+def sync_downloads():
+    cek = require_root()
+    if cek:
+        return cek
+
+    try:
+        total = sinkron_file_db()
+        return jsonify({
+            "status": "sukses",
+            "db_dibersihkan": total
         })
     except Exception as e:
         return jsonify({"status": "gagal", "error": str(e)}), 500
