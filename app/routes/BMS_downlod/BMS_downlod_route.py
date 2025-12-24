@@ -5,17 +5,28 @@
 
 from flask import Blueprint, request, jsonify
 
+from app.routes.BMS_utils import require_root
+
 from app.routes.BMS_downlod.downloader import unduh_video
 from app.routes.BMS_downlod.audio import download_mp3
 from app.routes.BMS_downlod.file_helper import bersihkan_nama_file
 from app.routes.BMS_downlod.utils_info import ambil_info_video
-from app.routes.BMS_downlod.db import get_db
-from app.routes.BMS_downlod.db import ambil_semua_download
-from app.routes.BMS_downlod.progress_store import buat_task, get_task
-from app.routes.BMS_downlod.maintenance import cleanup_file_lama
-from app.routes.BMS_utils import require_root
-from app.routes.BMS_downlod.maintenance import hapus_download_id
-from app.routes.BMS_downlod.maintenance import sinkron_file_db
+
+from app.routes.BMS_downlod.db import (
+    get_db,
+    ambil_semua_download
+)
+
+from app.routes.BMS_downlod.progress_store import (
+    buat_task,
+    get_task
+)
+
+from app.routes.BMS_downlod.maintenance import (
+    cleanup_file_lama,
+    hapus_download_id,
+    sinkron_file_db
+)
 
 # ============================================================
 # BLUEPRINT
@@ -45,17 +56,7 @@ def status():
 
 @BMS_downlod_bp.route("/video", methods=["POST"])
 def download_video_route():
-    """
-    Body JSON:
-    {
-        "url": "https://youtube.com/...",
-        "resolusi": 720
-    }
-    """
-
-    data = request.get_json(silent=True)
-    if not data:
-        return jsonify({"error": "Body JSON tidak valid"}), 400
+    data = request.get_json(silent=True) or {}
 
     url = data.get("url")
     resolusi = data.get("resolusi", 720)
@@ -63,26 +64,29 @@ def download_video_route():
     if not url:
         return jsonify({"error": "URL wajib diisi"}), 400
 
+    task_id = buat_task()
+
     try:
-        hasil = unduh_video(url, resolusi)
+        hasil = unduh_video(url, resolusi, task_id=task_id)
         if not hasil:
             return jsonify({
                 "status": "dibatalkan",
-                "message": "Download dibatalkan oleh pengguna"
+                "task_id": task_id
             }), 200
 
         return jsonify({
             "status": "sukses",
             "tipe": "video",
+            "task_id": task_id,
             "file": hasil
         })
 
     except Exception as e:
         return jsonify({
             "status": "gagal",
+            "task_id": task_id,
             "error": str(e)
         }), 500
-
 
 # ============================================================
 # ROUTE: DOWNLOAD AUDIO (MP3)
@@ -90,28 +94,20 @@ def download_video_route():
 
 @BMS_downlod_bp.route("/audio", methods=["POST"])
 def download_audio_route():
-    """
-    Body JSON:
-    {
-        "url": "https://youtube.com/..."
-    }
-    """
+    data = request.get_json(silent=True) or {}
 
-    data = request.get_json(silent=True)
-    if not data or "url" not in data:
+    url = data.get("url")
+    if not url:
         return jsonify({"error": "URL wajib diisi"}), 400
 
-    url = data["url"]
+    task_id = buat_task()
 
     try:
-        # 🔎 ambil info video (judul asli)
         info = ambil_info_video(url)
         title = bersihkan_nama_file(info.get("title", "audio"))
 
-        # 🎵 download mp3
-        hasil = download_mp3(url, title)
+        hasil = download_mp3(url, title, task_id=task_id)
 
-        # 💾 simpan ke database
         db = get_db()
         db.execute(
             """
@@ -126,14 +122,31 @@ def download_audio_route():
         return jsonify({
             "status": "sukses",
             "tipe": "audio",
+            "task_id": task_id,
             "file": hasil
         })
 
     except Exception as e:
         return jsonify({
             "status": "gagal",
+            "task_id": task_id,
             "error": str(e)
         }), 500
+
+# ============================================================
+# ROUTE: PROGRESS CHECK
+# ============================================================
+
+@BMS_downlod_bp.route("/progress/<task_id>", methods=["GET"])
+def cek_progress(task_id):
+    data = get_task(task_id)
+    if not data:
+        return jsonify({"error": "task_id tidak ditemukan"}), 404
+    return jsonify(data)
+
+# ============================================================
+# ROUTE: DOWNLOAD HISTORY (ADMIN)
+# ============================================================
 
 @BMS_downlod_bp.route("/history", methods=["GET"])
 def download_history():
@@ -146,22 +159,16 @@ def download_history():
         data = ambil_semua_download(limit)
         return jsonify({
             "status": "sukses",
+            "admin": True,
             "total": len(data),
             "data": data
         })
     except Exception as e:
         return jsonify({"status": "gagal", "error": str(e)}), 500
 
-
-
-
-@BMS_downlod_bp.route("/progress/<task_id>", methods=["GET"])
-def cek_progress(task_id):
-    data = get_task(task_id)
-    if not data:
-        return jsonify({"error": "task_id tidak ditemukan"}), 404
-    return jsonify(data)
-
+# ============================================================
+# ROUTE: CLEANUP FILE LAMA (ADMIN)
+# ============================================================
 
 @BMS_downlod_bp.route("/cleanup", methods=["POST"])
 def cleanup_download():
@@ -169,18 +176,23 @@ def cleanup_download():
     if cek:
         return cek
 
-    hari = request.json.get("hari", 30)
+    data = request.get_json(silent=True) or {}
+    hari = int(data.get("hari", 30))
 
     try:
         total = cleanup_file_lama(hari)
         return jsonify({
             "status": "sukses",
+            "admin": True,
             "dihapus": total,
             "hari": hari
         })
     except Exception as e:
         return jsonify({"status": "gagal", "error": str(e)}), 500
 
+# ============================================================
+# ROUTE: DELETE DOWNLOAD BY ID (ADMIN)
+# ============================================================
 
 @BMS_downlod_bp.route("/delete/<int:download_id>", methods=["DELETE"])
 def delete_download(download_id):
@@ -195,11 +207,15 @@ def delete_download(download_id):
 
         return jsonify({
             "status": "sukses",
+            "admin": True,
             "id": download_id
         })
     except Exception as e:
         return jsonify({"status": "gagal", "error": str(e)}), 500
 
+# ============================================================
+# ROUTE: SYNC FILE <-> DATABASE (ADMIN)
+# ============================================================
 
 @BMS_downlod_bp.route("/sync", methods=["POST"])
 def sync_downloads():
@@ -211,6 +227,7 @@ def sync_downloads():
         total = sinkron_file_db()
         return jsonify({
             "status": "sukses",
+            "admin": True,
             "db_dibersihkan": total
         })
     except Exception as e:
