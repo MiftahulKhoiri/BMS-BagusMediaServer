@@ -11,6 +11,7 @@ from app.routes.BMS_downlod.file_helper import bersihkan_nama_file
 from app.routes.BMS_downlod.utils_info import ambil_info_video
 from app.routes.BMS_downlod.db import get_db
 from app.routes.BMS_downlod.db import ambil_semua_download
+from app.routes.BMS_downlod.progress_store import buat_task, get_task
 
 
 # ============================================================
@@ -144,3 +145,12 @@ def download_history():
         })
     except Exception as e:
         return jsonify({"status": "gagal", "error": str(e)}), 500
+
+
+
+@BMS_downlod_bp.route("/progress/<task_id>", methods=["GET"])
+def cek_progress(task_id):
+    data = get_task(task_id)
+    if not data:
+        return jsonify({"error": "task_id tidak ditemukan"}), 404
+    return jsonify(data)
