@@ -3,7 +3,7 @@
 # Route internal downloader BMS (DEV / PRIBADI)
 # ============================================================
 
-from flask import Blueprint, request,session
+from flask import Blueprint,render_template, request,session
 
 from app.routes.BMS_utils import require_root
 from app.routes.BMS_downlod.downloader import unduh_video
