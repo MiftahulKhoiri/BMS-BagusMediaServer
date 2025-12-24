@@ -238,8 +238,7 @@ def sync_downloads():
 def ui_downlod():
    cek = BMS_profile_required()
     if cek:
-        return cek
-      render_template("BMS_downlod_user.html")
+        return cek render_template("BMS_downlod_admin.html")
+      
     
-   return
-render_template("BMS_downlod_admin.html")
+   return render_template("BMS_downlod_user.html")
