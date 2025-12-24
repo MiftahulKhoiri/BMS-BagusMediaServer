@@ -8,6 +8,8 @@ from flask import Blueprint, request, jsonify
 from app.routes.BMS_downlod.downloader import unduh_video
 from app.routes.BMS_downlod.audio import download_mp3
 from app.routes.BMS_downlod.file_helper import bersihkan_nama_file
+from app.routes.BMS_downlod.utils_info import ambil_info_video
+from app.routes.BMS_downlod.db import get_db
 
 # ============================================================
 # BLUEPRINT
@@ -90,51 +92,26 @@ def download_audio_route():
     """
 
     data = request.get_json(silent=True)
-    if not data:
-        return jsonify({"error": "Body JSON tidak valid"}), 400
-
-    url = data.get("url")
-    if not url:
-        return jsonify({"error": "URL wajib diisi"}), 400
-
-    try:
-        # Ambil judul dulu (nama file aman)
-        nama_file = bersihkan_nama_file("audio_youtube")
-
-        download_mp3(url, nama_file)
-
-        return jsonify({
-            "status": "sukses",
-            "tipe": "audio",
-            "file": f"downloads/mp3/{nama_file}.mp3"
-        })
-
-    except Exception as e:
-        return jsonify({
-            "status": "gagal",
-            "error": str(e)
-        }), 500
-
-from app.routes.BMS_downlod.utils_info import ambil_info_video
-from app.routes.BMS_downlod.db import get_db
-
-@BMS_downlod_bp.route("/audio", methods=["POST"])
-def download_audio_route():
-    data = request.get_json(silent=True)
     if not data or "url" not in data:
         return jsonify({"error": "URL wajib diisi"}), 400
 
     url = data["url"]
 
     try:
+        # 🔎 ambil info video (judul asli)
         info = ambil_info_video(url)
-        title = bersihkan_nama_file(info["title"])
+        title = bersihkan_nama_file(info.get("title", "audio"))
 
+        # 🎵 download mp3
         hasil = download_mp3(url, title)
 
+        # 💾 simpan ke database
         db = get_db()
         db.execute(
-            "INSERT INTO downloads (tipe, title, file_path, source_url) VALUES (?,?,?,?)",
+            """
+            INSERT INTO downloads (tipe, title, file_path, source_url)
+            VALUES (?,?,?,?)
+            """,
             ("audio", title, hasil, url)
         )
         db.commit()
@@ -147,4 +124,7 @@ def download_audio_route():
         })
 
     except Exception as e:
-        return jsonify({"status": "gagal", "error": str(e)}), 500
+        return jsonify({
+            "status": "gagal",
+            "error": str(e)
+        }), 500
