@@ -1,5 +1,5 @@
 import os
-from app.BMS_config import BASE_DOWNLOADS_FOLDER
+from app.BMS_config import DOWNLOADS_FOLDER
 from app.routes.BMS_downlod.video import download_video
 from app.routes.BMS_downlod.audio import download_audio
 from app.routes.BMS_downlod.ffmpeg_merge import merge_video_audio
