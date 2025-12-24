@@ -237,12 +237,9 @@ def sync_downloads():
 from flask import render_template
 
 @BMS_downlod_bp.route("/ui", methods=["GET"])
+@require_login
 def ui_downlod():
-    require_login():
-    cek = require_root()
-    if cek:
-        # bukan root → halaman user
-        return render_template("BMS_downlod_user.html")
+    if require_root():
+        return render_template("BMS_downlod_admin.html")
 
-    # root → halaman admin
-    return render_template("BMS_downlod_admin.html")
+    return render_template("BMS_downlod_user.html")
