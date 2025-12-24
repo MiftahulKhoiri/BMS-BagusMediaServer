@@ -57,3 +57,20 @@ def hapus_download_id(download_id):
     conn.commit()
     conn.close()
     return True
+
+def sinkron_file_db():
+    conn = get_db()
+    cur = conn.cursor()
+
+    cur.execute("SELECT id, file_path FROM downloads")
+    rows = cur.fetchall()
+
+    hilang = 0
+    for r in rows:
+        if not r["file_path"] or not os.path.exists(r["file_path"]):
+            cur.execute("DELETE FROM downloads WHERE id=?", (r["id"],))
+            hilang += 1
+
+    conn.commit()
+    conn.close()
+    return hilang
