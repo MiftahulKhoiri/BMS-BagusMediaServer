@@ -2,7 +2,7 @@ from yt_dlp import YoutubeDL
 from app.routes.BMS_downlod.progress import yt_progress_hook
 from app.BMS_config import DOWNLOADS_FOLDER
 
-def unduh_video(url, resolusi=720):
+def download_video(url, resolusi=720):
     cek_ffmpeg()
     if not konfirmasi_mode_pribadi():
         return None
