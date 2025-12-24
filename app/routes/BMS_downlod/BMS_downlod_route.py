@@ -240,7 +240,7 @@ def ui_downlod():
     if cek:
         return cek
 
-    if session.get("role") == "admin":
+    if session.get("role") == "root":
         return render_template("BMS_downlod_admin.html")
 
     return render_template("BMS_downlod_user.html")
