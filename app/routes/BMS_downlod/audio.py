@@ -10,7 +10,7 @@ from app.BMS_config import DOWNLOADS_FOLDER
 from app.routes.BMS_downlod.progress import yt_progress_hook
 from app.routes.BMS_downlod.file_helper import buat_nama_unik
 
-def download_mp3(url, title, task_id=None):
+def download_audio(url, title, task_id=None):
     """
     Download audio menjadi MP3
     """
