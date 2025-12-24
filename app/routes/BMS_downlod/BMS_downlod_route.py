@@ -8,7 +8,6 @@ from flask import Blueprint, request, jsonify
 from app.routes.BMS_utils import require_root
 
 from app.routes.BMS_downlod.downloader import unduh_video
-from app.routes.BMS_downlod.audio import download_mp3
 from app.routes.BMS_downlod.file_helper import bersihkan_nama_file
 from app.routes.BMS_downlod.utils_info import ambil_info_video
 
@@ -94,9 +93,12 @@ def download_video_route():
 
 @BMS_downlod_bp.route("/audio", methods=["POST"])
 def download_audio_route():
-    data = request.get_json(silent=True) or {}
+    # 🔥 LAZY IMPORT (memutus circular import)
+    from app.routes.BMS_downlod.audio import download_mp3
 
+    data = request.get_json(silent=True) or {}
     url = data.get("url")
+
     if not url:
         return jsonify({"error": "URL wajib diisi"}), 400
 
