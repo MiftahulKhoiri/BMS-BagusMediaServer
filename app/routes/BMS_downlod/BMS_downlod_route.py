@@ -14,7 +14,7 @@ from app.routes.BMS_downlod.db import ambil_semua_download
 from app.routes.BMS_downlod.progress_store import buat_task, get_task
 from app.routes.BMS_downlod.maintenance import cleanup_file_lama
 from app.routes.BMS_utils import require_root
-
+from app.routes.BMS_downlod.maintenance import hapus_download_id
 
 # ============================================================
 # BLUEPRINT
@@ -176,6 +176,25 @@ def cleanup_download():
             "status": "sukses",
             "dihapus": total,
             "hari": hari
+        })
+    except Exception as e:
+        return jsonify({"status": "gagal", "error": str(e)}), 500
+
+
+@BMS_downlod_bp.route("/delete/<int:download_id>", methods=["DELETE"])
+def delete_download(download_id):
+    cek = require_root()
+    if cek:
+        return cek
+
+    try:
+        ok = hapus_download_id(download_id)
+        if not ok:
+            return jsonify({"error": "Data tidak ditemukan"}), 404
+
+        return jsonify({
+            "status": "sukses",
+            "id": download_id
         })
     except Exception as e:
         return jsonify({"status": "gagal", "error": str(e)}), 500
