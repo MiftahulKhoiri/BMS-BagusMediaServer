@@ -5,7 +5,7 @@
 
 from flask import Blueprint, request, jsonify
 
-from app.routes.BMS_utils import require_root,require_login
+from app.routes.BMS_utils import require_root
 from app.routes.BMS_downlod.downloader import unduh_video
 from app.routes.BMS_downlod.file_helper import bersihkan_nama_file
 from app.routes.BMS_downlod.utils_info import ambil_info_video
@@ -236,7 +236,7 @@ def sync_downloads():
 
 @BMS_downlod_bp.route("/ui", methods=["GET"])
 def ui_downlod():
-    require_login()   # ← panggil langsung
+      # ← panggil langsung
 
     if require_root():
         return render_template("BMS_downlod_user.html")
