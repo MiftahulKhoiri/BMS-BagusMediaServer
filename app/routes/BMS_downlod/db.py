@@ -1,8 +1,8 @@
 import sqlite3
 import os
-from app.BMS_config import BASE_DOWNLOADS_FOLDER
+from app.BMS_config import DOWNLOADS_FOLDER
 
-DB_PATH = os.path.join(BASE_DOWNLOADS_FOLDER, "download_history.db")
+DB_PATH = os.path.join(DOWNLOADS_FOLDER, "download_history.db")
 
 def get_db():
     conn = sqlite3.connect(DB_PATH)
