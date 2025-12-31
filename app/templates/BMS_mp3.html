@@ -5,37 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>BMS - MP3 Library</title>
 
+    <!-- CSS -->
     <link rel="stylesheet" href="/static/css/BMS_mp3.css">
 </head>
 <body>
 
+<!-- ================= TOP BAR ================= -->
 <div class="topbar">
-
-    <!-- LOGO / HOME BUTTON -->
-    <h2 class="home-btn" onclick="goHome()">🎵 BMS daftar MP3 </h2>
-
+    <h2 class="home-btn" onclick="goHome()">🎵 BMS daftar MP3</h2>
 </div>
 
-<!-- Tombol Back -->
+<!-- ================= ACTION BAR ================= -->
+<div class="action-bar" style="margin-bottom:10px;">
+    <button class="btn" onclick="scanMP3()">🔍 Scan MP3</button>
+</div>
+
+<!-- ================= BACK BUTTON ================= -->
 <div id="backButton" style="display:none; margin-bottom:10px;">
     <button class="btn" onclick="goBack()">⬅ Kembali</button>
-    <button class="btn" onclick="scanMP3()">🔍 ScanMP3</button>
 </div>
 
-<div class="folder-select">
-  <h3>Pilih Folder</h3>
-  <div id="folderList"></div>
-
-  <button id="playSelectedBtn">
-    ▶ Putar Folder Terpilih
-  </button>
-</div>
-
+<!-- ================= STATUS ================= -->
 <div id="status" class="status"></div>
 
-<!-- GRID UNTUK FOLDER & FILE -->
+<!-- ================= LIBRARY GRID ================= -->
 <div id="library" class="grid"></div>
 
+<!-- ================= SCRIPT ================= -->
 <script src="/static/js/BMS_mp3.js"></script>
 
 </body>
