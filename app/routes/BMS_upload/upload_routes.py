@@ -104,3 +104,23 @@ def upload_finish():
     shutil.rmtree(info["tmp_dir"], ignore_errors=True)
 
     return jsonify({"status": "ok", "file": final_filename})
+
+# =================================================
+# CEK STATUS UPLOAD (RESUME)
+# =================================================
+@upload.route("/upload_chunk/status", methods=["GET"])
+@fm_auth
+def upload_status():
+    session_id = request.args.get("session_id")
+
+    with upload_lock:
+        info = upload_sessions.get(session_id)
+
+    if not info:
+        return jsonify({"exists": False})
+
+    return jsonify({
+        "exists": True,
+        "received": info["received"],
+        "total": info["total"]
+    })
