@@ -3,7 +3,7 @@ import uuid
 import time
 import shutil
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, render_template
 from werkzeug.utils import secure_filename
 
 from .upload_auth import fm_auth
@@ -12,6 +12,17 @@ from .upload_sessions import upload_lock, upload_sessions
 from .upload_utils import check_disk_space
 
 upload = Blueprint("upload", __name__, url_prefix="/upload")
+
+
+
+# =================================================
+# UI UPLOAD PAGE
+# GET /upload/
+# =================================================
+@upload.route("/", methods=["GET"])
+@fm_auth
+def upload_ui():
+    return render_template("BMS_upload.html")
 
 # =================================================
 # START SESSION
