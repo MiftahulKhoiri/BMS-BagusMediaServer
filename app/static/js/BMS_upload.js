@@ -2,6 +2,28 @@ let isPaused = false;
 let isRestart = false;
 
 /* ===============================
+   INIT MODE (PENTING!)
+   atur multiple SEBELUM pilih file
+================================ */
+document.addEventListener("DOMContentLoaded", () => {
+    const modeSelect = document.getElementById("mode");
+    const fileInput = document.getElementById("file-input");
+
+    function updateMode() {
+        if (modeSelect.value === "multi") {
+            fileInput.multiple = true;
+        } else {
+            fileInput.multiple = false;
+        }
+        // reset file biar tidak nyangkut
+        fileInput.value = "";
+    }
+
+    updateMode();
+    modeSelect.addEventListener("change", updateMode);
+});
+
+/* ===============================
    START UPLOAD
 ================================ */
 function startUpload() {
@@ -16,9 +38,6 @@ function startUpload() {
         alert("Pilih file dulu!");
         return;
     }
-
-    // atur multiple sesuai mode (UX rapi)
-    fileInput.multiple = (mode === "multi");
 
     if (mode === "single") {
         uploadSingle(files[0]);
@@ -54,7 +73,7 @@ async function uploadMulti(files) {
     for (let i = 0; i < files.length; i++) {
         if (isRestart) return;
 
-        setStatus(`⬆ Upload ${i + 1} / ${files.length} : ${files[i].name}`);
+        setStatus(`⬆ Upload ${i + 1} / ${files.length}: ${files[i].name}`);
         await uploadSingle(files[i]);
     }
 
