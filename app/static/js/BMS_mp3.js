@@ -1,217 +1,157 @@
 /* ==========================================================
-   BMS MP3 LIBRARY (FOLDER & FILE LIST)
-   Mode: Clean, Elegant, Neon Green
+   BMS MP3 LIBRARY – CLEAN MODE
+   Browse Folder → List MP3 → Play
 ========================================================== */
 
 let currentFolderId = null;
 let currentFolderName = null;
 
 /* ----------------------------------------------------------
-   Helper GET JSON
+   Helper API JSON
 ---------------------------------------------------------- */
-async function api(path){
-    let r = await fetch(path);
-    return await r.json();
+async function api(url){
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("API error");
+    return await res.json();
 }
 
 /* ==========================================================
    HOME BUTTON
-   - Admin/Root  → /admin/home
-   - User biasa  → /user/home
 ========================================================== */
 function goHome(){
     fetch("/auth/role")
         .then(r => r.json())
         .then(d => {
             if (d.role === "admin" || d.role === "root") {
-                window.location.href = "/admin/home";
+                location.href = "/admin/home";
             } else {
-                window.location.href = "/user/home";
+                location.href = "/user/home";
             }
         })
-        .catch(() => window.location.href = "/user/home");
+        .catch(() => location.href = "/user/home");
 }
 
 /* ==========================================================
-   SCAN MP3 KE LIBRARY
+   SCAN MP3
 ========================================================== */
 async function scanMP3(){
-    document.getElementById("status").innerHTML = "🔍 Scan berjalan...";
-
-    let res = await fetch("/mp3/scan-db", { method: "POST" });
-    let data = await res.json();
-
-    document.getElementById("status").innerHTML = data.message;
-
-    // setelah scan, tampilkan ulang folder
-    showFolders();
+    const status = document.getElementById("status");
+    try {
+        status.innerHTML = "🔍 Scan MP3 berjalan...";
+        const res = await fetch("/mp3/scan-db", { method: "POST" });
+        const data = await res.json();
+        status.innerHTML = data.message || "✅ Scan selesai";
+        showFolders();
+    } catch (e){
+        status.innerHTML = "❌ Scan gagal";
+    }
 }
 
 /* ==========================================================
-   TAMPILKAN LIST SEMUA FOLDER MP3
+   TAMPILKAN FOLDER
 ========================================================== */
 async function showFolders(){
-    document.getElementById("status").innerHTML = "📁 Memuat folder...";
+    const lib = document.getElementById("library");
+    const status = document.getElementById("status");
+    const backBtn = document.getElementById("backButton");
 
     currentFolderId = null;
     currentFolderName = null;
 
-    // sembunyikan tombol back
-    document.getElementById("backButton").style.display = "none";
-
-    let data = await api("/mp3/folders");
-
-    const lib = document.getElementById("library");
+    backBtn.style.display = "none";
+    status.innerHTML = "📁 Memuat folder...";
     lib.innerHTML = "";
 
-    if (!data || data.length === 0) {
-        lib.innerHTML = "<div>Tidak ada folder MP3.</div>";
-        return;
+    try {
+        const data = await api("/mp3/folders");
+
+        if (!data || data.length === 0){
+            lib.innerHTML = "<div>Tidak ada folder MP3.</div>";
+            status.innerHTML = "";
+            return;
+        }
+
+        data.forEach(f => {
+            const card = document.createElement("div");
+            card.className = "card";
+            card.onclick = () => loadMp3Files(f.id, f.folder_name);
+
+            card.innerHTML = `
+                <div class="thumb-folder">📁</div>
+                <div class="title">${f.folder_name}</div>
+                <div class="sub">${f.total_mp3} file</div>
+            `;
+
+            lib.appendChild(card);
+        });
+
+        status.innerHTML = "";
+    } catch (e){
+        status.innerHTML = "❌ Gagal memuat folder";
     }
-
-    // tampilkan card folder
-    data.forEach(f => {
-        let card = document.createElement("div");
-        card.className = "card";
-
-        card.onclick = ()=> loadMp3Files(f.id, f.folder_name);
-
-        card.innerHTML = `
-            <div class="thumb-folder">📁</div>
-            <div class="title">${f.folder_name}</div>
-            <div class="sub">${f.total_mp3} file</div>
-        `;
-
-        lib.appendChild(card);
-    });
-
-    document.getElementById("status").innerHTML = "";
 }
 
 /* ==========================================================
-   TAMPILKAN LIST FILE MP3 DALAM FOLDER
+   TAMPILKAN FILE MP3
 ========================================================== */
-async function loadMp3Files(folder_id, folder_name){
-    currentFolderId = folder_id;
-    currentFolderName = folder_name;
-
-    document.getElementById("status").innerHTML = "🎵 Memuat file MP3...";
-
-    // tampilkan tombol back
-    document.getElementById("backButton").style.display = "block";
-
-    let data = await api(`/mp3/folder/${folder_id}/tracks`);
-
+async function loadMp3Files(folderId, folderName){
     const lib = document.getElementById("library");
+    const status = document.getElementById("status");
+    const backBtn = document.getElementById("backButton");
+
+    currentFolderId = folderId;
+    currentFolderName = folderName;
+
+    backBtn.style.display = "block";
+    status.innerHTML = "🎵 Memuat MP3...";
     lib.innerHTML = "";
 
-    if (!data || data.length === 0){
-        lib.innerHTML = "<div>Folder kosong.</div>";
-        return;
+    try {
+        const data = await api(`/mp3/folder/${folderId}/tracks`);
+
+        if (!data || data.length === 0){
+            lib.innerHTML = "<div>Folder kosong.</div>";
+            status.innerHTML = `📁 Folder: ${folderName}`;
+            return;
+        }
+
+        data.forEach(mp3 => {
+            const card = document.createElement("div");
+            card.className = "card";
+            card.onclick = () => openMp3Player(mp3.id);
+
+            card.innerHTML = `
+                <div class="thumb-mp3">🎵</div>
+                <div class="title">${mp3.filename}</div>
+                <div class="sub">${(mp3.size / 1024 / 1024).toFixed(1)} MB</div>
+            `;
+
+            lib.appendChild(card);
+        });
+
+        status.innerHTML = `📁 Folder: ${folderName}`;
+    } catch (e){
+        status.innerHTML = "❌ Gagal memuat MP3";
     }
-
-    // tampilkan MP3 files
-    data.forEach(mp3 => {
-        let card = document.createElement("div");
-        card.className = "card";
-
-        // klik file → masuk player
-        card.onclick = ()=> openMp3Player(mp3.id);
-
-        card.innerHTML = `
-            <div class="thumb-mp3">🎵</div>
-            <div class="title">${mp3.filename}</div>
-            <div class="sub">${(mp3.size/1024/1024).toFixed(1)} MB</div>
-        `;
-
-        lib.appendChild(card);
-    });
-
-    document.getElementById("status").innerHTML =
-        `📁 Folder: ${folder_name}`;
 }
 
 /* ==========================================================
-   BUKA MP3 PLAYER (halaman terpisah)
+   BUKA MP3 PLAYER
 ========================================================== */
-function openMp3Player(mp3_id){
-    window.location.href =
-        `/mp3/watch/${mp3_id}?folder=${currentFolderId}`;
+function openMp3Player(mp3Id){
+    location.href = `/mp3/watch/${mp3Id}?folder=${currentFolderId}`;
 }
 
 /* ==========================================================
-   TOMBOL KEMBALI KE LIST FOLDER ATAU FILE
+   BACK BUTTON
 ========================================================== */
 function goBack(){
-    if(currentFolderId){
-        showFolders();
-    } else {
-        showFolders();
-    }
+    showFolders();
 }
 
 /* ==========================================================
-   AUTO DETECT SAAT PAGE LOAD
+   INIT PAGE
 ========================================================== */
 document.addEventListener("DOMContentLoaded", () => {
-    const params = new URLSearchParams(window.location.search);
-    const folderId = params.get("folder");
-    const folderName = params.get("name");
-
-    if (folderId) {
-        loadMp3Files(folderId, folderName || "Folder");
-    } else {
-        showFolders();
-    }
+    showFolders();
 });
-
-async function api(url){
-  const res = await fetch(url);
-  return await res.json();
-}
-
-const folderListEl = document.getElementById("folderList");
-const playBtn = document.getElementById("playSelectedBtn");
-
-let selectedFolders = [];
-
-// load folder list
-async function loadFolders(){
-  const folders = await api("/mp3/folders");
-
-  folderListEl.innerHTML = "";
-  folders.forEach(f => {
-    const div = document.createElement("div");
-    div.className = "folder-item";
-
-    div.innerHTML = `
-      <input type="checkbox" value="${f.id}">
-      <span>${f.folder_name} (${f.total_mp3})</span>
-    `;
-
-    const checkbox = div.querySelector("input");
-    checkbox.onchange = () => {
-      if(checkbox.checked){
-        selectedFolders.push(f.id);
-      }else{
-        selectedFolders = selectedFolders.filter(x => x !== f.id);
-      }
-    };
-
-    folderListEl.appendChild(div);
-  });
-}
-
-// klik putar
-playBtn.onclick = () => {
-  if(selectedFolders.length === 0){
-    alert("Pilih minimal 1 folder");
-    return;
-  }
-
-  const ids = selectedFolders.join(",");
-  // arahkan ke player (track pertama akan auto play)
-  location.href = `/mp3/watch/0?folders=${ids}`;
-};
-
-loadFolders();
