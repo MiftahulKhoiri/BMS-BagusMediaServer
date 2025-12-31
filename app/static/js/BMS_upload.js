@@ -1,20 +1,24 @@
 let isPaused = false;
 let isRestart = false;
 
-// ===============================
-// START UPLOAD
-// ===============================
+/* ===============================
+   START UPLOAD
+================================ */
 function startUpload() {
     isPaused = false;
     isRestart = false;
 
-    let mode = document.getElementById("mode").value;
-    let files = document.getElementById("file-input").files;
+    const mode = document.getElementById("mode").value;
+    const fileInput = document.getElementById("file-input");
+    const files = fileInput.files;
 
-    if (files.length === 0) {
+    if (!files || files.length === 0) {
         alert("Pilih file dulu!");
         return;
     }
+
+    // atur multiple sesuai mode (UX rapi)
+    fileInput.multiple = (mode === "multi");
 
     if (mode === "single") {
         uploadSingle(files[0]);
@@ -23,108 +27,125 @@ function startUpload() {
     }
 }
 
-// ===============================
-// PAUSE / RESUME / RESTART
-// ===============================
+/* ===============================
+   PAUSE / RESUME / RESTART
+================================ */
 function pauseUpload() {
     isPaused = true;
-    document.getElementById("status").innerText = "Upload dijeda...";
+    setStatus("⏸ Upload dijeda...");
 }
 
 function resumeUpload() {
     isPaused = false;
-    document.getElementById("status").innerText = "Upload dilanjutkan...";
+    setStatus("▶ Upload dilanjutkan...");
 }
 
 function restartUpload() {
     isRestart = true;
-    document.getElementById("status").innerText = "Upload diulang...";
+    isPaused = false;
+    updateProgress(0);
+    setStatus("↺ Upload diulang...");
 }
 
-
-// ===============================
-// MULTI UPLOAD — Sequential
-// ===============================
+/* ===============================
+   MULTI UPLOAD (SEQUENTIAL)
+================================ */
 async function uploadMulti(files) {
     for (let i = 0; i < files.length; i++) {
-        if (isRestart) break;
+        if (isRestart) return;
 
-        document.getElementById("status").innerText =
-            `Upload file ${i + 1} dari ${files.length}: ${files[i].name}`;
-
+        setStatus(`⬆ Upload ${i + 1} / ${files.length} : ${files[i].name}`);
         await uploadSingle(files[i]);
     }
 
-    if (!isRestart)
-        document.getElementById("status").innerText = "SEMUA FILE SELESAI!";
+    if (!isRestart) {
+        setStatus("✅ Semua file selesai!");
+    }
 }
 
-
-// ===============================
-// UPLOAD SINGLE FILE (Chunk)
-// ===============================
+/* ===============================
+   UPLOAD SINGLE FILE (CHUNK)
+================================ */
 async function uploadSingle(file) {
-    updateProgress(0);
+    try {
+        updateProgress(0);
 
-    let startForm = new FormData();
-    startForm.append("name", file.name);
-    startForm.append("total_size", file.size);
+        // === START SESSION ===
+        const startForm = new FormData();
+        startForm.append("name", file.name);
+        startForm.append("total_size", file.size);
 
-    let startRes = await fetch("/upload/upload_chunk/start", {
-        method: "POST",
-        body: startForm
-    });
-
-    let startData = await startRes.json();
-    let session_id = startData.session_id;
-
-    let chunkSize = 1024 * 1024;
-    let chunkIndex = 0;
-
-    for (let start = 0; start < file.size; start += chunkSize) {
-
-        while (isPaused) {
-            await wait(200);
-        }
-        if (isRestart) return;
-
-        let chunk = file.slice(start, start + chunkSize);
-
-        let form = new FormData();
-        form.append("session_id", session_id);
-        form.append("chunk_index", chunkIndex);
-        form.append("chunk", chunk);
-
-        let res = await fetch("/upload/upload_chunk/append", {
+        const startRes = await fetch("/upload/upload_chunk/start", {
             method: "POST",
-            body: form
+            body: startForm
         });
 
-        let data = await res.json();
-        updateProgress(data.progress);
+        if (!startRes.ok) throw new Error("Gagal start upload");
 
-        chunkIndex++;
-        await wait(50);
+        const startData = await startRes.json();
+        const session_id = startData.session_id;
+
+        const chunkSize = 1024 * 1024; // 1 MB
+        let chunkIndex = 0;
+
+        // === SEND CHUNKS ===
+        for (let start = 0; start < file.size; start += chunkSize) {
+
+            while (isPaused) {
+                await wait(200);
+            }
+            if (isRestart) return;
+
+            const chunk = file.slice(start, start + chunkSize);
+
+            const form = new FormData();
+            form.append("session_id", session_id);
+            form.append("chunk_index", chunkIndex);
+            form.append("chunk", chunk);
+
+            const res = await fetch("/upload/upload_chunk/append", {
+                method: "POST",
+                body: form
+            });
+
+            if (!res.ok) throw new Error("Chunk gagal dikirim");
+
+            const data = await res.json();
+            updateProgress(data.progress || 0);
+
+            chunkIndex++;
+            await wait(50);
+        }
+
+        // === FINISH ===
+        const finishForm = new FormData();
+        finishForm.append("session_id", session_id);
+        finishForm.append("final_filename", file.name);
+
+        await fetch("/upload/upload_chunk/finish", {
+            method: "POST",
+            body: finishForm
+        });
+
+        setStatus(`✅ ${file.name} selesai`);
+        updateProgress(100);
+
+    } catch (err) {
+        console.error(err);
+        setStatus("❌ Upload gagal");
     }
-
-    let finishForm = new FormData();
-    finishForm.append("session_id", session_id);
-    finishForm.append("final_filename", file.name);
-
-    await fetch("/upload/upload_chunk/finish", {
-        method: "POST",
-        body: finishForm
-    });
-
-    document.getElementById("status").innerText = `${file.name} selesai!`;
 }
 
-
-// ===============================
-// UTIL
-// ===============================
+/* ===============================
+   UTIL
+================================ */
 function updateProgress(p) {
-    document.getElementById("progress-bar").style.width = p + "%";
+    const bar = document.getElementById("progress-bar");
+    bar.style.width = p + "%";
+}
+
+function setStatus(text) {
+    document.getElementById("status").innerText = text;
 }
 
 function wait(ms) {
