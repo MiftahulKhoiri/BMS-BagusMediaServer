@@ -10,7 +10,6 @@ from app.routes.BMS_auth.session_helpers import (
 def fm_auth(func):
     @wraps(func)
     def wrapper(*args, **kwargs):
-
         if not BMS_auth_is_login():
             return jsonify({"error": "Belum login"}), 403
 
@@ -18,5 +17,4 @@ def fm_auth(func):
             return jsonify({"error": "Akses ditolak"}), 403
 
         return func(*args, **kwargs)
-
     return wrapper
