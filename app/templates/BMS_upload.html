@@ -1,49 +1,62 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
 
-    <!-- WAJIB: membuat tampilan responsive di HP -->
+    <!-- Responsive HP -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
     <title>BMS Premium Upload</title>
 
-    <!-- File CSS eksternal -->
+    <!-- CSS -->
     <link rel="stylesheet" href="/static/css/BMS_upload.css">
 </head>
 <body>
 
-<h2>BMS Premium Upload Manager</h2>
+<div class="container">
 
-<div class="card">
+    <h2>BMS Premium Upload Manager</h2>
 
-    <label>Pilih Mode Upload:</label><br>
+    <div class="card">
 
-    <select id="mode">
-        <option value="single">Upload Satu File</option>
-        <option value="multi">Upload Banyak File</option>
-    </select>
+        <!-- MODE -->
+        <label for="mode">Pilih Mode Upload:</label><br>
+        <select id="mode">
+            <option value="single">Upload Satu File</option>
+            <option value="multi">Upload Banyak File</option>
+        </select>
 
-    <br><br>
+        <br><br>
 
-    <input type="file" id="file-input" multiple>
+        <!-- FILE INPUT -->
+        <input
+            type="file"
+            id="file-input"
+            accept="audio/*,video/*"
+        >
 
-    <br><br>
+        <br><br>
 
-    <button onclick="startUpload()">Mulai Upload</button>
-    <button onclick="pauseUpload()">⏸ Pause</button>
-    <button onclick="resumeUpload()">▶ Resume</button>
-    <button onclick="restartUpload()">↺ Restart</button>
+        <!-- ACTION BUTTON -->
+        <div class="btn-group">
+            <button onclick="startUpload()">⬆ Mulai Upload</button>
+            <button onclick="pauseUpload()">⏸ Pause</button>
+            <button onclick="resumeUpload()">▶ Resume</button>
+            <button onclick="restartUpload()">↺ Restart</button>
+        </div>
 
-    <div id="status" class="status-box"></div>
+        <!-- STATUS -->
+        <div id="status" class="status-box"></div>
 
-    <div class="progress-box">
-        <div class="progress-bar" id="progress-bar"></div>
+        <!-- PROGRESS -->
+        <div class="progress-box">
+            <div class="progress-bar" id="progress-bar"></div>
+        </div>
+
     </div>
-
 </div>
 
-<!-- File JS eksternal -->
+<!-- JS -->
 <script src="/static/js/BMS_upload.js"></script>
 
 </body>
