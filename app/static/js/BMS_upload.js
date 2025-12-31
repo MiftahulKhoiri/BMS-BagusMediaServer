@@ -1,124 +1,104 @@
 let isPaused = false;
-let isRestart = false;
+let currentTask = null;
+let uploadQueue = JSON.parse(localStorage.getItem("upload_queue") || "[]");
 
 /* ===============================
-   INIT MODE (PENTING!)
-   atur multiple SEBELUM pilih file
+   INIT
 ================================ */
 document.addEventListener("DOMContentLoaded", () => {
-    const modeSelect = document.getElementById("mode");
-    const fileInput = document.getElementById("file-input");
-
-    function updateMode() {
-        if (modeSelect.value === "multi") {
-            fileInput.multiple = true;
-        } else {
-            fileInput.multiple = false;
-        }
-        // reset file biar tidak nyangkut
-        fileInput.value = "";
-    }
-
-    updateMode();
-    modeSelect.addEventListener("change", updateMode);
+    initMode();
+    renderQueue();
+    resumePendingUploads();
 });
+
+/* ===============================
+   MODE (single / multi)
+================================ */
+function initMode() {
+    const mode = document.getElementById("mode");
+    const input = document.getElementById("file-input");
+
+    function update() {
+        input.multiple = (mode.value === "multi");
+        input.value = "";
+    }
+    update();
+    mode.addEventListener("change", update);
+}
 
 /* ===============================
    START UPLOAD
 ================================ */
 function startUpload() {
-    isPaused = false;
-    isRestart = false;
-
-    const mode = document.getElementById("mode").value;
-    const fileInput = document.getElementById("file-input");
-    const files = fileInput.files;
-
+    const files = document.getElementById("file-input").files;
     if (!files || files.length === 0) {
         alert("Pilih file dulu!");
         return;
     }
 
-    if (mode === "single") {
-        uploadSingle(files[0]);
-    } else {
-        uploadMulti(files);
-    }
-}
-
-/* ===============================
-   PAUSE / RESUME / RESTART
-================================ */
-function pauseUpload() {
-    isPaused = true;
-    setStatus("⏸ Upload dijeda...");
-}
-
-function resumeUpload() {
-    isPaused = false;
-    setStatus("▶ Upload dilanjutkan...");
-}
-
-function restartUpload() {
-    isRestart = true;
-    isPaused = false;
-    updateProgress(0);
-    setStatus("↺ Upload diulang...");
-}
-
-/* ===============================
-   MULTI UPLOAD (SEQUENTIAL)
-================================ */
-async function uploadMulti(files) {
-    for (let i = 0; i < files.length; i++) {
-        if (isRestart) return;
-
-        setStatus(`⬆ Upload ${i + 1} / ${files.length}: ${files[i].name}`);
-        await uploadSingle(files[i]);
-    }
-
-    if (!isRestart) {
-        setStatus("✅ Semua file selesai!");
-    }
-}
-
-/* ===============================
-   UPLOAD SINGLE FILE (CHUNK)
-================================ */
-async function uploadSingle(file) {
-    try {
-        updateProgress(0);
-
-        // === START SESSION ===
-        const startForm = new FormData();
-        startForm.append("name", file.name);
-        startForm.append("total_size", file.size);
-
-        const startRes = await fetch("/upload/upload_chunk/start", {
-            method: "POST",
-            body: startForm
+    for (let f of files) {
+        uploadQueue.push({
+            name: f.name,
+            size: f.size,
+            file: f,
+            session_id: null,
+            progress: 0,
+            status: "queued"
         });
+    }
 
-        if (!startRes.ok) throw new Error("Gagal start upload");
+    saveQueue();
+    renderQueue();
+    processQueue();
+}
 
-        const startData = await startRes.json();
-        const session_id = startData.session_id;
+/* ===============================
+   QUEUE PROCESSOR
+================================ */
+async function processQueue() {
+    if (currentTask || uploadQueue.length === 0) return;
 
-        const chunkSize = 1024 * 1024; // 1 MB
-        let chunkIndex = 0;
+    currentTask = uploadQueue.find(f => f.status === "queued" || f.status === "uploading");
+    if (!currentTask) return;
 
-        // === SEND CHUNKS ===
-        for (let start = 0; start < file.size; start += chunkSize) {
+    currentTask.status = "uploading";
+    saveQueue();
+    renderQueue();
 
-            while (isPaused) {
-                await wait(200);
-            }
-            if (isRestart) return;
+    await uploadFile(currentTask);
 
-            const chunk = file.slice(start, start + chunkSize);
+    currentTask = null;
+    processQueue();
+}
+
+/* ===============================
+   UPLOAD FILE (RESUMABLE)
+================================ */
+async function uploadFile(task) {
+    try {
+        // START SESSION (jika belum ada)
+        if (!task.session_id) {
+            const form = new FormData();
+            form.append("name", task.name);
+            form.append("total_size", task.size);
+
+            const res = await fetch("/upload/upload_chunk/start", { method: "POST", body: form });
+            const data = await res.json();
+            task.session_id = data.session_id;
+        }
+
+        const chunkSize = 1024 * 1024;
+        let uploaded = task.progress / 100 * task.size;
+        let chunkIndex = Math.floor(uploaded / chunkSize);
+
+        // CHUNK LOOP
+        for (let start = uploaded; start < task.size; start += chunkSize) {
+            while (isPaused) await wait(300);
+
+            const chunk = task.file.slice(start, start + chunkSize);
 
             const form = new FormData();
-            form.append("session_id", session_id);
+            form.append("session_id", task.session_id);
             form.append("chunk_index", chunkIndex);
             form.append("chunk", chunk);
 
@@ -127,46 +107,92 @@ async function uploadSingle(file) {
                 body: form
             });
 
-            if (!res.ok) throw new Error("Chunk gagal dikirim");
-
             const data = await res.json();
-            updateProgress(data.progress || 0);
+            task.progress = data.progress;
+            saveQueue();
+            renderQueue();
 
             chunkIndex++;
-            await wait(50);
         }
 
-        // === FINISH ===
-        const finishForm = new FormData();
-        finishForm.append("session_id", session_id);
-        finishForm.append("final_filename", file.name);
+        // FINISH
+        const finish = new FormData();
+        finish.append("session_id", task.session_id);
+        finish.append("final_filename", task.name);
 
-        await fetch("/upload/upload_chunk/finish", {
-            method: "POST",
-            body: finishForm
-        });
+        await fetch("/upload/upload_chunk/finish", { method: "POST", body: finish });
 
-        setStatus(`✅ ${file.name} selesai`);
-        updateProgress(100);
+        task.status = "done";
+        task.progress = 100;
+        saveQueue();
+        renderQueue();
 
-    } catch (err) {
-        console.error(err);
-        setStatus("❌ Upload gagal");
+    } catch (e) {
+        console.error(e);
+        task.status = "paused";
+        saveQueue();
     }
+}
+
+/* ===============================
+   RESUME AFTER REFRESH
+================================ */
+async function resumePendingUploads() {
+    for (let task of uploadQueue) {
+        if (task.session_id && task.status !== "done") {
+            const res = await fetch(`/upload/upload_chunk/status?session_id=${task.session_id}`);
+            const data = await res.json();
+            if (data.exists) {
+                task.progress = Math.floor((data.received / data.total) * 100);
+                task.status = "uploading";
+            }
+        }
+    }
+    saveQueue();
+    renderQueue();
+    processQueue();
+}
+
+/* ===============================
+   PAUSE / RESUME
+================================ */
+function pauseUpload() {
+    isPaused = true;
+}
+function resumeUpload() {
+    isPaused = false;
+}
+
+/* ===============================
+   UI RENDER QUEUE
+================================ */
+function renderQueue() {
+    const box = document.getElementById("status");
+    box.innerHTML = "";
+
+    uploadQueue.forEach(f => {
+        box.innerHTML += `
+            <div style="margin-bottom:6px">
+                ${f.name}
+                <div style="height:6px;background:#222">
+                    <div style="width:${f.progress}%;height:6px;background:#00ff9c"></div>
+                </div>
+                <small>${f.status} (${f.progress}%)</small>
+            </div>
+        `;
+    });
+}
+
+/* ===============================
+   STORAGE
+================================ */
+function saveQueue() {
+    localStorage.setItem("upload_queue", JSON.stringify(uploadQueue));
 }
 
 /* ===============================
    UTIL
 ================================ */
-function updateProgress(p) {
-    const bar = document.getElementById("progress-bar");
-    bar.style.width = p + "%";
-}
-
-function setStatus(text) {
-    document.getElementById("status").innerText = text;
-}
-
 function wait(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise(r => setTimeout(r, ms));
 }
