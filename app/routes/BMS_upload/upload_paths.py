@@ -1,5 +1,7 @@
 import os
 from app.BMS_config import BASE
+from app.BMS_config import VIDEO_FOLDER,
+
 
 ROOT = os.path.realpath(BASE)
 
