@@ -58,7 +58,7 @@ function startUpload() {
 async function processQueue() {
     if (currentTask || uploadQueue.length === 0) return;
 
-    currentTask = uploadQueue.find(f => f.status === "mengantri" || f.status === "uploading");
+    currentTask = uploadQueue.find(f => f.status === "queue" || f.status === "uploading");
     if (!currentTask) return;
 
     currentTask.status = "uploading";
