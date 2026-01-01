@@ -2,47 +2,36 @@
 let isPaused = false;
 let currentTask = null;
 
-/*
-  File object tidak bisa disimpan di localStorage.
-  Setelah refresh upload akan menunggu file dipilih ulang.
-*/
 let uploadQueue = JSON.parse(localStorage.getItem("upload_queue") || "[]");
 
 /* ===============================
    INIT
 ================================ */
 document.addEventListener("DOMContentLoaded", () => {
-    initMode();
     renderQueue();
     resumePendingUploads();
 });
 
 /* ===============================
-   MODE
-================================ */
-function initMode() {
-    const mode = document.getElementById("mode");
-    const input = document.getElementById("file-input");
-
-    function update() {
-        input.multiple = (mode.value === "multi");
-        input.value = "";
-    }
-    update();
-    mode.addEventListener("change", update);
-}
-
-/* ===============================
-   START UPLOAD
+   START UPLOAD (FIXED)
 ================================ */
 function startUpload() {
-    const files = document.getElementById("file-input").files;
-    if (!files.length) {
+    const input = document.getElementById("file-input");
+    const files = input.files;
+
+    if (!files || files.length === 0) {
         alert("Pilih file dulu!");
         return;
     }
 
-    for (let f of files) {
+    // 🔥 RESET STATE (WAJIB)
+    currentTask = null;
+
+    const mode = document.getElementById("mode").value;
+    const selectedFiles =
+        mode === "single" ? [files[0]] : Array.from(files);
+
+    for (let f of selectedFiles) {
         uploadQueue.push({
             name: f.name,
             size: f.size,
@@ -59,23 +48,30 @@ function startUpload() {
 }
 
 /* ===============================
-   QUEUE PROCESSOR (FIX MULTI)
+   QUEUE PROCESSOR
 ================================ */
 async function processQueue() {
     if (currentTask !== null) return;
 
-    const next = uploadQueue.find(f => f.status === "queued");
-    if (!next) return;
+    const task = uploadQueue.find(f => f.status === "queued");
+    if (!task) return;
 
-    currentTask = next;
-    currentTask.status = "uploading";
+    if (!task.file) {
+        task.status = "waiting_file";
+        saveQueue();
+        renderQueue();
+        return;
+    }
+
+    currentTask = task;
+    task.status = "uploading";
     saveQueue();
     renderQueue();
 
-    await uploadFile(currentTask);
+    await uploadFile(task);
 
-    currentTask = null;      // 🔥 KUNCI MULTI UPLOAD
-    processQueue();          // lanjut file berikutnya
+    currentTask = null;
+    processQueue();
 }
 
 /* ===============================
@@ -83,13 +79,6 @@ async function processQueue() {
 ================================ */
 async function uploadFile(task) {
     try {
-        if (!task.file) {
-            task.status = "waiting_file";
-            saveQueue();
-            renderQueue();
-            return;
-        }
-
         if (!task.session_id) {
             const form = new FormData();
             form.append("name", task.name);
@@ -112,6 +101,7 @@ async function uploadFile(task) {
             while (isPaused) await wait(300);
 
             const chunk = task.file.slice(start, start + chunkSize);
+
             const form = new FormData();
             form.append("session_id", task.session_id);
             form.append("chunk_index", chunkIndex);
@@ -133,6 +123,7 @@ async function uploadFile(task) {
         const finish = new FormData();
         finish.append("session_id", task.session_id);
         finish.append("final_filename", task.name);
+
         await fetch("/upload/upload_chunk/finish", {
             method: "POST",
             body: finish
@@ -143,8 +134,8 @@ async function uploadFile(task) {
         saveQueue();
         renderQueue();
 
-    } catch (err) {
-        console.error(err);
+    } catch (e) {
+        console.error(e);
         task.status = "paused";
         saveQueue();
         renderQueue();
