@@ -1,5 +1,12 @@
+<script>
 let isPaused = false;
 let currentTask = null;
+
+/*
+  NOTE PENTING:
+  File object TIDAK bisa disimpan ke localStorage.
+  Setelah refresh, upload akan menunggu user memilih ulang file.
+*/
 let uploadQueue = JSON.parse(localStorage.getItem("upload_queue") || "[]");
 
 /* ===============================
@@ -40,7 +47,7 @@ function startUpload() {
         uploadQueue.push({
             name: f.name,
             size: f.size,
-            file: f,
+            file: f,                // ⚠ hanya hidup selama session
             session_id: null,
             progress: 0,
             status: "queued"
@@ -56,10 +63,21 @@ function startUpload() {
    QUEUE PROCESSOR
 ================================ */
 async function processQueue() {
-    if (currentTask || uploadQueue.length === 0) return;
+    if (currentTask) return;
 
-    currentTask = uploadQueue.find(f => f.status === "queue" || f.status === "uploading");
+    currentTask = uploadQueue.find(
+        f => f.status === "queued" || f.status === "uploading"
+    );
     if (!currentTask) return;
+
+    // file hilang setelah refresh
+    if (!currentTask.file) {
+        currentTask.status = "waiting_file";
+        saveQueue();
+        renderQueue();
+        currentTask = null;
+        return;
+    }
 
     currentTask.status = "uploading";
     saveQueue();
@@ -76,19 +94,23 @@ async function processQueue() {
 ================================ */
 async function uploadFile(task) {
     try {
-        // START SESSION (jika belum ada)
+        // START SESSION
         if (!task.session_id) {
             const form = new FormData();
             form.append("name", task.name);
             form.append("total_size", task.size);
 
-            const res = await fetch("/upload/upload_chunk/start", { method: "POST", body: form });
+            const res = await fetch("/upload/upload_chunk/start", {
+                method: "POST",
+                body: form
+            });
             const data = await res.json();
             task.session_id = data.session_id;
+            saveQueue();
         }
 
-        const chunkSize = 1024 * 1024;
-        let uploaded = task.progress / 100 * task.size;
+        const chunkSize = 1024 * 1024; // 1MB
+        let uploaded = Math.floor(task.progress * task.size / 100);
         let chunkIndex = Math.floor(uploaded / chunkSize);
 
         // CHUNK LOOP
@@ -110,8 +132,8 @@ async function uploadFile(task) {
             const data = await res.json();
             task.progress = data.progress;
             saveQueue();
-            renderQueue();
 
+            if (chunkIndex % 3 === 0) renderQueue();
             chunkIndex++;
         }
 
@@ -120,17 +142,21 @@ async function uploadFile(task) {
         finish.append("session_id", task.session_id);
         finish.append("final_filename", task.name);
 
-        await fetch("/upload/upload_chunk/finish", { method: "POST", body: finish });
+        await fetch("/upload/upload_chunk/finish", {
+            method: "POST",
+            body: finish
+        });
 
         task.status = "done";
         task.progress = 100;
         saveQueue();
         renderQueue();
 
-    } catch (e) {
-        console.error(e);
+    } catch (err) {
+        console.error(err);
         task.status = "paused";
         saveQueue();
+        renderQueue();
     }
 }
 
@@ -140,11 +166,16 @@ async function uploadFile(task) {
 async function resumePendingUploads() {
     for (let task of uploadQueue) {
         if (task.session_id && task.status !== "done") {
-            const res = await fetch(`/upload/upload_chunk/status?session_id=${task.session_id}`);
+            const res = await fetch(
+                `/upload/upload_chunk/status?session_id=${task.session_id}`
+            );
             const data = await res.json();
+
             if (data.exists) {
-                task.progress = Math.floor((data.received / data.total) * 100);
-                task.status = "uploading";
+                task.progress = Math.floor(
+                    (data.received / data.total) * 100
+                );
+                task.status = "queued"; // 🔥 jangan langsung uploading
             }
         }
     }
@@ -173,7 +204,7 @@ function renderQueue() {
     uploadQueue.forEach(f => {
         box.innerHTML += `
             <div style="margin-bottom:6px">
-                ${f.name}
+                <b>${f.name}</b>
                 <div style="height:6px;background:#222">
                     <div style="width:${f.progress}%;height:6px;background:#00ff9c"></div>
                 </div>
@@ -196,3 +227,4 @@ function saveQueue() {
 function wait(ms) {
     return new Promise(r => setTimeout(r, ms));
 }
+</script>
