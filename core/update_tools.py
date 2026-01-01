@@ -162,5 +162,5 @@ def force_update(env: dict, project_dir: str):
         else:
             print("[!] venv tidak ditemukan.")
 
-    restart_services(env)
+    # restart_services(env)
     print("====== FORCE UPDATE SELESAI ======")
