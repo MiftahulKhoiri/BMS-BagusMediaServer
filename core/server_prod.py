@@ -1,6 +1,7 @@
 # core/server_prod.py
 
 import socket
+import sys
 from core.nginx_tools import generate_nginx_config, reload_nginx
 from core.system_tools import run
 
@@ -16,11 +17,16 @@ def get_ip_address():
     try:
         # Buat socket UDP untuk mendapatkan IP lokal yang terhubung ke internet
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        # Gunakan timeout untuk mencegah hanging
+        s.settimeout(2.0)
         s.connect(("8.8.8.8", 80))  # Google DNS server
         ip = s.getsockname()[0]  # Dapatkan IP dari socket
         s.close()
         return ip
-    except:
+    except (socket.error, socket.timeout):
+        # Tampilkan warning ke stderr
+        print("[⚠] Tidak bisa mendapatkan IP eksternal, menggunakan localhost", 
+              file=sys.stderr)
         return "127.0.0.1"  # Fallback ke localhost jika gagal
 
 def run_production(env: dict, venv_python: str, project_dir: str):
@@ -46,39 +52,80 @@ def run_production(env: dict, venv_python: str, project_dir: str):
         print(f"[✓] Backend (Gunicorn) di:       http://127.0.0.1:5000")
         print("[i] Menyiapkan konfigurasi NGINX...")
 
-        # Buat dan terapkan konfigurasi NGINX
-        generate_nginx_config(project_dir)
-        reload_nginx()
+        try:
+            # Buat dan terapkan konfigurasi NGINX
+            generate_nginx_config(project_dir)
+            reload_nginx()
+        except Exception as e:
+            print(f"[✗] Gagal mengkonfigurasi NGINX: {e}", file=sys.stderr)
+            print("[i] Fallback ke Waitress tanpa NGINX...")
+            # Fallback ke Waitress
+            return run_waitress(venv_python, server_ip)
 
+        # Hitung jumlah worker optimal untuk Gunicorn
+        # Rumus umum: (2 * jumlah_core) + 1
+        import multiprocessing
+        cpu_count = multiprocessing.cpu_count()
+        worker_count = (2 * cpu_count) + 1
+        
         # Command untuk menjalankan Gunicorn dengan konfigurasi produksi
         cmd = (
             f"{venv_python} -m gunicorn "
-            f"-w 3 --threads 3 "           # 3 worker dengan 3 thread per worker
-            f"-b 127.0.0.1:5000 "          # Binding hanya ke localhost (diproxy oleh NGINX)
-            f"wsgi:application"            # Entry point aplikasi
+            f"--name bms_app "                     # Nama proses
+            f"--workers {worker_count} "           # Jumlah worker optimal
+            f"--worker-class gthread "            # Gunakan thread worker untuk I/O bound apps
+            f"--threads 3 "                       # Thread per worker
+            f"--bind 127.0.0.1:5000 "             # Binding hanya ke localhost
+            f"--timeout 300 "                     # Timeout 5 menit
+            f"--access-logfile - "                # Log akses ke stdout
+            f"--error-logfile - "                 # Log error ke stdout
+            f"--capture-output "                  # Capture output untuk logging
+            f"wsgi:application"                   # Entry point aplikasi
         )
 
-        print("[i] Menjalankan Gunicorn (production)...")
+        print(f"[i] Menjalankan Gunicorn dengan {worker_count} workers...")
 
     else:
         # Konfigurasi untuk Termux, Windows, macOS - gunakan Waitress
-        print(f"[✓] Server berjalan di:          http://{server_ip}:5000")
-        print("[i] Menjalankan Waitress (fallback production).")
-
-        # Command untuk menjalankan Waitress
-        cmd = (
-            f"{venv_python} -m waitress "
-            f"--listen=0.0.0.0:5000 "      # Binding ke semua interface
-            f"wsgi:application"            # Entry point aplikasi
-        )
+        return run_waitress(venv_python, server_ip)
 
     # Tampilkan command yang dijalankan untuk debugging
     print(f"[cmd] {cmd}")
-    
-    # Jalankan server
-    run(cmd)
 
+    # Jalankan server
+    try:
+        run(cmd)
+    except KeyboardInterrupt:
+        print("\n[i] Server dihentikan oleh pengguna")
+        sys.exit(0)
+    except Exception as e:
+        print(f"[✗] Gagal menjalankan server: {e}", file=sys.stderr)
+        sys.exit(1)
+
+def run_waitress(venv_python: str, server_ip: str):
+    """
+    Menjalankan server menggunakan Waitress (untuk Windows, macOS, Termux)
+    """
+    print(f"[✓] Server berjalan di:          http://{server_ip}:5000")
+    print("[i] Menjalankan Waitress (production).")
+    
+    cmd = (
+        f"{venv_python} -m waitress "
+        f"--listen=0.0.0.0:5000 "      # Binding ke semua interface
+        f"--threads=4 "                # Default threads
+        f"wsgi:application"            # Entry point aplikasi
+    )
+    
+    print(f"[cmd] {cmd}")
+    
     # Tampilkan informasi akses
     print("\n=== Production Server Aktif ===")
-    print(f"Akses melalui browser: http://{server_ip}")
+    print(f"Akses melalui browser: http://{server_ip}:5000")
+    print("Tekan Ctrl+C untuk menghentikan server")
     print("================================\n")
+    
+    try:
+        run(cmd)
+    except KeyboardInterrupt:
+        print("\n[i] Server dihentikan oleh pengguna")
+        sys.exit(0)
